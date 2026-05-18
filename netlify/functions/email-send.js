@@ -52,15 +52,17 @@ async function sendViaBrevo({ to, from, subject, html }) {
 }
 
 async function sendViaSMTP({ to, from, subject, html }) {
-  // nodemailer — install separately if needed
-  const nodemailer = require('nodemailer');
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+  // SMTP via fetch to a relay endpoint — set SMTP_RELAY_URL + SMTP_RELAY_KEY env vars
+  // to point to a self-hosted relay (e.g. Postal, Mailhog) or use Resend/Brevo instead
+  const relayUrl = process.env.SMTP_RELAY_URL;
+  if (!relayUrl) throw new Error('SMTP_RELAY_URL not configured. Use EMAIL_PROVIDER=resend or EMAIL_PROVIDER=brevo instead.');
+  const res = await fetch(relayUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.SMTP_RELAY_KEY || ''}` },
+    body: JSON.stringify({ from: from || FROM_DEFAULT, to: Array.isArray(to) ? to : [to], subject, html })
   });
-  return transporter.sendMail({ from: from || FROM_DEFAULT, to: Array.isArray(to) ? to.join(',') : to, subject, html });
+  if (!res.ok) throw new Error(`SMTP relay error: ${res.status}`);
+  return res.json();
 }
 
 // ── Template variable replacement ────────────────────────────────────────

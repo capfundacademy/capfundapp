@@ -9,12 +9,21 @@
   name = "abandoned-checkout"
   cron = "0 */2 * * *"
 
-# Stripe webhook needs raw body for signature verification
-[[redirects]]
-  from = "/.netlify/functions/stripe-webhook"
-  to = "/.netlify/functions/stripe-webhook"
-  status = 200
-  force = true
+[[scheduled-functions]]
+  name = "daily-nurture"
+  cron = "0 9 * * *"
+
+[[scheduled-functions]]
+  name = "weekly-digest"
+  cron = "0 8 * * 1"
+
+[[scheduled-functions]]
+  name = "renewal-reminder"
+  cron = "0 10 * * *"
+
+[[scheduled-functions]]
+  name = "exception-detect"
+  cron = "0 * * * *"
 
 [[redirects]]
   from = "/*"
