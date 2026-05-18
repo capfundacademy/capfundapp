@@ -1137,7 +1137,7 @@ window.ENV = {
           <button onClick={onSignOut} className="px-4 py-2 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50 transition-colors">Sign Out</button>
         </div>
         <div className="flex gap-1 border-b border-gray-200 mb-8">
-          {[['certifications','Certifications'],['students','Students'],['review','Content Review'],['commerce','Offers & Orders']].map(([id,label]) => (
+          {[['certifications','Certifications'],['students','Students'],['review','Content Review'],['commerce','Offers & Orders'],['crm','CRM']].map(([id,label]) => (
             <button key={id} onClick={() => setTab(id)}
               className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${tab===id ? 'border-[#2D1FB1] text-[#2D1FB1]' : 'border-transparent text-gray-500 hover:text-[#0F1631]'}`}>
               {label}
@@ -1208,6 +1208,7 @@ window.ENV = {
             </div>
           )}
           {tab === 'commerce' && <AdminOffersManager />}
+          {tab === 'crm'      && <CRMDashboard />}
         </>)}
       </main>
     );
@@ -2454,6 +2455,403 @@ window.ENV = {
           {DISCLAIMER}
         </div>
       </main>
+    );
+  }
+
+  // ─── CRM Dashboard ───────────────────────────────────────────────────────
+  function CRMDashboard() {
+    const [leads, setLeads]           = useState([]);
+    const [stages, setStages]         = useState([]);
+    const [tasks, setTasks]           = useState([]);
+    const [loading, setLoading]       = useState(true);
+    const [view, setView]             = useState('pipeline'); // pipeline | list | lead | sequences | templates
+    const [selectedLead, setSelectedLead] = useState(null);
+    const [filter, setFilter]         = useState({ stage: '', source: '', tag: '' });
+    const [search, setSearch]         = useState('');
+    const [events, setEvents]         = useState([]);
+    const [leadTasks, setLeadTasks]   = useState([]);
+    const [newNote, setNewNote]       = useState('');
+    const [newTask, setNewTask]       = useState('');
+    const [savingNote, setSavingNote] = useState(false);
+    const [sequences, setSequences]   = useState([]);
+    const [templates, setTemplates]   = useState([]);
+
+    useEffect(() => {
+      loadCRM();
+    }, []);
+
+    const loadCRM = async () => {
+      setLoading(true);
+      const sb = await getSupabase();
+      if (!sb) { setLoading(false); return; }
+      const [{ data: l }, { data: s }, { data: t }] = await Promise.all([
+        sb.from('leads').select('*, funnel_stages(name,color)').order('last_activity', { ascending: false }).limit(200),
+        sb.from('funnel_stages').select('*').eq('is_active', true).order('sort_order'),
+        sb.from('crm_tasks').select('*, leads(name,email)').eq('completed', false).order('due_at').limit(50)
+      ]);
+      setLeads(l || []);
+      setStages(s || []);
+      setTasks(t || []);
+      setLoading(false);
+    };
+
+    const openLead = async (lead) => {
+      setSelectedLead(lead);
+      setView('lead');
+      const sb = await getSupabase();
+      if (!sb) return;
+      const [{ data: ev }, { data: tk }] = await Promise.all([
+        sb.from('crm_events').select('*').eq('lead_id', lead.id).order('created_at', { ascending: false }).limit(50),
+        sb.from('crm_tasks').select('*').eq('lead_id', lead.id).order('created_at', { ascending: false })
+      ]);
+      setEvents(ev || []);
+      setLeadTasks(tk || []);
+    };
+
+    const addNote = async () => {
+      if (!newNote.trim() || !selectedLead) return;
+      setSavingNote(true);
+      const sb = await getSupabase();
+      if (!sb) { setSavingNote(false); return; }
+      const { data: ev } = await sb.from('crm_events').insert({
+        lead_id: selectedLead.id, event_type: 'note', title: 'Note added', body: newNote.trim()
+      }).select().single();
+      if (ev) setEvents(prev => [ev, ...prev]);
+      await sb.from('leads').update({ notes: newNote.trim(), last_activity: new Date().toISOString() }).eq('id', selectedLead.id);
+      setNewNote('');
+      setSavingNote(false);
+    };
+
+    const addTask = async () => {
+      if (!newTask.trim() || !selectedLead) return;
+      const sb = await getSupabase();
+      if (!sb) return;
+      const { data: task } = await sb.from('crm_tasks').insert({
+        lead_id: selectedLead.id, title: newTask.trim(),
+        due_at: new Date(Date.now() + 24*60*60*1000).toISOString()
+      }).select().single();
+      if (task) setLeadTasks(prev => [task, ...prev]);
+      setNewTask('');
+    };
+
+    const completeTask = async (task) => {
+      const sb = await getSupabase();
+      if (!sb) return;
+      await sb.from('crm_tasks').update({ completed: true, completed_at: new Date().toISOString() }).eq('id', task.id);
+      setLeadTasks(prev => prev.map(t => t.id === task.id ? { ...t, completed: true } : t));
+      setTasks(prev => prev.filter(t => t.id !== task.id));
+    };
+
+    const changeStage = async (leadId, stageId) => {
+      const sb = await getSupabase();
+      if (!sb) return;
+      await sb.from('leads').update({ stage_id: stageId, last_activity: new Date().toISOString() }).eq('id', leadId);
+      setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage_id: stageId } : l));
+      if (selectedLead?.id === leadId) setSelectedLead(l => ({ ...l, stage_id: stageId }));
+    };
+
+    const loadSequences = async () => {
+      const sb = await getSupabase();
+      if (!sb) return;
+      const { data } = await sb.from('email_sequences').select('*, email_sequence_steps(*)').order('name');
+      setSequences(data || []);
+    };
+
+    const loadTemplates = async () => {
+      const sb = await getSupabase();
+      if (!sb) return;
+      const { data } = await sb.from('email_templates').select('*').order('name');
+      setTemplates(data || []);
+    };
+
+    useEffect(() => {
+      if (view === 'sequences') loadSequences();
+      if (view === 'templates') loadTemplates();
+    }, [view]);
+
+    const filteredLeads = leads.filter(l => {
+      if (search && !`${l.name||''} ${l.email||''} ${l.organization||''}`.toLowerCase().includes(search.toLowerCase())) return false;
+      if (filter.stage && l.stage_id !== filter.stage) return false;
+      if (filter.source && l.source !== filter.source) return false;
+      if (filter.tag && l.result_tag !== filter.tag) return false;
+      return true;
+    });
+
+    const RESULT_COLORS = { beginner: '#F97316', developing: '#FFD23F', ready: '#2D1FB1', advanced: '#16A34A' };
+    const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+    const fmtRelative = (d) => {
+      if (!d) return '—';
+      const diff = Date.now() - new Date(d).getTime();
+      if (diff < 60000) return 'just now';
+      if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+      if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+      return Math.floor(diff/86400000) + 'd ago';
+    };
+
+    if (loading) return <div className="text-center py-12 text-gray-400">Loading CRM…</div>;
+
+    return (
+      <div className="fade-in">
+        {/* CRM sub-nav */}
+        <div className="flex items-center gap-1 border-b border-gray-200 mb-6 overflow-x-auto">
+          {[['pipeline','Pipeline'],['list','All Leads'],['lead','Lead Detail'],['sequences','Email Sequences'],['templates','Templates']].map(([id,label]) => (
+            (id !== 'lead' || selectedLead) && (
+              <button key={id} onClick={() => setView(id)}
+                className={`px-4 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors ${view===id ? 'border-[#2D1FB1] text-[#2D1FB1]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                {label}
+                {id==='list' && <span className="ml-1.5 text-xs text-gray-400">({filteredLeads.length})</span>}
+                {id==='pipeline' && tasks.length > 0 && <span className="ml-1.5 bg-orange-100 text-orange-700 text-xs px-1.5 py-0.5 rounded-full">{tasks.length}</span>}
+              </button>
+            )
+          ))}
+          <div className="flex-1"/>
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#2D1FB1] w-48 mr-2"
+            placeholder="Search leads…" />
+        </div>
+
+        {/* PIPELINE view — stage columns */}
+        {view === 'pipeline' && (
+          <div>
+            {/* Task strip */}
+            {tasks.length > 0 && (
+              <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <div className="text-xs font-bold text-amber-800 mb-2 uppercase tracking-wider">Due Tasks ({tasks.length})</div>
+                <div className="space-y-1">
+                  {tasks.slice(0,5).map(task => (
+                    <div key={task.id} className="flex items-center gap-3">
+                      <button onClick={() => completeTask(task)} className="w-4 h-4 rounded border border-amber-400 flex-shrink-0 hover:bg-amber-200 transition-colors"/>
+                      <span className="text-sm text-gray-700 flex-1">{task.title}</span>
+                      <span className="text-xs text-gray-400">{task.leads?.name || task.leads?.email}</span>
+                      <span className="text-xs text-amber-600">{task.due_at ? fmtDate(task.due_at) : 'No date'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="overflow-x-auto">
+              <div className="flex gap-4 pb-4" style={{ minWidth: stages.length * 220 }}>
+                {stages.map(stage => {
+                  const stageLeads = filteredLeads.filter(l => l.stage_id === stage.id || (!l.stage_id && stage.slug === 'new_lead'));
+                  return (
+                    <div key={stage.id} className="flex-shrink-0 w-52">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ background: stage.color }}/>
+                          <span className="text-xs font-bold text-gray-700">{stage.name}</span>
+                        </div>
+                        <span className="text-xs text-gray-400 bg-gray-100 px-1.5 rounded-full">{stageLeads.length}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {stageLeads.slice(0,10).map(lead => (
+                          <div key={lead.id} onClick={() => openLead(lead)}
+                            className="bg-white border border-gray-200 rounded-xl p-3 cursor-pointer hover:shadow-md hover:border-[#2D1FB1] transition-all">
+                            <div className="font-semibold text-xs text-[#0F1631] truncate mb-0.5">{lead.name || lead.email}</div>
+                            {lead.organization && <div className="text-xs text-gray-400 truncate mb-1">{lead.organization}</div>}
+                            <div className="flex items-center justify-between">
+                              {lead.result_tag && <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={{ background: `${RESULT_COLORS[lead.result_tag]}20`, color: RESULT_COLORS[lead.result_tag] }}>{lead.result_tag}</span>}
+                              <span className="text-xs text-gray-400 ml-auto">{fmtRelative(lead.last_activity)}</span>
+                            </div>
+                          </div>
+                        ))}
+                        {stageLeads.length > 10 && <div className="text-xs text-center text-gray-400 py-1">+{stageLeads.length-10} more</div>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* LIST view */}
+        {view === 'list' && (
+          <div>
+            <div className="flex gap-2 mb-4 flex-wrap">
+              <select value={filter.stage} onChange={e => setFilter(f => ({ ...f, stage: e.target.value }))}
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none">
+                <option value="">All Stages</option>
+                {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <select value={filter.tag} onChange={e => setFilter(f => ({ ...f, tag: e.target.value }))}
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none">
+                <option value="">All Results</option>
+                {['beginner','developing','ready','advanced'].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <select value={filter.source} onChange={e => setFilter(f => ({ ...f, source: e.target.value }))}
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none">
+                <option value="">All Sources</option>
+                {['quiz','checklist','webinar','website','purchase'].map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="grid grid-cols-12 px-5 py-2.5 bg-gray-50 text-xs font-semibold text-gray-500 border-b border-gray-100">
+                <div className="col-span-3">Lead</div>
+                <div className="col-span-2">Stage</div>
+                <div className="col-span-2">Source</div>
+                <div className="col-span-2">Score</div>
+                <div className="col-span-2">Last Active</div>
+                <div className="col-span-1"/>
+              </div>
+              {filteredLeads.length === 0 && <div className="text-center py-12 text-gray-400 text-sm">No leads found.</div>}
+              {filteredLeads.map(lead => (
+                <div key={lead.id} className="grid grid-cols-12 px-5 py-3.5 border-b border-gray-100 hover:bg-blue-50 transition-colors items-center">
+                  <div className="col-span-3">
+                    <div className="font-semibold text-sm text-[#0F1631] truncate">{lead.name || '—'}</div>
+                    <div className="text-xs text-gray-400 truncate">{lead.email}</div>
+                  </div>
+                  <div className="col-span-2">
+                    <select value={lead.stage_id || ''} onChange={e => changeStage(lead.id, e.target.value || null)}
+                      className="border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none w-full">
+                      <option value="">Unset</option>
+                      {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="col-span-2 text-xs text-gray-500 capitalize">{lead.source || '—'}</div>
+                  <div className="col-span-2">
+                    {lead.result_tag && <span className="text-xs px-2 py-0.5 rounded-full font-semibold capitalize" style={{ background: `${RESULT_COLORS[lead.result_tag]}20`, color: RESULT_COLORS[lead.result_tag] }}>{lead.result_tag}</span>}
+                    {lead.quiz_score != null && <span className="text-xs text-gray-400 ml-1">{lead.quiz_score}%</span>}
+                  </div>
+                  <div className="col-span-2 text-xs text-gray-400">{fmtRelative(lead.last_activity)}</div>
+                  <div className="col-span-1 text-right">
+                    <button onClick={() => openLead(lead)} className="text-xs text-[#2D1FB1] font-semibold hover:underline">View</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* LEAD DETAIL view */}
+        {view === 'lead' && selectedLead && (
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Left: lead info */}
+            <div className="md:col-span-1 space-y-4">
+              <div className="bg-white border border-gray-200 rounded-xl p-5">
+                <div className="w-12 h-12 rounded-full bg-[#2D1FB1] text-white flex items-center justify-center font-black text-lg mb-3">
+                  {(selectedLead.name || selectedLead.email || '?')[0].toUpperCase()}
+                </div>
+                <div className="font-bold text-[#0F1631]">{selectedLead.name || '—'}</div>
+                <div className="text-sm text-gray-500 mb-3">{selectedLead.email}</div>
+                {selectedLead.organization && <div className="text-xs text-gray-400 mb-1">🏢 {selectedLead.organization}</div>}
+                {selectedLead.source && <div className="text-xs text-gray-400 mb-1">📥 Source: {selectedLead.source}</div>}
+                {selectedLead.result_tag && <div className="text-xs font-semibold capitalize mt-2 px-2 py-0.5 rounded-full inline-block" style={{ background: `${RESULT_COLORS[selectedLead.result_tag]}20`, color: RESULT_COLORS[selectedLead.result_tag] }}>{selectedLead.result_tag}</div>}
+                {selectedLead.quiz_score != null && <div className="text-xs text-gray-500 mt-1">Quiz score: {selectedLead.quiz_score}%</div>}
+              </div>
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="text-xs font-bold text-gray-600 mb-2">Stage</div>
+                <select value={selectedLead.stage_id || ''} onChange={e => changeStage(selectedLead.id, e.target.value || null)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1]">
+                  <option value="">Unset</option>
+                  {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              {/* Tasks */}
+              <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="text-xs font-bold text-gray-600 mb-3">Tasks</div>
+                <div className="flex gap-2 mb-3">
+                  <input value={newTask} onChange={e => setNewTask(e.target.value)}
+                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none"
+                    placeholder="Add a task…" onKeyDown={e => e.key === 'Enter' && addTask()} />
+                  <button onClick={addTask} disabled={!newTask.trim()} className="px-3 py-1.5 bg-[#2D1FB1] text-white text-xs font-bold rounded-lg disabled:opacity-40">Add</button>
+                </div>
+                <div className="space-y-1.5">
+                  {leadTasks.map(task => (
+                    <div key={task.id} className={`flex items-center gap-2 text-xs ${task.completed ? 'opacity-40' : ''}`}>
+                      <button onClick={() => !task.completed && completeTask(task)}
+                        className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${task.completed ? 'bg-green-100 border-green-300' : 'border-gray-300 hover:bg-gray-100'}`}>
+                        {task.completed && <span className="text-green-600 text-xs">✓</span>}
+                      </button>
+                      <span className={task.completed ? 'line-through text-gray-400' : 'text-gray-700'}>{task.title}</span>
+                    </div>
+                  ))}
+                  {leadTasks.length === 0 && <div className="text-xs text-gray-400 italic">No tasks</div>}
+                </div>
+              </div>
+            </div>
+
+            {/* Right: activity feed + note */}
+            <div className="md:col-span-2 space-y-4">
+              <div className="bg-white border border-gray-200 rounded-xl p-5">
+                <div className="text-xs font-bold text-gray-600 mb-3">Add Note</div>
+                <div className="flex gap-2">
+                  <textarea value={newNote} onChange={e => setNewNote(e.target.value)} rows={2}
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1] resize-none"
+                    placeholder="Write a note about this lead…" />
+                  <button onClick={addNote} disabled={!newNote.trim() || savingNote} className="px-4 bg-[#2D1FB1] text-white text-sm font-bold rounded-lg disabled:opacity-40 hover:bg-indigo-700 transition-colors self-start py-2">
+                    {savingNote ? '…' : 'Save'}
+                  </button>
+                </div>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-xl p-5">
+                <div className="text-xs font-bold text-gray-600 mb-4">Activity Feed</div>
+                {events.length === 0 && <div className="text-sm text-gray-400 italic">No activity yet.</div>}
+                <div className="space-y-3">
+                  {events.map(ev => (
+                    <div key={ev.id} className="flex items-start gap-3">
+                      <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs flex-shrink-0">
+                        {ev.event_type === 'note' ? '📝' : ev.event_type === 'email_sent' ? '📧' : ev.event_type === 'stage_change' ? '🔄' : '📋'}
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-[#0F1631]">{ev.title}</div>
+                        {ev.body && <div className="text-xs text-gray-500 mt-0.5 leading-relaxed">{ev.body}</div>}
+                        <div className="text-xs text-gray-400 mt-0.5">{fmtDate(ev.created_at)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SEQUENCES view */}
+        {view === 'sequences' && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <div className="text-sm text-gray-500">{sequences.length} email sequences configured</div>
+            </div>
+            <div className="space-y-3">
+              {sequences.map(seq => (
+                <div key={seq.id} className="bg-white border border-gray-200 rounded-xl p-5">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <div className="font-bold text-[#0F1631] text-sm">{seq.name}</div>
+                      <div className="text-xs text-gray-400">Trigger: {seq.trigger_event}{seq.result_tag ? ` · Tag: ${seq.result_tag}` : ''}</div>
+                    </div>
+                    <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${seq.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
+                      {seq.is_active ? 'Active' : 'Paused'}
+                    </span>
+                  </div>
+                  {seq.email_sequence_steps?.length > 0 && (
+                    <div className="text-xs text-gray-400 mt-1">{seq.email_sequence_steps.length} email{seq.email_sequence_steps.length !== 1 ? 's' : ''} · steps: {seq.email_sequence_steps.map(s => `+${s.delay_hours}h`).join(', ')}</div>
+                  )}
+                </div>
+              ))}
+              {sequences.length === 0 && <div className="text-center py-12 text-gray-400">No sequences found. Run sql/11_crm_schema.sql to seed defaults.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* TEMPLATES view */}
+        {view === 'templates' && (
+          <div className="space-y-3">
+            {templates.map(tmpl => (
+              <div key={tmpl.id} className="bg-white border border-gray-200 rounded-xl p-5">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="font-bold text-[#0F1631] text-sm">{tmpl.name}</div>
+                  <span className="text-xs text-gray-400 font-mono">{tmpl.slug}</span>
+                </div>
+                <div className="text-xs text-gray-500 mb-2">Subject: {tmpl.subject}</div>
+                {tmpl.variables?.length > 0 && (
+                  <div className="text-xs text-gray-400">Variables: {tmpl.variables.map(v => `{{${v}}}`).join(', ')}</div>
+                )}
+              </div>
+            ))}
+            {templates.length === 0 && <div className="text-center py-12 text-gray-400">No templates found. Run sql/11_crm_schema.sql to seed defaults.</div>}
+          </div>
+        )}
+      </div>
     );
   }
 
