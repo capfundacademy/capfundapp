@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 48" fill="none" role="img" aria-label="Cap Fund Academy">
+  <!-- Circular arrow icon -->
+  <circle cx="24" cy="24" r="20" stroke="#2D1FB1" stroke-width="2.5" fill="none"/>
+  <path d="M24 10 A14 14 0 1 1 10.5 34" stroke="#2D1FB1" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <polygon points="10.5,34 5,28 16,29" fill="#2D1FB1"/>
+  <!-- Wordmark -->
+  <text x="52" y="18" font-family="'Inter', 'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="14" fill="#0F1631" letter-spacing="-0.3">Cap Fund</text>
+  <text x="52" y="35" font-family="'Inter', 'Plus Jakarta Sans', system-ui, sans-serif" font-weight="700" font-size="14" fill="#0F1631" letter-spacing="-0.3">Academy</text>
+</svg>

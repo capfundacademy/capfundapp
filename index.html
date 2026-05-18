@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cap Fund Academy — Rural Capital Access Certification Platform</title>
+  <meta name="description" content="17 stackable certifications in microfinance, revolving loan funds, USDA RMAP, RBDG, IRP, underwriting, and compliance. Cap Fund Academy is an independent training platform." />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Cap Fund Academy — Rural Capital Access Certification" />
+  <meta property="og:description" content="Become a Certified Rural Capital Access Professional. 17 stackable certifications." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://capfundacademy.com" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              blue: '#2D1FB1',
+              navy: '#0F1631',
+              yellow: '#FFD23F',
+              orange: '#F97316',
+              light: '#F8FAFC',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- React 18 + Babel Standalone -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif; margin: 0; background: #F8FAFC; }
+    html { scroll-behavior: smooth; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { animation: spin 1s linear infinite; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.4s ease both; }
+  </style>
+</head>
+<body>
+
+<!-- Environment config — replace before deploy -->
+<script>
+window.ENV = {
+  SUPABASE_URL: 'YOUR_SUPABASE_URL',
+  SUPABASE_ANON_KEY: 'YOUR_SUPABASE_ANON_KEY'
+};
+</script>
+
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+  const { useState, useEffect, useRef, useCallback } = React;
+
+  // ─── Supabase client (lazy-initialized) ───────────────────────────────────
+  let _supabase = null;
+  async function getSupabase() {
+    if (_supabase) return _supabase;
+    const url = window.ENV?.SUPABASE_URL;
+    const key = window.ENV?.SUPABASE_ANON_KEY;
+    if (!url || url === 'YOUR_SUPABASE_URL' || !key || key === 'YOUR_SUPABASE_ANON_KEY') {
+      return null;
+    }
+    try {
+      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.58.0');
+      _supabase = createClient(url, key);
+      return _supabase;
+    } catch {
+      return null;
+    }
+  }
+
+  // ─── Constants ────────────────────────────────────────────────────────────
+  const DISCLAIMER = "Cap Fund Academy is an independent training and certification platform. It is not affiliated with, endorsed by, or certified by USDA or any government agency. Training is designed to help organizations understand and prepare for microlending, revolving loan funds, rural capital access programs, RMAP, RBDG, IRP, and related community finance best practices. Cap Fund Academy does not guarantee funding, eligibility, approval, or award decisions.";
+
+  const CERT_TRACKS = [
+    {
+      title: 'Rural Microfinance Associate',
+      certs: 'Certifications 1–4',
+      color: 'bg-blue-50 border-[#2D1FB1]',
+      badge: 'bg-[#2D1FB1] text-white',
+      skills: [
+        'Microfinance fundamentals & loan fund structure',
+        'Borrower eligibility & underwriting basics',
+        'Regulatory framework overview (7 CFR 4280)',
+      ],
+    },
+    {
+      title: 'Revolving Loan Fund Practitioner',
+      certs: 'Certifications 1–9',
+      color: 'bg-yellow-50 border-[#FFD23F]',
+      badge: 'bg-[#FFD23F] text-[#0F1631]',
+      skills: [
+        'RLF capitalization, program design & policy',
+        'Loan underwriting, monitoring & collections',
+        'Federal reporting (2 CFR 200) & audit readiness',
+      ],
+    },
+    {
+      title: 'USDA Rural Capital Program Specialist',
+      certs: 'Certifications 1–13',
+      color: 'bg-orange-50 border-[#F97316]',
+      badge: 'bg-[#F97316] text-white',
+      skills: [
+        'RMAP, RBDG, IRP program mechanics & scoring',
+        'Application strategy & evidence documentation',
+        'RMAP AI Scoring Engine readiness assessment',
+      ],
+    },
+    {
+      title: 'Certified RLF Executive',
+      certs: 'Certifications 1–15 + Capstone',
+      color: 'bg-indigo-50 border-indigo-700',
+      badge: 'bg-indigo-700 text-white',
+      skills: [
+        'Executive leadership of microlending programs',
+        'Organization-wide compliance architecture',
+        'Capstone: full program design & live case review',
+      ],
+    },
+  ];
+
+  const PRICING_TIERS = [
+    {
+      name: 'Single Certificate',
+      price: 'From $497',
+      desc: 'Purchase any one of the 17 certifications individually.',
+      cta: 'Get Started',
+      ctaStyle: 'bg-[#2D1FB1] text-white hover:bg-indigo-800',
+      contact: false,
+    },
+    {
+      name: 'Professional Library',
+      price: '$1,997',
+      desc: 'All 17 certifications. Lifetime access to every track and update.',
+      cta: 'Get Full Library',
+      ctaStyle: 'bg-[#F97316] text-white hover:bg-orange-600',
+      contact: false,
+      featured: true,
+    },
+    {
+      name: 'Organization License',
+      price: 'From $5,000',
+      desc: 'Up to 5 seats. Team access with progress tracking and reporting.',
+      cta: 'Contact for Pricing',
+      ctaStyle: 'bg-[#2D1FB1] text-white hover:bg-indigo-800',
+      contact: true,
+    },
+    {
+      name: 'Done-With-You',
+      price: 'From $10,000',
+      desc: 'Full-service training plus hands-on application support.',
+      cta: 'Contact for Pricing',
+      ctaStyle: 'bg-[#0F1631] text-white hover:bg-gray-800',
+      contact: true,
+    },
+  ];
+
+  const FAQS = [
+    {
+      q: 'Is Cap Fund Academy affiliated with USDA?',
+      a: 'No. Cap Fund Academy is a fully independent training and certification platform. It is not affiliated with, endorsed by, or certified by USDA or any government agency. See our full disclaimer on the Trust Center page.',
+    },
+    {
+      q: 'Do these certifications guarantee USDA funding?',
+      a: 'No. Certifications are educational and advisory. Completing a Cap Fund Academy program does not guarantee funding, eligibility, or approval for any USDA program. Funding decisions are made solely by USDA.',
+    },
+    {
+      q: 'Who should take these courses?',
+      a: 'Our programs are designed for nonprofits, CDFIs, rural development agencies, county offices, consultants, and technical assistance providers who work with or want to launch microlending or revolving loan fund programs.',
+    },
+    {
+      q: 'What is the RMAP AI Scoring Engine?',
+      a: 'A tool that scores your organization\'s readiness against the actual scoring criteria from 7 CFR 4280.316. It provides an advisory estimate of your application strength based on publicly available USDA scoring guidance — not USDA\'s actual review. Results are advisory only.',
+    },
+    {
+      q: 'How long do certifications take?',
+      a: 'Each certification is self-paced and designed to take 8–20 hours depending on your background. The full Professional Library can be completed at your own pace with no time limit.',
+    },
+    {
+      q: 'Is there a money-back guarantee?',
+      a: 'Contact support@capfundacademy.com to discuss your situation. We review refund requests on a case-by-case basis.',
+    },
+  ];
+
+  // ─── SVG Logo component ───────────────────────────────────────────────────
+  function Logo({ size = 'md' }) {
+    const textSize = size === 'sm' ? 'text-base' : 'text-lg';
+    return (
+      <div className="flex items-center gap-2">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="18" cy="18" r="15" stroke="#2D1FB1" strokeWidth="2" fill="none"/>
+          <path d="M18 7 A11 11 0 1 1 8 27" stroke="#2D1FB1" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+          <polygon points="8,27 4,21 12.5,22" fill="#2D1FB1"/>
+        </svg>
+        <span className={`font-bold ${textSize} text-[#0F1631] leading-tight`}>
+          Cap Fund<br/>
+          <span className="text-[#2D1FB1]">Academy</span>
+        </span>
+      </div>
+    );
+  }
+
+  // ─── Loading Screen ───────────────────────────────────────────────────────
+  function LoadingScreen() {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#2D1FB1]">
+        <div className="flex flex-col items-center gap-6">
+          <svg width="64" height="64" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="18" cy="18" r="15" stroke="white" strokeWidth="2" fill="none"/>
+            <path d="M18 7 A11 11 0 1 1 8 27" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+            <polygon points="8,27 4,21 12.5,22" fill="white"/>
+          </svg>
+          <div className="text-center">
+            <div className="text-white text-3xl font-bold mb-1">Cap Fund Academy</div>
+            <div className="text-indigo-200 text-sm tracking-widest uppercase">Capital Access Training Platform</div>
+          </div>
+          <svg className="spinner mt-4 w-8 h-8 text-[#F97316]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Header ───────────────────────────────────────────────────────────────
+  function Header({ view, setView, onLoginClick }) {
+    const [menuOpen, setMenuOpen] = useState(false);
+    return (
+      <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <button onClick={() => setView('home')} className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2D1FB1] rounded" aria-label="Cap Fund Academy home">
+            <Logo />
+          </button>
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
+            <button onClick={() => setView('home')} className={`text-sm font-medium transition-colors ${view === 'home' ? 'text-[#2D1FB1]' : 'text-gray-600 hover:text-[#2D1FB1]'}`}>Home</button>
+            <button onClick={() => setView('home')} className="text-sm font-medium text-gray-600 hover:text-[#2D1FB1] transition-colors">Certifications</button>
+            <button onClick={() => setView('home')} className="text-sm font-medium text-gray-600 hover:text-[#2D1FB1] transition-colors">Pricing</button>
+            <button onClick={() => setView('trust')} className={`text-sm font-medium transition-colors ${view === 'trust' ? 'text-[#2D1FB1]' : 'text-gray-600 hover:text-[#2D1FB1]'}`}>Trust Center</button>
+            <button
+              onClick={onLoginClick}
+              className="ml-2 px-4 py-2 bg-[#F97316] text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+            >
+              Login
+            </button>
+          </nav>
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-2 rounded text-gray-600 hover:text-[#2D1FB1] focus:outline-none"
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg>
+            )}
+          </button>
+        </div>
+        {/* Mobile menu */}
+        {menuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3">
+            <button onClick={() => { setView('home'); setMenuOpen(false); }} className="block w-full text-left text-sm font-medium text-gray-700 py-2">Home</button>
+            <button onClick={() => { setView('home'); setMenuOpen(false); }} className="block w-full text-left text-sm font-medium text-gray-700 py-2">Certifications</button>
+            <button onClick={() => { setView('home'); setMenuOpen(false); }} className="block w-full text-left text-sm font-medium text-gray-700 py-2">Pricing</button>
+            <button onClick={() => { setView('trust'); setMenuOpen(false); }} className="block w-full text-left text-sm font-medium text-[#2D1FB1] py-2">Trust Center</button>
+            <button onClick={() => { onLoginClick(); setMenuOpen(false); }} className="block w-full text-center px-4 py-2 bg-[#F97316] text-white text-sm font-semibold rounded-lg">Login</button>
+          </div>
+        )}
+      </header>
+    );
+  }
+
+  // ─── Footer ───────────────────────────────────────────────────────────────
+  function Footer({ setView }) {
+    return (
+      <footer className="bg-[#0F1631] text-gray-300 pt-12 pb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <circle cx="18" cy="18" r="15" stroke="white" strokeWidth="2" fill="none"/>
+                  <path d="M18 7 A11 11 0 1 1 8 27" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                  <polygon points="8,27 4,21 12.5,22" fill="white"/>
+                </svg>
+                <span className="text-white font-bold text-base leading-tight">Cap Fund Academy</span>
+              </div>
+              <p className="text-xs text-gray-400 leading-relaxed">Capital Access Training Platform</p>
+            </div>
+            {/* Links */}
+            <div>
+              <h4 className="text-white font-semibold text-sm mb-3">Platform</h4>
+              <ul className="space-y-2 text-sm">
+                <li><button onClick={() => setView('trust')} className="hover:text-white transition-colors">Trust Center</button></li>
+                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Refund Policy</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Accessibility</a></li>
+              </ul>
+            </div>
+            {/* Contact */}
+            <div>
+              <h4 className="text-white font-semibold text-sm mb-3">Support</h4>
+              <a href="mailto:support@capfundacademy.com" className="text-sm hover:text-white transition-colors">support@capfundacademy.com</a>
+            </div>
+          </div>
+          {/* Disclaimer */}
+          <div className="border-t border-gray-700 pt-6 mb-4">
+            <p className="text-xs text-gray-400 leading-relaxed max-w-4xl">
+              {DISCLAIMER}
+            </p>
+          </div>
+          <p className="text-xs text-gray-500">
+            © 2026 Cap Fund Academy. All rights reserved. Life House Reentry.
+          </p>
+        </div>
+      </footer>
+    );
+  }
+
+  // ─── FAQ Item ─────────────────────────────────────────────────────────────
+  function FAQItem({ q, a }) {
+    const [open, setOpen] = useState(false);
+    return (
+      <div className="border-b border-gray-200">
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="w-full flex items-center justify-between py-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2D1FB1] rounded"
+          aria-expanded={open}
+        >
+          <span className="font-semibold text-[#0F1631] text-sm pr-4">{q}</span>
+          <svg className={`w-5 h-5 text-[#2D1FB1] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        {open && (
+          <div className="pb-5 text-sm text-gray-600 leading-relaxed pr-8 fade-in">{a}</div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── Lead Capture Form ────────────────────────────────────────────────────
+  function LeadCaptureForm() {
+    const [form, setForm] = useState({ name: '', email: '', organization: '' });
+    const [status, setStatus] = useState('idle'); // idle | loading | success | error
+
+    const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
+    const handleSubmit = async e => {
+      e.preventDefault();
+      setStatus('loading');
+      try {
+        const sb = await getSupabase();
+        if (sb) {
+          const { error } = await sb.from('leads').insert([{
+            name: form.name,
+            email: form.email,
+            organization: form.organization,
+            source: 'checklist',
+          }]);
+          if (error) {
+            // Silent — still show success to user
+          }
+        }
+        setStatus('success');
+        setForm({ name: '', email: '', organization: '' });
+      } catch {
+        setStatus('success'); // Show success regardless of backend state
+      }
+    };
+
+    if (status === 'success') {
+      return (
+        <div className="text-center py-8 fade-in">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-[#0F1631] mb-2">You're on the list!</h3>
+          <p className="text-gray-600 text-sm">Check your inbox at <strong>{form.email || 'your email'}</strong> for the RMAP Evidence Checklist.</p>
+        </div>
+      );
+    }
+
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="lead-name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <input
+              id="lead-name"
+              name="name"
+              type="text"
+              required
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Jane Smith"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2D1FB1] focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label htmlFor="lead-email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <input
+              id="lead-email"
+              name="email"
+              type="email"
+              required
+              value={form.email}
+              onChange={handleChange}
+              placeholder="jane@yourorg.org"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2D1FB1] focus:border-transparent"
+            />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="lead-org" className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+          <input
+            id="lead-org"
+            name="organization"
+            type="text"
+            value={form.organization}
+            onChange={handleChange}
+            placeholder="Rural Development Org, County Office, CDFI, etc."
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2D1FB1] focus:border-transparent"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={status === 'loading'}
+          className="w-full sm:w-auto px-8 py-3 bg-[#F97316] text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+        >
+          {status === 'loading' ? 'Sending…' : 'Get Free Checklist'}
+        </button>
+      </form>
+    );
+  }
+
+  // ─── Login Modal ──────────────────────────────────────────────────────────
+  function LoginModal({ open, onClose, onLoginSuccess }) {
+    const [form, setForm] = useState({ email: '', password: '' });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
+    const handleSubmit = async e => {
+      e.preventDefault();
+      setError('');
+      setLoading(true);
+      try {
+        const sb = await getSupabase();
+        if (!sb) {
+          setError('Authentication is not configured yet. Please check back later.');
+          setLoading(false);
+          return;
+        }
+        const { data, error: authError } = await sb.auth.signInWithPassword({
+          email: form.email,
+          password: form.password,
+        });
+        if (authError) {
+          setError(authError.message);
+          setLoading(false);
+          return;
+        }
+        onLoginSuccess(data.user);
+        onClose();
+      } catch {
+        setError('An unexpected error occurred. Please try again.');
+        setLoading(false);
+      }
+    };
+
+    if (!open) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" role="dialog" aria-modal="true" aria-label="Login">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 fade-in">
+          <div className="flex items-center justify-between mb-6">
+            <Logo size="sm" />
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 focus:outline-none" aria-label="Close login">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          <h2 className="text-2xl font-bold text-[#0F1631] mb-2">Sign in</h2>
+          <p className="text-sm text-gray-500 mb-6">Access your Cap Fund Academy dashboard.</p>
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <div>
+              <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                id="login-email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                value={form.email}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2D1FB1]"
+              />
+            </div>
+            <div>
+              <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <input
+                id="login-password"
+                name="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                value={form.password}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2D1FB1]"
+              />
+            </div>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{error}</div>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-[#F97316] text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-60"
+            >
+              {loading ? 'Signing in…' : 'Sign In'}
+            </button>
+          </form>
+          <p className="mt-4 text-xs text-center text-gray-400">
+            No account? Contact <a href="mailto:support@capfundacademy.com" className="underline">support@capfundacademy.com</a>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Dashboard (Phase 2 placeholder) ─────────────────────────────────────
+  function Dashboard({ user, onSignOut }) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-lg max-w-lg w-full p-10 text-center fade-in">
+          <div className="w-16 h-16 bg-[#2D1FB1] rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-[#0F1631] mb-2">Welcome back</h2>
+          <p className="text-gray-500 text-sm mb-2">Signed in as <strong>{user?.email}</strong></p>
+          <div className="bg-[#F8FAFC] rounded-xl p-6 my-6 text-left">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 rounded-full bg-[#FFD23F] flex items-center justify-center">
+                <svg className="w-4 h-4 text-[#0F1631]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <span className="font-semibold text-[#0F1631] text-sm">Dashboard coming in Phase 2</span>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Your course library, certification progress, and RMAP AI Scoring Engine will be available in Phase 2. You'll receive an email when your account is fully activated.
+            </p>
+          </div>
+          <button
+            onClick={onSignOut}
+            className="px-6 py-2 border border-gray-300 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Trust Center ─────────────────────────────────────────────────────────
+  function TrustCenter({ setView }) {
+    const sections = [
+      {
+        title: '1. USDA Non-Affiliation',
+        content: DISCLAIMER,
+      },
+      {
+        title: '2. No Funding Guarantee',
+        content: 'Completing any Cap Fund Academy course, certification, or program does not guarantee that your organization will receive funding, be found eligible, or be approved for any USDA program, grant, loan, or award. Funding decisions are made solely by USDA and its authorized representatives based on criteria set forth in applicable federal regulations. Cap Fund Academy has no role in, and no influence over, any USDA funding determination.',
+      },
+      {
+        title: '3. Educational Use Only',
+        content: 'All courses, certifications, checklists, scoring tools, templates, and other materials provided by Cap Fund Academy are for educational and informational purposes only. They are intended to help practitioners understand best practices and regulatory frameworks. Nothing on this platform constitutes legal, financial, accounting, tax, or regulatory advice. Always consult qualified legal and financial professionals for advice specific to your situation.',
+      },
+      {
+        title: '4. No Legal or Financial Advice',
+        content: 'Cap Fund Academy does not provide legal advice, financial advice, accounting advice, or regulatory compliance guidance. Course content reflects the platform\'s interpretation of publicly available federal regulations and program guidance. Regulations change. Always verify current requirements directly with USDA or qualified legal counsel before acting on any information from Cap Fund Academy.',
+      },
+      {
+        title: '5. AI Scoring Limitations',
+        content: 'The RMAP AI Scoring Engine and any other AI-powered tools on Cap Fund Academy are automated systems that estimate organizational readiness based on publicly available USDA scoring criteria and program guidance documents. AI scoring outputs are estimates based on publicly available USDA scoring criteria. Results are advisory only and do not represent USDA\'s review or determination. AI tools may contain errors, omissions, or outdated information. Do not rely solely on AI scoring outputs for compliance, application preparation, or regulatory decisions. Always verify against current USDA program guidance and consult qualified advisors.',
+      },
+    ];
+
+    return (
+      <div className="min-h-screen bg-[#F8FAFC]">
+        {/* Hero */}
+        <div className="bg-[#0F1631] text-white py-16 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-block bg-[#2D1FB1] text-xs font-semibold text-white px-3 py-1 rounded-full mb-4 uppercase tracking-wider">Trust Center</div>
+            <h1 className="text-4xl font-bold mb-4">Transparency &amp; Disclaimers</h1>
+            <p className="text-indigo-200 text-lg max-w-2xl mx-auto">
+              Cap Fund Academy is committed to being clear about what we are, what we offer, and what we cannot guarantee.
+            </p>
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+          {sections.map((s, i) => (
+            <div key={i} className="bg-white rounded-2xl shadow-sm p-8 mb-6 fade-in">
+              <h2 className="text-xl font-bold text-[#0F1631] mb-4">{s.title}</h2>
+              <p className="text-gray-600 leading-relaxed">{s.content}</p>
+            </div>
+          ))}
+
+          {/* Policy links */}
+          <div className="bg-white rounded-2xl shadow-sm p-8 mb-6">
+            <h2 className="text-xl font-bold text-[#0F1631] mb-4">6. Additional Policies</h2>
+            <p className="text-gray-600 text-sm mb-6 leading-relaxed">The following policies govern use of Cap Fund Academy services. Full documents will be published prior to public launch and are currently under attorney review.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                { name: 'Privacy Policy', desc: 'How we collect, use, and protect your data.' },
+                { name: 'Terms of Service', desc: 'Conditions governing use of the platform.' },
+                { name: 'Refund Policy', desc: 'Conditions for refund requests.' },
+                { name: 'Accessibility Statement', desc: 'Our commitment to digital accessibility.' },
+              ].map(p => (
+                <div key={p.name} className="border border-gray-200 rounded-xl p-4">
+                  <div className="font-semibold text-[#0F1631] text-sm mb-1">{p.name}</div>
+                  <div className="text-xs text-gray-500 mb-2">{p.desc}</div>
+                  <span className="inline-block text-xs bg-yellow-100 text-yellow-800 font-medium px-2 py-0.5 rounded">Coming soon</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Contact */}
+          <div className="bg-[#2D1FB1] rounded-2xl p-8 text-white text-center">
+            <h2 className="text-xl font-bold mb-2">Questions about our policies?</h2>
+            <p className="text-indigo-200 text-sm mb-4">Contact our support team — we respond within one business day.</p>
+            <a
+              href="mailto:support@capfundacademy.com"
+              className="inline-block px-6 py-3 bg-[#F97316] text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              support@capfundacademy.com
+            </a>
+          </div>
+
+          {/* Disclaimer repeat */}
+          <div className="mt-8 p-6 bg-gray-100 rounded-xl">
+            <p className="text-xs text-gray-500 leading-relaxed">{DISCLAIMER}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Homepage ─────────────────────────────────────────────────────────────
+  function Homepage({ setView }) {
+    const checklistRef = useRef(null);
+    const scrollToChecklist = () => checklistRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+    return (
+      <main>
+        {/* 1. Hero */}
+        <section className="bg-[#F8FAFC] py-20 px-4 border-b border-gray-200">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-block bg-[#2D1FB1]/10 text-[#2D1FB1] text-xs font-semibold px-3 py-1 rounded-full mb-6 uppercase tracking-wider">
+              17 Stackable Certifications
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-[#0F1631] leading-tight mb-6">
+              Become a Certified<br className="hidden sm:block"/> Rural Capital Access<br className="hidden sm:block"/>Professional
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8 leading-relaxed">
+              17 stackable certifications in microfinance, revolving loan funds, USDA RMAP, RBDG, IRP, underwriting, compliance, and automated business operations.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => document.getElementById('cert-tracks')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-8 py-4 bg-[#2D1FB1] text-white font-semibold rounded-xl hover:bg-indigo-800 transition-colors text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2D1FB1]"
+              >
+                Browse Certifications
+              </button>
+              <button
+                onClick={scrollToChecklist}
+                className="px-8 py-4 bg-[#F97316] text-white font-semibold rounded-xl hover:bg-orange-600 transition-colors text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
+              >
+                Get Free RMAP Checklist
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* 2. Trust strip */}
+        <section className="bg-white py-6 border-b border-gray-100">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {['RMAP Aligned', 'RBDG Ready', 'IRP Strategy', '2 CFR 200 Compliant Training', 'RLF Best Practices'].map(label => (
+                <span key={label} className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2D1FB1]/8 border border-[#2D1FB1]/20 text-[#2D1FB1] text-xs font-semibold rounded-full">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Certification tracks */}
+        <section id="cert-tracks" className="py-20 px-4 bg-[#F8FAFC]">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-[#0F1631] mb-3">Certification Tracks</h2>
+              <p className="text-gray-600 max-w-xl mx-auto">Four credential levels. Stack them in order or start where you are.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {CERT_TRACKS.map((track, i) => (
+                <div key={i} className={`bg-white border-2 ${track.color} rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow`}>
+                  <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full mb-4 ${track.badge}`}>
+                    {track.certs}
+                  </span>
+                  <h3 className="text-lg font-bold text-[#0F1631] mb-4">{track.title}</h3>
+                  <ul className="space-y-2 mb-6">
+                    {track.skills.map((skill, j) => (
+                      <li key={j} className="flex items-start gap-2 text-sm text-gray-600">
+                        <svg className="w-4 h-4 text-[#2D1FB1] mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+                        {skill}
+                      </li>
+                    ))}
+                  </ul>
+                  <button className="text-sm font-semibold text-[#2D1FB1] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2D1FB1] rounded">
+                    Learn more →
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 4. Who this is for */}
+        <section className="py-20 px-4 bg-white">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-[#0F1631] mb-3">Who This Is For</h2>
+              <p className="text-gray-600 max-w-xl mx-auto">Built for the practitioners on the front lines of rural capital access.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  icon: '🏛️',
+                  title: 'Nonprofits & CDFIs',
+                  desc: 'Organizations launching or scaling microlending and revolving loan fund programs. Build the policy, compliance, and underwriting infrastructure your funders require.',
+                },
+                {
+                  icon: '🌾',
+                  title: 'County / Rural Dev Agencies',
+                  desc: 'Government and quasi-government entities administering USDA-aligned programs. Understand scoring criteria, evidence requirements, and reporting obligations inside out.',
+                },
+                {
+                  icon: '📋',
+                  title: 'Consultants & TA Providers',
+                  desc: 'Technical assistance providers and consultants who support multiple organizations. Earn credentials that signal deep program expertise to clients and funders.',
+                },
+              ].map((col, i) => (
+                <div key={i} className="text-center p-6 rounded-2xl bg-[#F8FAFC] border border-gray-100">
+                  <div className="text-4xl mb-4">{col.icon}</div>
+                  <h3 className="text-lg font-bold text-[#0F1631] mb-3">{col.title}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{col.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 5. Lead magnet / checklist */}
+        <section ref={checklistRef} className="py-20 px-4 bg-[#0F1631]">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-10">
+              <div className="inline-block bg-[#FFD23F] text-[#0F1631] text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">Free Resource</div>
+              <h2 className="text-3xl font-bold text-white mb-4">Download the Free RMAP Evidence Checklist</h2>
+              <p className="text-indigo-200 leading-relaxed">
+                Know exactly what USDA reviewers look for before you submit. Our evidence checklist maps every scoring criterion from 7 CFR 4280.316.
+              </p>
+            </div>
+            <div className="bg-white rounded-2xl p-8 shadow-xl">
+              <LeadCaptureForm />
+            </div>
+          </div>
+        </section>
+
+        {/* 6. Pricing */}
+        <section id="pricing" className="py-20 px-4 bg-[#F8FAFC]">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-[#0F1631] mb-3">Pricing</h2>
+              <p className="text-gray-600 max-w-xl mx-auto">Start with what you need. Scale as your program grows.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {PRICING_TIERS.map((tier, i) => (
+                <div
+                  key={i}
+                  className={`bg-white rounded-2xl p-6 shadow-sm flex flex-col border-2 ${tier.featured ? 'border-[#F97316] shadow-lg' : 'border-gray-100'}`}
+                >
+                  {tier.featured && (
+                    <div className="text-center mb-3">
+                      <span className="text-xs font-bold bg-[#F97316] text-white px-3 py-1 rounded-full uppercase tracking-wider">Most Popular</span>
+                    </div>
+                  )}
+                  <h3 className="font-bold text-[#0F1631] text-base mb-1">{tier.name}</h3>
+                  <div className="text-2xl font-extrabold text-[#2D1FB1] mb-3">{tier.price}</div>
+                  <p className="text-sm text-gray-500 leading-relaxed mb-6 flex-1">{tier.desc}</p>
+                  <button
+                    onClick={() => tier.contact && (window.location.href = 'mailto:support@capfundacademy.com')}
+                    className={`w-full py-2.5 px-4 font-semibold text-sm rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2D1FB1] ${tier.ctaStyle}`}
+                  >
+                    {tier.cta}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 7. FAQ */}
+        <section className="py-20 px-4 bg-white">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-[#0F1631] mb-3">Frequently Asked Questions</h2>
+            </div>
+            <div className="divide-y divide-gray-200">
+              {FAQS.map((faq, i) => <FAQItem key={i} q={faq.q} a={faq.a} />)}
+            </div>
+          </div>
+        </section>
+
+        {/* 8. Final CTA */}
+        <section className="py-20 px-4 bg-[#2D1FB1]">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl font-bold text-white mb-4">Ready to Build a USDA-Ready Microlending Program?</h2>
+            <p className="text-indigo-200 mb-8 text-lg">
+              Start with Cert 1 — a free preview of the Rural Microfinance Associate track.
+            </p>
+            <button className="px-10 py-4 bg-[#F97316] text-white font-bold rounded-xl hover:bg-orange-600 transition-colors text-base shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+              Start with Cert 1 Free Preview
+            </button>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  // ─── Root App ─────────────────────────────────────────────────────────────
+  function App() {
+    const [loading, setLoading] = useState(true);
+    const [view, setView] = useState('home'); // 'home' | 'trust' | 'app'
+    const [loginOpen, setLoginOpen] = useState(false);
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+      // Initialize auth state
+      (async () => {
+        try {
+          const sb = await getSupabase();
+          if (sb) {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session?.user) {
+              setUser(session.user);
+              setView('app');
+            }
+            sb.auth.onAuthStateChange((_event, session) => {
+              if (session?.user) {
+                setUser(session.user);
+                setView('app');
+              } else {
+                setUser(null);
+                if (view === 'app') setView('home');
+              }
+            });
+          }
+        } catch {
+          // Supabase not configured — continue as public
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, []);
+
+    const handleSignOut = async () => {
+      try {
+        const sb = await getSupabase();
+        if (sb) await sb.auth.signOut();
+      } catch {}
+      setUser(null);
+      setView('home');
+    };
+
+    const handleLoginSuccess = (u) => {
+      setUser(u);
+      setView('app');
+    };
+
+    if (loading) return <LoadingScreen />;
+
+    return (
+      <div className="min-h-screen flex flex-col">
+        {view !== 'app' && (
+          <Header view={view} setView={setView} onLoginClick={() => setLoginOpen(true)} />
+        )}
+
+        {view === 'home' && <Homepage setView={setView} />}
+        {view === 'trust' && <TrustCenter setView={setView} />}
+        {view === 'app' && user && <Dashboard user={user} onSignOut={handleSignOut} />}
+
+        {view !== 'app' && <Footer setView={setView} />}
+
+        <LoginModal
+          open={loginOpen}
+          onClose={() => setLoginOpen(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      </div>
+    );
+  }
+
+  // ─── Mount ────────────────────────────────────────────────────────────────
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(<App />);
+</script>
+</body>
+</html>
