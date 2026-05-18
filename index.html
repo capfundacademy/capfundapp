@@ -202,21 +202,11 @@ window.ENV = {
     },
   ];
 
-  // ─── SVG Logo component ───────────────────────────────────────────────────
+  // ─── Logo component ───────────────────────────────────────────────────────
   function Logo({ size = 'md' }) {
-    const textSize = size === 'sm' ? 'text-base' : 'text-lg';
+    const h = size === 'sm' ? 32 : size === 'lg' ? 56 : 40;
     return (
-      <div className="flex items-center gap-2">
-        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <circle cx="18" cy="18" r="15" stroke="#2D1FB1" strokeWidth="2" fill="none"/>
-          <path d="M18 7 A11 11 0 1 1 8 27" stroke="#2D1FB1" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-          <polygon points="8,27 4,21 12.5,22" fill="#2D1FB1"/>
-        </svg>
-        <span className={`font-bold ${textSize} text-[#0F1631] leading-tight`}>
-          Cap Fund<br/>
-          <span className="text-[#2D1FB1]">Academy</span>
-        </span>
-      </div>
+      <img src="/assets/logo.png" alt="Cap Fund Academy" height={h} style={{ height: h, width: 'auto', display: 'block' }} />
     );
   }
 
@@ -225,16 +215,11 @@ window.ENV = {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#2D1FB1]">
         <div className="flex flex-col items-center gap-6">
-          <svg width="64" height="64" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="18" cy="18" r="15" stroke="white" strokeWidth="2" fill="none"/>
-            <path d="M18 7 A11 11 0 1 1 8 27" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-            <polygon points="8,27 4,21 12.5,22" fill="white"/>
-          </svg>
+          <img src="/assets/logo.png" alt="Cap Fund Academy" style={{ height: 72, width: 'auto', filter: 'brightness(0) invert(1)' }} />
           <div className="text-center">
-            <div className="text-white text-3xl font-bold mb-1">Cap Fund Academy</div>
             <div className="text-indigo-200 text-sm tracking-widest uppercase">Capital Access Training Platform</div>
           </div>
-          <svg className="spinner mt-4 w-8 h-8 text-[#F97316]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg className="spinner mt-2 w-8 h-8 text-[#F97316]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
           </svg>
@@ -300,13 +285,8 @@ window.ENV = {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
             {/* Brand */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <circle cx="18" cy="18" r="15" stroke="white" strokeWidth="2" fill="none"/>
-                  <path d="M18 7 A11 11 0 1 1 8 27" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-                  <polygon points="8,27 4,21 12.5,22" fill="white"/>
-                </svg>
-                <span className="text-white font-bold text-base leading-tight">Cap Fund Academy</span>
+              <div className="mb-3">
+                <img src="/assets/logo.png" alt="Cap Fund Academy" style={{ height: 36, width: 'auto', filter: 'brightness(0) invert(1)' }} />
               </div>
               <p className="text-xs text-gray-400 leading-relaxed">Capital Access Training Platform</p>
             </div>
@@ -558,36 +538,702 @@ window.ENV = {
   }
 
   // ─── Dashboard (Phase 2 placeholder) ─────────────────────────────────────
-  function Dashboard({ user, onSignOut }) {
+  // ─── Markdown renderer ───────────────────────────────────────────────────
+  function renderMarkdown(text) {
+    if (!text) return '';
+    let html = text
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/^#{3} (.+)$/gm, '<h3 class="text-lg font-bold text-[#0F1631] mt-6 mb-2">$1</h3>')
+      .replace(/^#{2} (.+)$/gm, '<h2 class="text-xl font-bold text-[#0F1631] mt-8 mb-3">$1</h2>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`(.+?)`/g, '<code class="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>')
+      .replace(/^---$/gm, '<hr class="my-6 border-gray-200"/>')
+      .replace(/^\| (.+) \|$/gm, (row) => {
+        const cells = row.split('|').filter(c => c.trim() && !c.trim().match(/^[-\s]+$/));
+        if (!cells.length) return '';
+        return '<tr>' + cells.map(c => `<td class="border border-gray-200 px-3 py-2 text-sm">${c.trim()}</td>`).join('') + '</tr>';
+      })
+      .replace(/(<tr>.*<\/tr>\n?)+/gs, m => `<div class="overflow-x-auto my-4"><table class="min-w-full border-collapse border border-gray-200 rounded-lg">${m}</table></div>`)
+      .replace(/^☐ (.+)$/gm, '<div class="flex items-start gap-2 my-1"><span class="text-gray-400 mt-0.5">☐</span><span>$1</span></div>')
+      .replace(/^\d+\. (.+)$/gm, '<li class="ml-5 list-decimal my-0.5">$1</li>')
+      .replace(/^- (.+)$/gm, '<li class="ml-5 list-disc my-0.5">$1</li>')
+      .replace(/(<li.*<\/li>\n?)+/gs, m => `<ul class="my-3 space-y-1">${m}</ul>`)
+      .replace(/^(.+)$/gm, (line) => {
+        if (line.match(/^<[a-zA-Z]/) || !line.trim()) return line;
+        return `<p class="my-3 leading-relaxed text-gray-700">${line}</p>`;
+      });
+    return html;
+  }
+
+  // ─── Cert Catalog ────────────────────────────────────────────────────────
+  function CertCatalog({ onSelectCert, profile }) {
+    const [certs, setCerts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState('all');
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb) { setLoading(false); return; }
+        const isStaff = ['super_admin','admin','instructor','reviewer'].includes(profile?.role);
+        let q = sb.from('certifications').select('*').order('cert_number');
+        if (!isStaff) q = q.eq('status','approved');
+        const { data } = await q;
+        setCerts(data || []);
+        setLoading(false);
+      })();
+    }, [profile?.role]);
+
+    const tracks = {
+      foundation: [1,2,3,4],
+      practitioner: [5,6,7,8,9],
+      compliance: [10,11,12],
+      growth: [13,14,15,16],
+      master: [17]
+    };
+    const filtered = filter === 'all' ? certs : certs.filter(c => tracks[filter]?.includes(c.cert_number));
+
+    const trackColor = (n) => {
+      if (n <= 4) return 'bg-blue-100 text-blue-800';
+      if (n <= 9) return 'bg-indigo-100 text-indigo-800';
+      if (n <= 12) return 'bg-purple-100 text-purple-800';
+      if (n <= 16) return 'bg-orange-100 text-orange-800';
+      return 'bg-yellow-100 text-yellow-800';
+    };
+    const trackLabel = (n) => {
+      if (n <= 4) return 'Foundation';
+      if (n <= 9) return 'Practitioner';
+      if (n <= 12) return 'Compliance';
+      if (n <= 16) return 'Growth';
+      return 'Master';
+    };
+
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-lg max-w-lg w-full p-10 text-center fade-in">
-          <div className="w-16 h-16 bg-[#2D1FB1] rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-[#0F1631] mb-2">Welcome back</h2>
-          <p className="text-gray-500 text-sm mb-2">Signed in as <strong>{user?.email}</strong></p>
-          <div className="bg-[#F8FAFC] rounded-xl p-6 my-6 text-left">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 rounded-full bg-[#FFD23F] flex items-center justify-center">
-                <svg className="w-4 h-4 text-[#0F1631]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+      <main className="max-w-6xl mx-auto px-4 py-12 fade-in">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#0F1631] mb-2">Certification Catalog</h1>
+          <p className="text-gray-500">17 stackable certifications in rural capital access, microfinance, and USDA program readiness.</p>
+        </div>
+        <div className="flex gap-2 flex-wrap mb-8">
+          {[['all','All (17)'],['foundation','Foundation'],['practitioner','Practitioner'],['compliance','Compliance'],['growth','Growth'],['master','Master']].map(([id,label]) => (
+            <button key={id} onClick={() => setFilter(id)}
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${filter===id ? 'bg-[#2D1FB1] text-white border-[#2D1FB1]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#2D1FB1]'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {loading ? (
+          <div className="text-center py-20 text-gray-400">Loading certifications…</div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filtered.map(cert => (
+              <div key={cert.id} className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md transition-shadow flex flex-col">
+                <div className="flex items-start justify-between mb-3">
+                  <span className="text-2xl font-black text-gray-200">0{cert.cert_number > 9 ? '' : '0'}{cert.cert_number}</span>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${trackColor(cert.cert_number)}`}>{trackLabel(cert.cert_number)}</span>
+                </div>
+                <h3 className="font-bold text-[#0F1631] text-base mb-2 leading-tight flex-1">{cert.title}</h3>
+                <p className="text-gray-500 text-sm mb-4 leading-relaxed line-clamp-3">{cert.description}</p>
+                <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
+                  <span className="text-xs text-gray-400">{cert.hours_min}–{cert.hours_max}h</span>
+                  {cert.status !== 'approved' && <span className="text-xs text-amber-600 font-medium">Draft</span>}
+                  <button onClick={() => onSelectCert(cert)}
+                    className="px-4 py-1.5 bg-[#2D1FB1] text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                    View
+                  </button>
+                </div>
               </div>
-              <span className="font-semibold text-[#0F1631] text-sm">Dashboard coming in Phase 2</span>
-            </div>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              Your course library, certification progress, and RMAP AI Scoring Engine will be available in Phase 2. You'll receive an email when your account is fully activated.
-            </p>
+            ))}
           </div>
-          <button
-            onClick={onSignOut}
-            className="px-6 py-2 border border-gray-300 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Sign Out
+        )}
+      </main>
+    );
+  }
+
+  // ─── Cert Detail ─────────────────────────────────────────────────────────
+  function CertDetail({ cert, onBack, onStartLesson, profile }) {
+    const [modules, setModules] = useState([]);
+    const [quiz, setQuiz] = useState(null);
+    const [progress, setProgress] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const isStaff = ['super_admin','admin','instructor','reviewer'].includes(profile?.role);
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb || !cert) { setLoading(false); return; }
+        let mq = sb.from('modules').select('*, lessons(*)').eq('certification_id', cert.id).order('sort_order');
+        if (!isStaff) mq = mq.eq('status','approved');
+        const [{ data: mods }, { data: qz }, { data: prog }] = await Promise.all([
+          mq,
+          sb.from('quizzes').select('*').eq('certification_id', cert.id).maybeSingle(),
+          sb.from('student_progress').select('*').eq('certification_id', cert.id)
+        ]);
+        const sorted = (mods || []).map(m => ({ ...m, lessons: (m.lessons || []).sort((a,b) => a.sort_order - b.sort_order) }));
+        setModules(sorted);
+        setQuiz(qz);
+        setProgress(prog || []);
+        setLoading(false);
+      })();
+    }, [cert?.id]);
+
+    const completedIds = new Set(progress.filter(p => p.status === 'completed').map(p => p.lesson_id));
+    const allLessons = modules.flatMap(m => m.lessons || []);
+    const pct = allLessons.length ? Math.round((completedIds.size / allLessons.length) * 100) : 0;
+
+    return (
+      <main className="max-w-4xl mx-auto px-4 py-10 fade-in">
+        <button onClick={onBack} className="flex items-center gap-1 text-sm text-gray-500 hover:text-[#2D1FB1] mb-6 transition-colors">
+          ← Back to Catalog
+        </button>
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <h1 className="text-3xl font-bold text-[#0F1631] leading-tight">{cert.title}</h1>
+          {cert.status === 'approved'
+            ? <span className="flex-shrink-0 text-xs px-3 py-1 rounded-full bg-green-50 text-green-700 font-semibold border border-green-200">✓ Approved</span>
+            : <span className="flex-shrink-0 text-xs px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-semibold border border-amber-200">Drafted · Awaiting Review</span>
+          }
+        </div>
+        <p className="text-gray-500 mb-4">{cert.hours_min}–{cert.hours_max} hours · Self-paced</p>
+        {pct > 0 && (
+          <div className="mb-6">
+            <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Progress</span><span>{pct}%</span></div>
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-[#2D1FB1] rounded-full transition-all" style={{ width: `${pct}%` }}/>
+            </div>
+          </div>
+        )}
+        <p className="text-gray-700 leading-relaxed mb-6">{cert.description}</p>
+        {cert.learning_outcomes?.length > 0 && (
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-8">
+            <div className="font-semibold text-[#0F1631] mb-3 text-sm">Learning Outcomes</div>
+            <ul className="space-y-2">{cert.learning_outcomes.map((o,i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                <span className="text-[#2D1FB1] font-bold mt-0.5">✓</span>{o}
+              </li>
+            ))}</ul>
+          </div>
+        )}
+        {loading ? <div className="text-center py-10 text-gray-400">Loading content…</div> : (
+          <div className="space-y-4">
+            {modules.map((mod, mi) => (
+              <div key={mod.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div className="px-5 py-4 bg-gray-50 border-b border-gray-100">
+                  <div className="text-xs text-gray-400 font-medium mb-0.5">Module {mi+1}</div>
+                  <div className="font-bold text-[#0F1631]">{mod.title}</div>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {(mod.lessons||[]).map((lesson, li) => {
+                    const done = completedIds.has(lesson.id);
+                    return (
+                      <button key={lesson.id} onClick={() => onStartLesson(lesson, mod, cert)}
+                        className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-blue-50 transition-colors text-left">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${done ? 'bg-green-100' : 'bg-gray-100'}`}>
+                          {done ? <span className="text-green-600 text-xs font-bold">✓</span> : <span className="text-gray-400 text-xs font-bold">{mi+1}.{li+1}</span>}
+                        </div>
+                        <span className="flex-1 text-sm font-medium text-[#0F1631]">{lesson.title}</span>
+                        {lesson.read_time_minutes && <span className="text-xs text-gray-400 flex-shrink-0">{lesson.read_time_minutes} min</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            {quiz && (
+              <div className="bg-white border-2 border-[#2D1FB1] rounded-xl p-5 flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-[#0F1631] mb-0.5">{quiz.title}</div>
+                  <div className="text-sm text-gray-500">{quiz.passing_score}% required to pass · 20 questions</div>
+                </div>
+                <button onClick={() => onStartLesson(null, null, cert, quiz)}
+                  className="px-5 py-2 bg-[#2D1FB1] text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition-colors">
+                  Take Quiz
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+    );
+  }
+
+  // ─── Lesson Player ───────────────────────────────────────────────────────
+  function LessonPlayer({ lesson, mod, cert, allLessons, onComplete, onBack, onGoToQuiz, profile }) {
+    const [saving, setSaving] = useState(false);
+    const [done, setDone] = useState(false);
+
+    const idx = allLessons.findIndex(l => l.id === lesson.id);
+    const prev = allLessons[idx - 1];
+    const next = allLessons[idx + 1];
+
+    const markComplete = async () => {
+      setSaving(true);
+      const sb = await getSupabase();
+      if (sb) {
+        await sb.from('student_progress').upsert({
+          user_id: (await sb.auth.getUser()).data.user.id,
+          certification_id: cert.id,
+          lesson_id: lesson.id,
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        }, { onConflict: 'user_id,lesson_id' });
+      }
+      setSaving(false);
+      setDone(true);
+      onComplete && onComplete(lesson, next);
+    };
+
+    return (
+      <main className="max-w-3xl mx-auto px-4 py-10 fade-in">
+        <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
+          <button onClick={onBack} className="hover:text-[#2D1FB1] transition-colors">{cert?.title}</button>
+          <span>›</span><span className="text-gray-600">{mod?.title}</span>
+          <span>›</span><span className="text-gray-600">{lesson.title}</span>
+        </div>
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <h1 className="text-3xl font-bold text-[#0F1631] leading-tight">{lesson.title}</h1>
+          {lesson.status === 'approved'
+            ? <span className="flex-shrink-0 text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 font-medium">Approved</span>
+            : <span className="flex-shrink-0 text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-700 font-medium">Drafted · Awaiting Review</span>
+          }
+        </div>
+        {lesson.read_time_minutes && <p className="text-sm text-gray-400 mb-8">{lesson.read_time_minutes} min read</p>}
+        <article className="prose max-w-none"
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(lesson.content) }} />
+        <div className="mt-12 pt-6 border-t border-gray-200 flex items-center justify-between gap-4">
+          <button onClick={() => prev ? onComplete(lesson, prev, true) : onBack()}
+            className="px-4 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            ← {prev ? 'Previous' : 'Back to Cert'}
           </button>
+          {done ? (
+            <span className="text-green-600 font-semibold text-sm">✓ Completed</span>
+          ) : (
+            <button onClick={markComplete} disabled={saving}
+              className="px-6 py-2 bg-[#2D1FB1] text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50">
+              {saving ? 'Saving…' : next ? 'Mark Complete & Next →' : 'Mark Complete'}
+            </button>
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  // ─── Quiz Player ─────────────────────────────────────────────────────────
+  function QuizPlayer({ cert, quiz, onBack, onPassed, profile }) {
+    const [questions, setQuestions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [idx, setIdx] = useState(0);
+    const [answers, setAnswers] = useState({});
+    const [submitted, setSubmitted] = useState(false);
+    const [score, setScore] = useState(null);
+    const [saving, setSaving] = useState(false);
+    const [certClaimed, setCertClaimed] = useState(false);
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb) { setLoading(false); return; }
+        const { data } = await sb.from('quiz_questions').select('*').eq('quiz_id', quiz.id).order('sort_order');
+        setQuestions(data || []);
+        setLoading(false);
+      })();
+    }, [quiz.id]);
+
+    const q = questions[idx];
+    const total = questions.length;
+    const pct = total ? Math.round((idx / total) * 100) : 0;
+
+    const submit = async () => {
+      const correct = questions.filter(q => answers[q.id] === q.correct_option_id).length;
+      const sc = Math.round((correct / total) * 100);
+      setScore(sc);
+      setSubmitted(true);
+      const sb = await getSupabase();
+      if (sb) {
+        const { data: { user } } = await sb.auth.getUser();
+        await sb.from('quiz_attempts').insert({
+          user_id: user.id, quiz_id: quiz.id, certification_id: cert.id,
+          answers, score: sc, passed: sc >= quiz.passing_score,
+          started_at: new Date().toISOString(), completed_at: new Date().toISOString()
+        });
+      }
+    };
+
+    const claimCertificate = async () => {
+      setSaving(true);
+      const sb = await getSupabase();
+      if (sb) {
+        const { data: { user } } = await sb.auth.getUser();
+        const { data: prof } = await sb.from('profiles').select('full_name').eq('id', user.id).maybeSingle();
+        const certNum = 'CFA-' + Date.now().toString(36).toUpperCase();
+        const { data: comp } = await sb.from('certification_completions').upsert({
+          user_id: user.id, certification_id: cert.id,
+          artifact_submitted: false, completed_at: new Date().toISOString(),
+          certificate_number: certNum
+        }, { onConflict: 'user_id,certification_id' }).select().maybeSingle();
+        if (comp) {
+          await sb.from('certificates').upsert({
+            user_id: user.id, certification_id: cert.id, completion_id: comp.id,
+            recipient_name: prof?.full_name || user.email,
+            cert_title: cert.title, cert_number: certNum, score, issued_at: new Date().toISOString()
+          }, { onConflict: 'cert_number' });
+        }
+        setCertClaimed(true);
+        onPassed && onPassed();
+      }
+      setSaving(false);
+    };
+
+    if (loading) return <div className="text-center py-20 text-gray-400">Loading quiz…</div>;
+
+    if (submitted) {
+      const passed = score >= quiz.passing_score;
+      return (
+        <main className="max-w-3xl mx-auto px-4 py-10 fade-in">
+          <div className={`rounded-2xl p-8 mb-8 text-center ${passed ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+            <div className={`text-5xl font-black mb-2 ${passed ? 'text-green-600' : 'text-red-500'}`}>{score}%</div>
+            <div className={`text-xl font-bold mb-1 ${passed ? 'text-green-700' : 'text-red-600'}`}>{passed ? '🎉 You passed!' : 'Not quite — keep learning'}</div>
+            <div className="text-sm text-gray-500">Required: {quiz.passing_score}% · Your score: {score}%</div>
+          </div>
+          {passed && !certClaimed && (
+            <div className="text-center mb-8">
+              <button onClick={claimCertificate} disabled={saving}
+                className="px-8 py-3 bg-[#F97316] text-white font-bold rounded-xl hover:bg-orange-600 transition-colors disabled:opacity-50">
+                {saving ? 'Claiming…' : '🏆 Claim Your Certificate'}
+              </button>
+            </div>
+          )}
+          {certClaimed && <div className="text-center text-green-600 font-semibold mb-8">✓ Certificate claimed! View it in your Dashboard.</div>}
+          <div className="space-y-4">
+            {questions.map((q, i) => {
+              const userAns = answers[q.id];
+              const correct = userAns === q.correct_option_id;
+              return (
+                <div key={q.id} className={`p-5 rounded-xl border ${correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                  <div className="font-semibold text-sm text-[#0F1631] mb-2">{i+1}. {q.question_text}</div>
+                  <div className="text-sm mb-2">
+                    {(q.options||[]).map(opt => (
+                      <div key={opt.id} className={`py-0.5 ${opt.id === q.correct_option_id ? 'text-green-700 font-semibold' : opt.id === userAns && !correct ? 'text-red-600 line-through' : 'text-gray-500'}`}>
+                        {opt.id.toUpperCase()}. {opt.text}
+                      </div>
+                    ))}
+                  </div>
+                  {q.explanation && <div className="text-xs text-gray-600 bg-white/60 rounded p-2">{q.explanation}</div>}
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-8 text-center">
+            <button onClick={onBack} className="px-6 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors">
+              ← Back to Certification
+            </button>
+          </div>
+        </main>
+      );
+    }
+
+    if (!q) return null;
+    return (
+      <main className="max-w-2xl mx-auto px-4 py-10 fade-in">
+        <div className="mb-6">
+          <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Question {idx+1} of {total}</span><span>{pct}%</span></div>
+          <div className="h-1.5 bg-gray-100 rounded-full"><div className="h-1.5 bg-[#2D1FB1] rounded-full transition-all" style={{ width: `${pct}%` }}/></div>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-4">
+          <div className="text-lg font-bold text-[#0F1631] mb-6 leading-snug">{q.question_text}</div>
+          <div className="space-y-3">
+            {(q.options||[]).map(opt => (
+              <button key={opt.id} onClick={() => setAnswers(a => ({ ...a, [q.id]: opt.id }))}
+                className={`w-full text-left px-4 py-3.5 rounded-xl border text-sm font-medium transition-all ${answers[q.id] === opt.id ? 'bg-[#2D1FB1] border-[#2D1FB1] text-white' : 'bg-white border-gray-200 text-gray-700 hover:border-[#2D1FB1]'}`}>
+                <span className="font-bold mr-2">{opt.id.toUpperCase()}.</span> {opt.text}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <button onClick={() => setIdx(i => Math.max(0, i-1))} disabled={idx === 0}
+            className="px-4 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors">← Previous</button>
+          {idx < total - 1 ? (
+            <button onClick={() => setIdx(i => i+1)} disabled={!answers[q.id]}
+              className="px-6 py-2 bg-[#2D1FB1] text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-30 transition-colors">Next →</button>
+          ) : (
+            <button onClick={submit} disabled={Object.keys(answers).length < total}
+              className="px-6 py-2 bg-[#F97316] text-white text-sm font-bold rounded-lg hover:bg-orange-600 disabled:opacity-30 transition-colors">Submit Quiz</button>
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  // ─── Student Dashboard ───────────────────────────────────────────────────
+  function StudentDashboard({ user, profile, onSignOut, onOpenCatalog, onSelectCert }) {
+    const [certs, setCerts] = useState([]);
+    const [progress, setProgress] = useState([]);
+    const [completions, setCompletions] = useState([]);
+    const [certificates, setMyCerts] = useState([]);
+    const [viewingCert, setViewingCert] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb) { setLoading(false); return; }
+        const [{ data: c }, { data: p }, { data: comp }, { data: myCerts }] = await Promise.all([
+          sb.from('certifications').select('*').eq('status','approved').order('cert_number'),
+          sb.from('student_progress').select('*'),
+          sb.from('certification_completions').select('*'),
+          sb.from('certificates').select('*, certifications(title)').order('issued_at', { ascending: false })
+        ]);
+        setCerts(c || []);
+        setProgress(p || []);
+        setCompletions(comp || []);
+        setMyCerts(myCerts || []);
+        setLoading(false);
+      })();
+    }, []);
+
+    const completedCertIds = new Set(completions.map(c => c.certification_id));
+    const inProgress = certs.filter(c => progress.some(p => p.certification_id === c.id) && !completedCertIds.has(c.id));
+    const completed = certs.filter(c => completedCertIds.has(c.id));
+
+    const lessonsPct = (cert) => {
+      const certProgress = progress.filter(p => p.certification_id === cert.id && p.status === 'completed');
+      return certProgress.length;
+    };
+
+    if (loading) return <div className="text-center py-20 text-gray-400">Loading your dashboard…</div>;
+
+    if (viewingCert) {
+      return <CertificateView cert={viewingCert} onClose={() => setViewingCert(null)} />;
+    }
+
+    return (
+      <main className="max-w-5xl mx-auto px-4 py-10 fade-in">
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-[#0F1631] mb-1">Welcome back{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}!</h1>
+            <p className="text-gray-500 text-sm">{user?.email} · Student</p>
+          </div>
+          <button onClick={onSignOut} className="px-4 py-2 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50 transition-colors">Sign Out</button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-10">
+          <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+            <div className="text-3xl font-black text-[#2D1FB1] mb-1">{inProgress.length}</div>
+            <div className="text-xs text-gray-500 font-medium">In Progress</div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+            <div className="text-3xl font-black text-green-600 mb-1">{completed.length}</div>
+            <div className="text-xs text-gray-500 font-medium">Completed</div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+            <div className="text-3xl font-black text-[#F97316] mb-1">{certificates.length}</div>
+            <div className="text-xs text-gray-500 font-medium">Certificates</div>
+          </div>
+        </div>
+
+        {inProgress.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold text-[#0F1631] mb-4">Continue Learning</h2>
+            <div className="space-y-3">
+              {inProgress.slice(0,3).map(cert => (
+                <div key={cert.id} className="bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => onSelectCert(cert)}>
+                  <div className="w-10 h-10 rounded-lg bg-[#2D1FB1] text-white flex items-center justify-center font-black text-sm flex-shrink-0">{String(cert.cert_number).padStart(2,'0')}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-[#0F1631] text-sm truncate">{cert.title}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">{lessonsPct(cert)} lessons completed</div>
+                  </div>
+                  <span className="text-[#2D1FB1] text-sm font-semibold flex-shrink-0">Continue →</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {certificates.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold text-[#0F1631] mb-4">My Certificates</h2>
+            <div className="space-y-3">
+              {certificates.map(cert => (
+                <div key={cert.id} className="bg-white border border-green-200 rounded-xl p-5 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0">🏆</div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-[#0F1631] text-sm">{cert.certifications?.title || cert.cert_title}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">{cert.cert_number} · {new Date(cert.issued_at).toLocaleDateString()}</div>
+                  </div>
+                  <button onClick={() => setViewingCert(cert)} className="px-4 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition-colors">View</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 flex items-center justify-between">
+          <div>
+            <div className="font-bold text-[#0F1631] mb-1">Browse all 17 certifications</div>
+            <div className="text-sm text-gray-500">From Microfinance Foundations to the Master Capstone.</div>
+          </div>
+          <button onClick={onOpenCatalog} className="px-5 py-2.5 bg-[#2D1FB1] text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors flex-shrink-0">Browse Catalog →</button>
+        </div>
+      </main>
+    );
+  }
+
+  // ─── Admin Dashboard ─────────────────────────────────────────────────────
+  function AdminDashboard({ user, profile, onSignOut }) {
+    const [tab, setTab] = useState('certifications');
+    const [certs, setCerts] = useState([]);
+    const [students, setStudents] = useState([]);
+    const [draftLessons, setDraftLessons] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [approving, setApproving] = useState({});
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb) { setLoading(false); return; }
+        const [{ data: c }, { data: s }, { data: dl }] = await Promise.all([
+          sb.from('certifications').select('*').order('cert_number'),
+          sb.from('profiles').select('id,full_name,email,role,created_at').in('role', ['student','organization_owner','organization_manager']).order('created_at', { ascending: false }),
+          sb.from('lessons').select('*, modules(title, certifications(title))').in('status', ['draft','review']).order('created_at', { ascending: false })
+        ]);
+        setCerts(c || []);
+        setStudents(s || []);
+        setDraftLessons(dl || []);
+        setLoading(false);
+      })();
+    }, []);
+
+    const approveCert = async (cert) => {
+      setApproving(a => ({ ...a, [cert.id]: true }));
+      const sb = await getSupabase();
+      if (sb) {
+        await sb.from('certifications').update({ status: 'approved' }).eq('id', cert.id);
+        setCerts(prev => prev.map(c => c.id === cert.id ? { ...c, status: 'approved' } : c));
+      }
+      setApproving(a => ({ ...a, [cert.id]: false }));
+    };
+
+    const approveLesson = async (lesson) => {
+      setApproving(a => ({ ...a, [lesson.id]: true }));
+      const sb = await getSupabase();
+      if (sb) {
+        await sb.from('lessons').update({ status: 'approved', reviewed_at: new Date().toISOString() }).eq('id', lesson.id);
+        setDraftLessons(prev => prev.filter(l => l.id !== lesson.id));
+      }
+      setApproving(a => ({ ...a, [lesson.id]: false }));
+    };
+
+    const draftCount = certs.filter(c => c.status !== 'approved').length;
+
+    return (
+      <main className="max-w-6xl mx-auto px-4 py-10 fade-in">
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-[#0F1631] mb-1">Admin Dashboard</h1>
+            <p className="text-gray-500 text-sm">{user?.email} · {profile?.role?.replace('_',' ')}</p>
+          </div>
+          <button onClick={onSignOut} className="px-4 py-2 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50 transition-colors">Sign Out</button>
+        </div>
+        <div className="flex gap-1 border-b border-gray-200 mb-8">
+          {[['certifications','Certifications'],['students','Students'],['review','Content Review']].map(([id,label]) => (
+            <button key={id} onClick={() => setTab(id)}
+              className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${tab===id ? 'border-[#2D1FB1] text-[#2D1FB1]' : 'border-transparent text-gray-500 hover:text-[#0F1631]'}`}>
+              {label}
+              {id==='certifications' && draftCount > 0 && <span className="ml-2 bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full">{draftCount}</span>}
+              {id==='review' && draftLessons.length > 0 && <span className="ml-2 bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full">{draftLessons.length}</span>}
+            </button>
+          ))}
+        </div>
+        {loading ? <div className="text-center py-20 text-gray-400">Loading…</div> : (<>
+          {tab === 'certifications' && (
+            <div className="space-y-2">
+              {certs.map(cert => (
+                <div key={cert.id} className="bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4">
+                  <span className="font-black text-gray-300 text-lg w-8">{String(cert.cert_number).padStart(2,'0')}</span>
+                  <div className="flex-1">
+                    <div className="font-semibold text-[#0F1631] text-sm">{cert.title}</div>
+                    <div className="text-xs text-gray-400">{cert.hours_min}–{cert.hours_max}h</div>
+                  </div>
+                  {cert.status === 'approved'
+                    ? <span className="text-xs px-3 py-1 rounded-full bg-green-50 text-green-700 font-semibold">Approved</span>
+                    : <div className="flex items-center gap-2">
+                        <span className="text-xs px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-semibold">Draft</span>
+                        <button onClick={() => approveCert(cert)} disabled={approving[cert.id]}
+                          className="text-xs px-3 py-1.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors">
+                          {approving[cert.id] ? 'Approving…' : 'Approve'}
+                        </button>
+                      </div>
+                  }
+                </div>
+              ))}
+            </div>
+          )}
+          {tab === 'students' && (
+            <div className="space-y-2">
+              {students.length === 0 && <div className="text-center py-12 text-gray-400">No students enrolled yet.</div>}
+              {students.map(s => (
+                <div key={s.id} className="bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4">
+                  <div className="w-9 h-9 rounded-full bg-[#2D1FB1] text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+                    {(s.full_name || s.email || '?')[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-[#0F1631] text-sm">{s.full_name || s.email}</div>
+                    <div className="text-xs text-gray-400">{s.email} · {s.role}</div>
+                  </div>
+                  <div className="text-xs text-gray-400">{new Date(s.created_at).toLocaleDateString()}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {tab === 'review' && (
+            <div className="space-y-3">
+              {draftLessons.length === 0 && <div className="text-center py-12 text-gray-400">No lessons pending review.</div>}
+              {draftLessons.map(lesson => (
+                <div key={lesson.id} className="bg-white border border-amber-200 rounded-xl p-5 flex items-center gap-4">
+                  <div className="flex-1">
+                    <div className="font-semibold text-[#0F1631] text-sm">{lesson.title}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">
+                      {lesson.modules?.certifications?.title} › {lesson.modules?.title}
+                    </div>
+                  </div>
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-semibold capitalize">{lesson.status}</span>
+                  <button onClick={() => approveLesson(lesson)} disabled={approving[lesson.id]}
+                    className="text-xs px-3 py-1.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors">
+                    {approving[lesson.id] ? 'Approving…' : 'Approve'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </>)}
+      </main>
+    );
+  }
+
+  // ─── Certificate View ─────────────────────────────────────────────────────
+  function CertificateView({ cert, onClose }) {
+    return (
+      <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden">
+          <div className="p-8 border-4 border-[#2D1FB1] m-4 rounded-xl text-center" id="cert-print">
+            <div className="text-xs tracking-widest text-gray-400 uppercase mb-4">Cap Fund Academy</div>
+            <div className="text-2xl font-black text-[#0F1631] mb-1">Certificate of Completion</div>
+            <div className="w-16 h-0.5 bg-[#FFD23F] mx-auto my-4"/>
+            <div className="text-sm text-gray-500 mb-2">This certifies that</div>
+            <div className="text-3xl font-black text-[#2D1FB1] mb-2">{cert.recipient_name}</div>
+            <div className="text-sm text-gray-500 mb-1">has successfully completed</div>
+            <div className="text-xl font-bold text-[#0F1631] mb-4 max-w-md mx-auto leading-tight">{cert.cert_title}</div>
+            <div className="text-sm text-gray-500 mb-4">Score: {cert.score}% · Issued {new Date(cert.issued_at).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</div>
+            <div className="text-xs font-mono text-gray-400 mb-6">{cert.cert_number}</div>
+            <div className="text-[10px] text-gray-400 max-w-sm mx-auto leading-relaxed border-t border-gray-100 pt-4">
+              This certificate is issued by Cap Fund Academy, an independent training platform not affiliated with USDA or any government agency. Completion does not guarantee funding, eligibility, or approval for any federal program.
+            </div>
+          </div>
+          <div className="flex gap-3 px-6 pb-6 justify-center">
+            <button onClick={() => window.print()} className="px-6 py-2.5 bg-[#2D1FB1] text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors text-sm">Print / Save PDF</button>
+            <button onClick={onClose} className="px-6 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-sm">Close</button>
+          </div>
         </div>
       </div>
     );
@@ -875,73 +1521,134 @@ window.ENV = {
 
   // ─── Root App ─────────────────────────────────────────────────────────────
   function App() {
-    const [loading, setLoading] = useState(true);
-    const [view, setView] = useState('home'); // 'home' | 'trust' | 'app'
-    const [loginOpen, setLoginOpen] = useState(false);
-    const [user, setUser] = useState(null);
+    const [loading, setLoading]         = useState(true);
+    const [pubView, setPubView]         = useState('home'); // public views
+    const [user, setUser]               = useState(null);
+    const [profile, setProfile]         = useState(null);
+    const [loginOpen, setLoginOpen]     = useState(false);
+    // LMS navigation state
+    const [lmsView, setLmsView]         = useState('dashboard'); // dashboard | admin | catalog | cert | lesson | quiz
+    const [selectedCert, setSelectedCert]     = useState(null);
+    const [selectedLesson, setSelectedLesson] = useState(null);
+    const [selectedMod, setSelectedMod]       = useState(null);
+    const [selectedQuiz, setSelectedQuiz]     = useState(null);
+    const [allLessons, setAllLessons]         = useState([]);
+
+    const isStaff = ['super_admin','admin','instructor','reviewer'].includes(profile?.role);
+    const loggedIn = !!user;
 
     useEffect(() => {
-      // Initialize auth state
       (async () => {
         try {
           const sb = await getSupabase();
           if (sb) {
             const { data: { session } } = await sb.auth.getSession();
-            if (session?.user) {
-              setUser(session.user);
-              setView('app');
-            }
-            sb.auth.onAuthStateChange((_event, session) => {
-              if (session?.user) {
-                setUser(session.user);
-                setView('app');
-              } else {
-                setUser(null);
-                if (view === 'app') setView('home');
-              }
+            if (session?.user) await loadUser(session.user);
+            sb.auth.onAuthStateChange(async (_event, session) => {
+              if (session?.user) await loadUser(session.user);
+              else { setUser(null); setProfile(null); }
             });
           }
-        } catch {
-          // Supabase not configured — continue as public
-        } finally {
-          setLoading(false);
-        }
+        } catch {}
+        finally { setLoading(false); }
       })();
     }, []);
 
-    const handleSignOut = async () => {
-      try {
-        const sb = await getSupabase();
-        if (sb) await sb.auth.signOut();
-      } catch {}
-      setUser(null);
-      setView('home');
+    const loadUser = async (u) => {
+      setUser(u);
+      const sb = await getSupabase();
+      if (sb) {
+        const { data: prof } = await sb.from('profiles').select('*').eq('id', u.id).maybeSingle();
+        setProfile(prof);
+        const staffRoles = ['super_admin','admin','instructor','reviewer'];
+        setLmsView(staffRoles.includes(prof?.role) ? 'admin' : 'dashboard');
+      }
     };
 
-    const handleLoginSuccess = (u) => {
-      setUser(u);
-      setView('app');
+    const handleSignOut = async () => {
+      try { const sb = await getSupabase(); if (sb) await sb.auth.signOut(); } catch {}
+      setUser(null); setProfile(null);
+    };
+
+    const openCert = (cert) => { setSelectedCert(cert); setLmsView('cert'); };
+    const openLesson = async (lesson, mod, cert, quiz) => {
+      if (quiz) { setSelectedQuiz(quiz); setSelectedCert(cert); setLmsView('quiz'); return; }
+      setSelectedLesson(lesson); setSelectedMod(mod); setSelectedCert(cert);
+      // Build flat lesson list for prev/next
+      const sb = await getSupabase();
+      if (sb) {
+        const isStaffRole = ['super_admin','admin','instructor','reviewer'].includes(profile?.role);
+        let q = sb.from('lessons').select('*, modules!inner(sort_order, certification_id)')
+          .eq('modules.certification_id', cert.id).order('sort_order');
+        if (!isStaffRole) q = q.eq('status','approved');
+        const { data } = await q;
+        setAllLessons(data || []);
+      }
+      setLmsView('lesson');
+    };
+    const onLessonComplete = (lesson, next, goBack) => {
+      if (goBack) { openLesson(next, selectedMod, selectedCert); return; }
+      if (next) openLesson(next, selectedMod, selectedCert);
+      else setLmsView('cert');
     };
 
     if (loading) return <LoadingScreen />;
 
+    if (loggedIn) {
+      return (
+        <div className="min-h-screen bg-[#F8FAFC]">
+          {/* Inner nav for logged-in users */}
+          <nav className="bg-white border-b border-gray-200 sticky top-0 z-20">
+            <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <button onClick={() => setLmsView(isStaff ? 'admin' : 'dashboard')} className="flex items-center">
+                  <img src="/assets/logo.png" alt="Cap Fund Academy" style={{ height: 32, width: 'auto' }} />
+                </button>
+                <button onClick={() => setLmsView('catalog')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Catalog</button>
+                {isStaff && <button onClick={() => setLmsView('admin')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Admin</button>}
+                {!isStaff && <button onClick={() => setLmsView('dashboard')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Dashboard</button>}
+              </div>
+              <div className="text-xs text-gray-400">{user?.email}</div>
+            </div>
+          </nav>
+
+          {lmsView === 'dashboard' && !isStaff && (
+            <StudentDashboard user={user} profile={profile} onSignOut={handleSignOut}
+              onOpenCatalog={() => setLmsView('catalog')} onSelectCert={openCert} />
+          )}
+          {lmsView === 'admin' && isStaff && (
+            <AdminDashboard user={user} profile={profile} onSignOut={handleSignOut} />
+          )}
+          {lmsView === 'catalog' && (
+            <CertCatalog onSelectCert={openCert} profile={profile} />
+          )}
+          {lmsView === 'cert' && selectedCert && (
+            <CertDetail cert={selectedCert} onBack={() => setLmsView('catalog')}
+              onStartLesson={openLesson} profile={profile} />
+          )}
+          {lmsView === 'lesson' && selectedLesson && (
+            <LessonPlayer lesson={selectedLesson} mod={selectedMod} cert={selectedCert}
+              allLessons={allLessons} onComplete={onLessonComplete}
+              onBack={() => setLmsView('cert')} profile={profile} />
+          )}
+          {lmsView === 'quiz' && selectedQuiz && (
+            <QuizPlayer cert={selectedCert} quiz={selectedQuiz}
+              onBack={() => setLmsView('cert')}
+              onPassed={() => setLmsView('dashboard')}
+              profile={profile} />
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex flex-col">
-        {view !== 'app' && (
-          <Header view={view} setView={setView} onLoginClick={() => setLoginOpen(true)} />
-        )}
-
-        {view === 'home' && <Homepage setView={setView} />}
-        {view === 'trust' && <TrustCenter setView={setView} />}
-        {view === 'app' && user && <Dashboard user={user} onSignOut={handleSignOut} />}
-
-        {view !== 'app' && <Footer setView={setView} />}
-
-        <LoginModal
-          open={loginOpen}
-          onClose={() => setLoginOpen(false)}
-          onLoginSuccess={handleLoginSuccess}
-        />
+        <Header view={pubView} setView={setPubView} onLoginClick={() => setLoginOpen(true)} />
+        {pubView === 'home' && <Homepage setView={setPubView} />}
+        {pubView === 'trust' && <TrustCenter setView={setPubView} />}
+        <Footer setView={setPubView} />
+        <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)}
+          onLoginSuccess={loadUser} />
       </div>
     );
   }
