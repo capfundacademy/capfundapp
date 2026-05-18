@@ -206,7 +206,7 @@ window.ENV = {
 
   // ─── Logo component ───────────────────────────────────────────────────────
   function Logo({ size = 'md', white = false }) {
-    const h = size === 'sm' ? 56 : size === 'lg' ? 110 : 88;
+    const h = size === 'sm' ? 72 : size === 'lg' ? 160 : 140;
     const src = white ? '/assets/logo-white.png' : '/assets/logo.png';
     return (
       <img src={src} alt="Cap Fund Academy" height={h} style={{ height: h, width: 'auto', display: 'block' }} />
@@ -218,7 +218,7 @@ window.ENV = {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#2D1FB1]">
         <div className="flex flex-col items-center gap-6">
-          <img src="/assets/logo-white.png" alt="Cap Fund Academy" style={{ height: 88, width: 'auto' }} />
+          <img src="/assets/logo-white.png" alt="Cap Fund Academy" style={{ height: 120, width: 'auto', display: 'block' }} />
           <div className="text-center">
             <div className="text-indigo-200 text-sm tracking-widest uppercase">Capital Access Training Platform</div>
           </div>
@@ -236,7 +236,7 @@ window.ENV = {
     const [menuOpen, setMenuOpen] = useState(false);
     return (
       <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-36 flex items-center justify-between">
           <button onClick={() => setView('home')} className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2D1FB1] rounded" aria-label="Cap Fund Academy home">
             <Logo />
           </button>
@@ -290,7 +290,7 @@ window.ENV = {
             {/* Brand */}
             <div>
               <div className="mb-3">
-                <img src="/assets/logo-white.png" alt="Cap Fund Academy" style={{ height: 72, width: 'auto' }} />
+                <img src="/assets/logo-white.png" alt="Cap Fund Academy" style={{ height: 90, width: 'auto', display: 'block' }} />
               </div>
               <p className="text-xs text-gray-400 leading-relaxed mt-2">Capital Access Training Platform</p>
             </div>
@@ -3769,7 +3769,7 @@ window.ENV = {
             <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <button onClick={() => setLmsView(isStaff ? 'admin' : 'dashboard')} className="flex items-center">
-                  <img src="/assets/logo.png" alt="Cap Fund Academy" style={{ height: 64, width: 'auto' }} />
+                  <img src="/assets/logo.png" alt="Cap Fund Academy" style={{ height: 80, width: 'auto' }} />
                 </button>
                 <button onClick={() => setLmsView('catalog')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Catalog</button>
                 <button onClick={() => setLmsView('scoring')} className="text-sm font-semibold text-[#F97316] hover:text-orange-600 transition-colors">🤖 Score My App</button>
