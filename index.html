@@ -240,8 +240,9 @@ window.ENV = {
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
             <button onClick={() => setView('home')} className={`text-sm font-medium transition-colors ${view === 'home' ? 'text-[#2D1FB1]' : 'text-gray-600 hover:text-[#2D1FB1]'}`}>Home</button>
-            <button onClick={() => setView('home')} className="text-sm font-medium text-gray-600 hover:text-[#2D1FB1] transition-colors">Certifications</button>
-            <button onClick={() => setView('home')} className="text-sm font-medium text-gray-600 hover:text-[#2D1FB1] transition-colors">Pricing</button>
+            <button onClick={() => setView('quiz')} className="text-sm font-medium text-gray-600 hover:text-[#2D1FB1] transition-colors">Free Quiz</button>
+            <button onClick={() => setView('webinar')} className="text-sm font-medium text-gray-600 hover:text-[#2D1FB1] transition-colors">Free Training</button>
+            <button onClick={() => setView('pricing')} className="text-sm font-medium text-gray-600 hover:text-[#2D1FB1] transition-colors">Pricing</button>
             <button onClick={() => setView('trust')} className={`text-sm font-medium transition-colors ${view === 'trust' ? 'text-[#2D1FB1]' : 'text-gray-600 hover:text-[#2D1FB1]'}`}>Trust Center</button>
             <button
               onClick={onLoginClick}
@@ -1348,13 +1349,13 @@ window.ENV = {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={() => document.getElementById('cert-tracks')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => setView('quiz')}
                 className="px-8 py-4 bg-[#2D1FB1] text-white font-semibold rounded-xl hover:bg-indigo-800 transition-colors text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2D1FB1]"
               >
-                Browse Certifications
+                Take the Free Quiz →
               </button>
               <button
-                onClick={scrollToChecklist}
+                onClick={() => setView('checklist')}
                 className="px-8 py-4 bg-[#F97316] text-white font-semibold rounded-xl hover:bg-orange-600 transition-colors text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
               >
                 Get Free RMAP Checklist
@@ -1956,6 +1957,398 @@ window.ENV = {
     return null;
   }
 
+  // ─── RLF Readiness Quiz Funnel ───────────────────────────────────────────
+  const RESULT_CONFIG = {
+    beginner:   { label: 'Building the Foundations', color: '#F97316', bg: 'bg-orange-50', border: 'border-orange-200', pctRange: '0–34%',
+      description: 'Your organization is in the early stages of building the capacity needed for USDA rural capital programs. The right training can accelerate your readiness significantly.',
+      nextStep: 'Start with Cert 1 (Microfinance Foundations) to build your foundational vocabulary and framework.',
+      cert: 1 },
+    developing: { label: 'Developing Capacity', color: '#FFD23F', bg: 'bg-yellow-50', border: 'border-yellow-200', pctRange: '35–59%',
+      description: 'You have meaningful foundational capacity but key gaps remain. Focus on policy documentation and financial management before submitting a competitive application.',
+      nextStep: 'Cert 3 (RMAP Eligibility, Application & Scoring) will map your gaps directly to the federal scoring criteria.',
+      cert: 3 },
+    ready:      { label: 'Ready to Apply', color: '#2D1FB1', bg: 'bg-blue-50', border: 'border-blue-200', pctRange: '60–79%',
+      description: 'Your organization has strong fundamentals and could be competitive. Refining your evidence documentation and understanding the scoring matrix will strengthen your application.',
+      nextStep: 'Use our AI Scoring Engine (Cert 12) to simulate your RMAP score before you submit.',
+      cert: 12 },
+    advanced:   { label: 'Advanced Practitioner', color: '#1F7A4A', bg: 'bg-green-50', border: 'border-green-200', pctRange: '80–100%',
+      description: 'You are an experienced practitioner. Your focus should be optimizing your scoring evidence and maximizing portfolio data quality.',
+      nextStep: 'The Master Capstone (Cert 17) and AI Scoring Engine are your highest-leverage next steps.',
+      cert: 17 },
+  };
+
+  function RLFReadinessQuiz({ onComplete }) {
+    const [questions, setQuestions]   = useState([]);
+    const [loading, setLoading]       = useState(true);
+    const [idx, setIdx]               = useState(0);
+    const [answers, setAnswers]       = useState({});
+    const [stage, setStage]           = useState('quiz'); // quiz | capture | result
+    const [name, setName]             = useState('');
+    const [email, setEmail]           = useState('');
+    const [org, setOrg]               = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [result, setResult]         = useState(null);
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb) { setLoading(false); return; }
+        const { data } = await sb.from('public_quiz_questions').select('*').eq('is_active', true).order('sort_order');
+        setQuestions(data || []);
+        setLoading(false);
+      })();
+    }, []);
+
+    const total = questions.length;
+    const q = questions[idx];
+    const pct = total ? Math.round(((idx) / total) * 100) : 0;
+
+    const calcScore = () => {
+      let score = 0, max = 0;
+      questions.forEach(q => {
+        const opts = q.options || [];
+        const maxPts = Math.max(...opts.map(o => o.points || 0));
+        max += maxPts;
+        const chosen = opts.find(o => o.id === answers[q.id]);
+        score += chosen?.points || 0;
+      });
+      return { score, max };
+    };
+
+    const submitResult = async () => {
+      if (!email.trim()) return;
+      setSubmitting(true);
+      const { score, max } = calcScore();
+      const pctScore = Math.round((score / max) * 100);
+      const tag = pctScore >= 80 ? 'advanced' : pctScore >= 60 ? 'ready' : pctScore >= 35 ? 'developing' : 'beginner';
+      try {
+        await fetch('/.netlify/functions/lead-capture', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, organization: org, source: 'quiz', answers, score, max_score: max })
+        });
+      } catch {}
+      setResult({ score: pctScore, tag, config: RESULT_CONFIG[tag] });
+      setStage('result');
+      setSubmitting(false);
+    };
+
+    if (loading) return <div className="text-center py-20 text-gray-400">Loading quiz…</div>;
+
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-12 fade-in">
+        <div className="text-center mb-8">
+          <div className="inline-block bg-[#2D1FB1] text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4">Free Assessment</div>
+          <h2 className="text-3xl font-black text-[#0F1631] mb-2">RLF Readiness Quiz</h2>
+          <p className="text-gray-500">12 questions · 3 minutes · Get your personalized score</p>
+        </div>
+
+        {stage === 'quiz' && q && (
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+            <div className="mb-6">
+              <div className="flex justify-between text-xs text-gray-400 mb-2"><span>Question {idx + 1} of {total}</span><span>{pct}% complete</span></div>
+              <div className="h-2 bg-gray-100 rounded-full"><div className="h-2 bg-[#2D1FB1] rounded-full transition-all" style={{ width: `${pct}%` }}/></div>
+            </div>
+            <h3 className="text-lg font-bold text-[#0F1631] mb-5 leading-snug">{q.question_text}</h3>
+            <div className="space-y-3">
+              {(q.options || []).map(opt => (
+                <button key={opt.id} onClick={() => setAnswers(a => ({ ...a, [q.id]: opt.id }))}
+                  className={`w-full text-left px-4 py-3.5 rounded-xl border text-sm font-medium transition-all ${answers[q.id] === opt.id ? 'bg-[#2D1FB1] border-[#2D1FB1] text-white' : 'border-gray-200 text-gray-700 hover:border-[#2D1FB1] bg-white'}`}>
+                  {opt.text}
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-between mt-6">
+              <button onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
+                className="px-4 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors">← Back</button>
+              {idx < total - 1 ? (
+                <button onClick={() => setIdx(i => i + 1)} disabled={!answers[q.id]}
+                  className="px-6 py-2 bg-[#2D1FB1] text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-30 transition-colors">Next →</button>
+              ) : (
+                <button onClick={() => setStage('capture')} disabled={!answers[q.id]}
+                  className="px-6 py-2 bg-[#F97316] text-white text-sm font-bold rounded-lg hover:bg-orange-600 disabled:opacity-30 transition-colors">Get My Score →</button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {stage === 'capture' && (
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
+            <div className="text-4xl mb-4">🎯</div>
+            <h3 className="text-2xl font-black text-[#0F1631] mb-2">Almost there!</h3>
+            <p className="text-gray-500 mb-6">Enter your info to see your personalized score and action plan.</p>
+            <div className="space-y-3 text-left mb-5">
+              {/* Honeypot */}
+              <input type="text" name="website" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+              <input value={name} onChange={e => setName(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#2D1FB1]"
+                placeholder="Your name" />
+              <input value={email} onChange={e => setEmail(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#2D1FB1]"
+                placeholder="Your email address *" type="email" required />
+              <input value={org} onChange={e => setOrg(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#2D1FB1]"
+                placeholder="Organization name" />
+            </div>
+            <button onClick={submitResult} disabled={!email.trim() || submitting}
+              className="w-full py-3.5 bg-[#F97316] text-white font-black rounded-xl hover:bg-orange-600 disabled:opacity-50 transition-colors">
+              {submitting ? 'Calculating…' : 'See My Score →'}
+            </button>
+            <p className="text-xs text-gray-400 mt-3">No spam. Unsubscribe anytime.</p>
+          </div>
+        )}
+
+        {stage === 'result' && result && (
+          <div>
+            <div className={`rounded-2xl border-2 p-8 text-center mb-6 ${result.config.bg} ${result.config.border}`}>
+              <div className="text-6xl font-black mb-2" style={{ color: result.config.color }}>{result.score}%</div>
+              <div className="text-2xl font-black mb-2" style={{ color: result.config.color }}>{result.config.label}</div>
+              <div className="text-sm text-gray-600 mb-1">{result.config.pctRange} readiness range</div>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-5">
+              <h4 className="font-bold text-[#0F1631] mb-2">What this means</h4>
+              <p className="text-sm text-gray-600 leading-relaxed mb-4">{result.config.description}</p>
+              <div className="bg-[#F8FAFC] rounded-xl p-4">
+                <div className="text-xs font-bold text-[#2D1FB1] mb-1 uppercase tracking-wider">Recommended next step</div>
+                <p className="text-sm text-gray-700">{result.config.nextStep}</p>
+              </div>
+            </div>
+            <div className="bg-[#2D1FB1] rounded-2xl p-6 text-center">
+              <div className="text-white font-bold text-lg mb-2">Ready to close the gaps?</div>
+              <p className="text-indigo-200 text-sm mb-5">Cap Fund Academy has the exact training, templates, and AI scoring tools you need.</p>
+              <button onClick={onComplete} className="px-8 py-3 bg-[#F97316] text-white font-black rounded-xl hover:bg-orange-600 transition-colors">
+                Explore Certifications →
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 text-center mt-4">Results sent to your email. Check your inbox.</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── RMAP Checklist Lead Magnet ───────────────────────────────────────────
+  const RMAP_CHECKLIST = [
+    { section: 'Required for All Applicants — 4280.316(a)', items: [
+      { item: 'SF-424 Application for Federal Assistance', points: null, critical: true },
+      { item: 'UEI number (from SAM.gov)', points: null, critical: true },
+      { item: 'SF-424A Budget Information (non-construction)', points: null, critical: true },
+      { item: 'RD 1910-11 Certification of No Federal Debt (microlender applicants)', points: null, critical: true },
+      { item: 'Documentation for 400-8v5 Compliance Review', points: null, critical: true },
+      { item: 'Evidence of nonprofit status (bylaws, articles of incorporation, citizenship requirement)', points: null, critical: true },
+      { item: 'Certificate of Good Standing (not more than 6 months old)', points: null, critical: true },
+      { item: 'Credit elsewhere certification', points: null, critical: true },
+      { item: 'Organizational chart — named individuals, management positions', points: 5, critical: true },
+      { item: 'Resumes for all key personnel shown on org chart', points: 5, critical: true },
+      { item: 'Succession plan for key RMAP personnel', points: 5, critical: true },
+      { item: 'Policy & procedures manual excerpts (loans, fund management, TA)', points: 5, critical: true },
+      { item: 'Financial statements — current year + 2 prior years', points: 10, critical: true },
+      { item: 'Organizational mission statement', points: 5, critical: true },
+      { item: 'Geographic service area description + county/jurisdiction count', points: 10, critical: true },
+    ]},
+    { section: 'Experienced Microlender (>3 years) — 4280.316(b)', items: [
+      { item: 'Microloan history table: 3 prior Federal Fiscal Years (count, $, rural %, demographics)', points: 20, critical: true },
+      { item: 'On-time payment rate data (3 prior years)', points: 10, critical: true },
+      { item: 'TA history: sessions, clients, outcomes, types of delivery', points: 10, critical: true },
+      { item: 'Commitment / support letters from community partners', points: 10, critical: true },
+      { item: 'Work plan (microlending goals, TA, staffing, timeline)', points: 5, critical: true },
+    ]},
+    { section: 'Less-Experienced Microlender (≤3 years) — 4280.316(c)', items: [
+      { item: '5-page detailed work plan (approach, staffing, outreach, milestones)', points: 20, critical: true },
+      { item: 'Documentation of years in business / operational track record', points: 10, critical: true },
+      { item: 'Staff qualifications and training plan', points: 10, critical: true },
+      { item: 'Support/commitment letters from community partners', points: 10, critical: true },
+      { item: 'Benchmarking against comparable RMAP programs', points: 5, critical: true },
+    ]},
+    { section: 'TA-Only MDO — 4280.316(d)', items: [
+      { item: 'TA history log: sessions, clients, methods, outcomes (3 years)', points: 20, critical: true },
+      { item: 'Documentation of microloans resulting from TA (loan conversion)', points: 15, critical: true },
+      { item: 'Description of TA methods and delivery approach', points: 10, critical: true },
+      { item: 'Evaluation reports and outcome data', points: 5, critical: true },
+      { item: 'Proposed TA plan with deliverables and targets', points: 5, critical: true },
+    ]},
+  ];
+
+  function RMAPChecklist({ onCapture }) {
+    const [captured, setCaptured] = useState(false);
+    const [name, setName]         = useState('');
+    const [email, setEmail]       = useState('');
+    const [org, setOrg]           = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [checked, setChecked]   = useState({});
+
+    const submit = async () => {
+      if (!email.trim()) return;
+      setSubmitting(true);
+      try {
+        await fetch('/.netlify/functions/lead-capture', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, organization: org, source: 'checklist' })
+        });
+      } catch {}
+      setCaptured(true);
+      setSubmitting(false);
+    };
+
+    const totalPoints = RMAP_CHECKLIST.flatMap(s => s.items).reduce((sum, i) => sum + (i.points || 0), 0);
+    const checkedCount = Object.values(checked).filter(Boolean).length;
+    const totalItems = RMAP_CHECKLIST.flatMap(s => s.items).length;
+
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12 fade-in">
+        <div className="text-center mb-10">
+          <div className="inline-block bg-[#2D1FB1] text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4">Free Resource</div>
+          <h2 className="text-3xl font-black text-[#0F1631] mb-3">RMAP Evidence Checklist</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto">Every document required for a USDA RMAP application, mapped to the exact 7 CFR 4280.316 scoring criteria. Use this as your application roadmap.</p>
+        </div>
+
+        {!captured ? (
+          <div className="max-w-md mx-auto bg-white border-2 border-[#2D1FB1] rounded-2xl p-6 mb-10 text-center">
+            <div className="text-2xl mb-3">📋</div>
+            <h3 className="font-black text-[#0F1631] mb-1">Get the Full Checklist</h3>
+            <p className="text-sm text-gray-500 mb-5">Enter your email to unlock the interactive checklist and receive a copy in your inbox.</p>
+            <input type="text" name="website" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+            <div className="space-y-2 mb-4">
+              <input value={name} onChange={e => setName(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#2D1FB1]" placeholder="Your name" />
+              <input value={email} onChange={e => setEmail(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#2D1FB1]" placeholder="Email address *" type="email" />
+              <input value={org} onChange={e => setOrg(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#2D1FB1]" placeholder="Organization" />
+            </div>
+            <button onClick={submit} disabled={!email.trim() || submitting} className="w-full py-3 bg-[#F97316] text-white font-black rounded-xl hover:bg-orange-600 disabled:opacity-50 transition-colors">
+              {submitting ? 'Unlocking…' : 'Unlock Free Checklist →'}
+            </button>
+          </div>
+        ) : (
+          <div className="mb-6">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+              <span className="text-2xl">✅</span>
+              <div><strong className="text-green-800">Checklist unlocked!</strong><span className="text-green-700 text-sm ml-2">A copy has been sent to your email.</span></div>
+            </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm text-gray-500">{checkedCount}/{totalItems} items checked · {totalPoints} total scoring points</div>
+              <button onClick={() => window.print()} className="text-sm text-[#2D1FB1] font-semibold hover:underline">🖨 Print Checklist</button>
+            </div>
+          </div>
+        )}
+
+        {captured && (
+          <div className="space-y-6">
+            {RMAP_CHECKLIST.map((section, si) => (
+              <div key={si} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div className="bg-[#0F1631] text-white px-5 py-3 text-sm font-bold">{section.section}</div>
+                <div className="divide-y divide-gray-100">
+                  {section.items.map((item, ii) => {
+                    const key = `${si}-${ii}`;
+                    return (
+                      <label key={key} className="flex items-start gap-3 px-5 py-3 hover:bg-gray-50 cursor-pointer">
+                        <input type="checkbox" checked={!!checked[key]} onChange={e => setChecked(c => ({ ...c, [key]: e.target.checked }))}
+                          className="mt-0.5 flex-shrink-0 accent-[#2D1FB1]" />
+                        <div className="flex-1">
+                          <span className={`text-sm ${checked[key] ? 'line-through text-gray-400' : 'text-gray-800'}`}>{item.item}</span>
+                        </div>
+                        {item.points && (
+                          <span className={`text-xs font-bold flex-shrink-0 px-2 py-0.5 rounded-full ${checked[key] ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-[#2D1FB1]'}`}>
+                            {item.points} pts
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <div className="text-center py-6">
+              <p className="text-sm text-gray-500 mb-4">Want to understand every item on this checklist in depth?</p>
+              <button onClick={onCapture} className="px-8 py-3 bg-[#2D1FB1] text-white font-black rounded-xl hover:bg-indigo-700 transition-colors">Explore Cert 3: RMAP Application & Scoring →</button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── VSL / Webinar Page ───────────────────────────────────────────────────
+  function VSLPage({ onCTA }) {
+    const [name, setName]   = useState('');
+    const [email, setEmail] = useState('');
+    const [org, setOrg]     = useState('');
+    const [submitted, setSubmitted] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    const submit = async () => {
+      if (!email.trim()) return;
+      setSubmitting(true);
+      try {
+        await fetch('/.netlify/functions/lead-capture', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, organization: org, source: 'webinar' })
+        });
+      } catch {}
+      setSubmitted(true);
+      setSubmitting(false);
+    };
+
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12 fade-in">
+        <div className="text-center mb-8">
+          <div className="inline-block bg-[#F97316] text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4">Free Training</div>
+          <h1 className="text-4xl font-black text-[#0F1631] mb-4 leading-tight">How to Build a USDA-Ready Microlending Program</h1>
+          <p className="text-xl text-gray-500 max-w-2xl mx-auto">The 5-step framework for nonprofits, CDFIs, and rural development organizations to become competitive RMAP applicants.</p>
+        </div>
+
+        {/* Video embed */}
+        <div className="rounded-2xl overflow-hidden bg-[#0F1631] aspect-video mb-8 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="text-6xl mb-4">▶</div>
+            <div className="text-lg font-bold mb-2">Training Video</div>
+            <div className="text-sm text-gray-400">Video will appear here once configured in Admin → Funnel Pages</div>
+          </div>
+        </div>
+
+        {/* What you'll learn */}
+        <div className="grid md:grid-cols-2 gap-4 mb-10">
+          {[
+            ['📋','Understand the RMAP scoring matrix','Learn exactly how USDA scores applications — 45 baseline points + pathway-specific criteria from 7 CFR 4280.316'],
+            ['📂','Build a competitive evidence binder','Know which documents to prepare, how to format them, and what reviewers actually look for'],
+            ['🤖','Use AI to simulate your score','Run your application data through our AI scoring engine before you submit'],
+            ['🏆','Avoid the top 5 disqualifiers','Common mistakes that eliminate otherwise strong applicants — and how to avoid them'],
+          ].map(([icon, title, desc], i) => (
+            <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 flex items-start gap-3">
+              <span className="text-2xl flex-shrink-0">{icon}</span>
+              <div><div className="font-bold text-[#0F1631] text-sm mb-1">{title}</div><div className="text-xs text-gray-500 leading-relaxed">{desc}</div></div>
+            </div>
+          ))}
+        </div>
+
+        {/* Lead capture */}
+        {!submitted ? (
+          <div className="bg-[#2D1FB1] rounded-2xl p-8 text-center">
+            <h3 className="text-2xl font-black text-white mb-2">Watch the Free Training</h3>
+            <p className="text-indigo-200 mb-6 text-sm">Enter your info to access the full training and get your free RMAP checklist.</p>
+            <input type="text" name="website" style={{ display: 'none' }} tabIndex={-1} />
+            <div className="space-y-3 max-w-sm mx-auto mb-5">
+              <input value={name} onChange={e => setName(e.target.value)} className="w-full border-0 rounded-lg px-4 py-3 text-sm focus:outline-none" placeholder="Your name" />
+              <input value={email} onChange={e => setEmail(e.target.value)} className="w-full border-0 rounded-lg px-4 py-3 text-sm focus:outline-none" placeholder="Email address *" type="email" />
+              <input value={org} onChange={e => setOrg(e.target.value)} className="w-full border-0 rounded-lg px-4 py-3 text-sm focus:outline-none" placeholder="Organization" />
+            </div>
+            <button onClick={submit} disabled={!email.trim() || submitting} className="px-10 py-3.5 bg-[#F97316] text-white font-black rounded-xl hover:bg-orange-600 disabled:opacity-50 transition-colors">
+              {submitting ? 'Registering…' : 'Watch Free Training →'}
+            </button>
+            <p className="text-xs text-indigo-300 mt-3">No spam. Unsubscribe anytime.</p>
+          </div>
+        ) : (
+          <div className="bg-green-50 border border-green-200 rounded-2xl p-8 text-center">
+            <div className="text-4xl mb-3">🎉</div>
+            <h3 className="font-black text-green-800 text-xl mb-2">You're in!</h3>
+            <p className="text-green-700 text-sm mb-5">Check your email for the training link and your free RMAP checklist.</p>
+            <button onClick={onCTA} className="px-8 py-3 bg-[#2D1FB1] text-white font-black rounded-xl hover:bg-indigo-700 transition-colors">Explore Certifications →</button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // ─── Pricing Page ────────────────────────────────────────────────────────
   function PricingPage({ onCheckout, user }) {
     const [offers, setOffers] = useState([]);
@@ -2481,8 +2874,12 @@ window.ENV = {
     return (
       <div className="min-h-screen flex flex-col">
         <Header view={pubView} setView={setPubView} onLoginClick={() => setLoginOpen(true)} />
-        {pubView === 'home' && <Homepage setView={setPubView} />}
-        {pubView === 'trust' && <TrustCenter setView={setPubView} />}
+        {pubView === 'home'      && <Homepage setView={setPubView} />}
+        {pubView === 'trust'     && <TrustCenter setView={setPubView} />}
+        {pubView === 'quiz'      && <RLFReadinessQuiz onComplete={() => setPubView('home')} />}
+        {pubView === 'checklist' && <RMAPChecklist onCapture={() => setPubView('home')} />}
+        {pubView === 'webinar'   && <VSLPage onCTA={() => setPubView('home')} />}
+        {pubView === 'pricing'   && <PricingPage user={null} />}
         <Footer setView={setPubView} />
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)}
           onLoginSuccess={loadUser} />

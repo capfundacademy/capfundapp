@@ -5,6 +5,10 @@
 [functions]
   included_files = ["netlify/functions/**"]
 
+[[scheduled-functions]]
+  name = "abandoned-checkout"
+  cron = "0 */2 * * *"
+
 # Stripe webhook needs raw body for signature verification
 [[redirects]]
   from = "/.netlify/functions/stripe-webhook"
