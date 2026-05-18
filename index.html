@@ -204,7 +204,7 @@ window.ENV = {
 
   // ─── Logo component ───────────────────────────────────────────────────────
   function Logo({ size = 'md' }) {
-    const h = size === 'sm' ? 32 : size === 'lg' ? 56 : 40;
+    const h = size === 'sm' ? 48 : size === 'lg' ? 96 : 72;
     return (
       <img src="/assets/logo.png" alt="Cap Fund Academy" height={h} style={{ height: h, width: 'auto', display: 'block' }} />
     );
@@ -233,7 +233,7 @@ window.ENV = {
     const [menuOpen, setMenuOpen] = useState(false);
     return (
       <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <button onClick={() => setView('home')} className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2D1FB1] rounded" aria-label="Cap Fund Academy home">
             <Logo />
           </button>
@@ -286,9 +286,9 @@ window.ENV = {
             {/* Brand */}
             <div>
               <div className="mb-3">
-                <img src="/assets/logo.png" alt="Cap Fund Academy" style={{ height: 36, width: 'auto', filter: 'brightness(0) invert(1)' }} />
+                <img src="/assets/logo.png" alt="Cap Fund Academy" style={{ height: 64, width: 'auto', filter: 'brightness(0) invert(1)' }} />
               </div>
-              <p className="text-xs text-gray-400 leading-relaxed">Capital Access Training Platform</p>
+              <p className="text-xs text-gray-400 leading-relaxed mt-2">Capital Access Training Platform</p>
             </div>
             {/* Links */}
             <div>
@@ -1136,7 +1136,7 @@ window.ENV = {
           <button onClick={onSignOut} className="px-4 py-2 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50 transition-colors">Sign Out</button>
         </div>
         <div className="flex gap-1 border-b border-gray-200 mb-8">
-          {[['certifications','Certifications'],['students','Students'],['review','Content Review']].map(([id,label]) => (
+          {[['certifications','Certifications'],['students','Students'],['review','Content Review'],['commerce','Offers & Orders']].map(([id,label]) => (
             <button key={id} onClick={() => setTab(id)}
               className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${tab===id ? 'border-[#2D1FB1] text-[#2D1FB1]' : 'border-transparent text-gray-500 hover:text-[#0F1631]'}`}>
               {label}
@@ -1206,6 +1206,7 @@ window.ENV = {
               ))}
             </div>
           )}
+          {tab === 'commerce' && <AdminOffersManager />}
         </>)}
       </main>
     );
@@ -1955,6 +1956,392 @@ window.ENV = {
     return null;
   }
 
+  // ─── Pricing Page ────────────────────────────────────────────────────────
+  function PricingPage({ onCheckout, user }) {
+    const [offers, setOffers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [coupon, setCoupon] = useState('');
+    const [checkingOut, setCheckingOut] = useState(null);
+    const [checkoutError, setCheckoutError] = useState('');
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb) { setLoading(false); return; }
+        const { data } = await sb.from('offers').select('*').eq('is_active', true).order('sort_order');
+        setOffers(data || []);
+        setLoading(false);
+      })();
+    }, []);
+
+    const startCheckout = async (offer) => {
+      if (!user) { setCheckoutError('Please log in to purchase.'); return; }
+      setCheckingOut(offer.id);
+      setCheckoutError('');
+      const sb = await getSupabase();
+      if (!sb) { setCheckingOut(null); return; }
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        const res = await fetch('/.netlify/functions/stripe-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ offer_id: offer.id, coupon_code: coupon || undefined })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Checkout failed');
+        window.location.href = json.url;
+      } catch (e) { setCheckoutError(e.message); setCheckingOut(null); }
+    };
+
+    const fmt = (cents) => '$' + (cents / 100).toLocaleString('en-US', { minimumFractionDigits: 0 });
+
+    const typeIcon = { single_cert: '📄', bundle: '📚', org_license: '🏢', subscription: '🔄', dwu: '🤝' };
+
+    return (
+      <main className="max-w-6xl mx-auto px-4 py-16 fade-in">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-black text-[#0F1631] mb-3">Pricing & Offers</h1>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">Choose the path that fits your organization's goals and budget. All certifications include lifetime access and artifact templates.</p>
+        </div>
+
+        {checkoutError && (
+          <div className="max-w-lg mx-auto mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{checkoutError}</div>
+        )}
+
+        {/* Coupon input */}
+        <div className="max-w-sm mx-auto mb-10 flex gap-2">
+          <input value={coupon} onChange={e => setCoupon(e.target.value.toUpperCase())}
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1]"
+            placeholder="Coupon code (optional)" />
+        </div>
+
+        {loading ? <div className="text-center py-12 text-gray-400">Loading offers…</div> : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {offers.map(offer => (
+              <div key={offer.id} className={`bg-white rounded-2xl border-2 p-6 flex flex-col ${offer.is_featured ? 'border-[#F97316] shadow-xl' : 'border-gray-200'}`}>
+                {offer.is_featured && (
+                  <div className="text-xs font-black text-[#F97316] uppercase tracking-wider mb-3">Most Popular</div>
+                )}
+                <div className="text-2xl mb-2">{typeIcon[offer.offer_type] || '📋'}</div>
+                <h3 className="text-xl font-black text-[#0F1631] mb-2">{offer.title}</h3>
+                <p className="text-gray-500 text-sm mb-4 leading-relaxed flex-1">{offer.description}</p>
+                {offer.features?.length > 0 && (
+                  <ul className="space-y-1.5 mb-6">
+                    {offer.features.map((f, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                        <span className="text-green-500 font-bold flex-shrink-0">✓</span>{f}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="mt-auto">
+                  <div className="text-3xl font-black text-[#0F1631] mb-1">
+                    {fmt(offer.price_cents)}
+                    {offer.offer_type === 'subscription' && <span className="text-base font-normal text-gray-400">/mo</span>}
+                  </div>
+                  {offer.seat_limit > 1 && <div className="text-xs text-gray-400 mb-3">Up to {offer.seat_limit} seats</div>}
+                  {offer.offer_type === 'dwu' ? (
+                    <a href="mailto:support@capfundacademy.com?subject=Done-With-You Application Support Inquiry"
+                      className="block w-full py-3 text-center bg-[#0F1631] text-white font-bold rounded-xl hover:bg-gray-800 transition-colors text-sm">
+                      Contact Us →
+                    </a>
+                  ) : (
+                    <button onClick={() => startCheckout(offer)} disabled={!!checkingOut}
+                      className={`w-full py-3 font-bold rounded-xl transition-colors text-sm ${offer.is_featured ? 'bg-[#F97316] hover:bg-orange-600 text-white' : 'bg-[#2D1FB1] hover:bg-indigo-700 text-white'} disabled:opacity-50`}>
+                      {checkingOut === offer.id ? 'Redirecting…' : 'Get Started'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-12 text-center text-xs text-gray-400 max-w-2xl mx-auto leading-relaxed">
+          {DISCLAIMER}
+        </div>
+      </main>
+    );
+  }
+
+  // ─── Admin Offers Manager ─────────────────────────────────────────────────
+  function AdminOffersManager() {
+    const [offers, setOffers] = useState([]);
+    const [coupons, setCoupons] = useState([]);
+    const [orders, setOrders] = useState([]);
+    const [tab, setTab] = useState('offers');
+    const [loading, setLoading] = useState(true);
+    const [editing, setEditing] = useState(null);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb) { setLoading(false); return; }
+        const [{ data: o }, { data: c }, { data: ord }] = await Promise.all([
+          sb.from('offers').select('*').order('sort_order'),
+          sb.from('coupons').select('*').order('created_at', { ascending: false }),
+          sb.from('orders').select('*, offers(title), profiles(full_name,email)').order('created_at', { ascending: false }).limit(50)
+        ]);
+        setOffers(o || []);
+        setCoupons(c || []);
+        setOrders(ord || []);
+        setLoading(false);
+      })();
+    }, []);
+
+    const saveOffer = async (offer) => {
+      setSaving(true);
+      const sb = await getSupabase();
+      if (!sb) { setSaving(false); return; }
+      if (offer.id) {
+        const { data } = await sb.from('offers').update({ ...offer, updated_at: new Date().toISOString() }).eq('id', offer.id).select().single();
+        setOffers(prev => prev.map(o => o.id === data.id ? data : o));
+      } else {
+        const { data } = await sb.from('offers').insert({ ...offer }).select().single();
+        setOffers(prev => [...prev, data]);
+      }
+      setSaving(false);
+      setEditing(null);
+    };
+
+    const toggleActive = async (offer) => {
+      const sb = await getSupabase();
+      if (!sb) return;
+      await sb.from('offers').update({ is_active: !offer.is_active }).eq('id', offer.id);
+      setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, is_active: !o.is_active } : o));
+    };
+
+    const fmt = (cents) => '$' + (cents / 100).toLocaleString();
+
+    if (loading) return <div className="text-center py-12 text-gray-400">Loading…</div>;
+
+    return (
+      <div className="mt-6">
+        <div className="flex gap-1 border-b border-gray-200 mb-6">
+          {[['offers','Offers'],['coupons','Coupons'],['orders','Orders']].map(([id,label]) => (
+            <button key={id} onClick={() => setTab(id)}
+              className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab===id ? 'border-[#F97316] text-[#F97316]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'offers' && (
+          <div>
+            <div className="flex justify-end mb-4">
+              <button onClick={() => setEditing({})} className="px-4 py-2 bg-[#F97316] text-white text-sm font-bold rounded-lg hover:bg-orange-600 transition-colors">+ New Offer</button>
+            </div>
+            <div className="space-y-2">
+              {offers.map(offer => (
+                <div key={offer.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4">
+                  <div className="flex-1">
+                    <div className="font-semibold text-[#0F1631] text-sm">{offer.title}</div>
+                    <div className="text-xs text-gray-400">{offer.offer_type} · {fmt(offer.price_cents)} · {offer.seat_limit} seat(s)</div>
+                  </div>
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${offer.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
+                    {offer.is_active ? 'Active' : 'Hidden'}
+                  </span>
+                  <button onClick={() => setEditing(offer)} className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Edit</button>
+                  <button onClick={() => toggleActive(offer)} className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    {offer.is_active ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'orders' && (
+          <div className="space-y-2">
+            {orders.length === 0 && <div className="text-center py-12 text-gray-400">No orders yet.</div>}
+            {orders.map(order => (
+              <div key={order.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4">
+                <div className="flex-1">
+                  <div className="font-semibold text-sm text-[#0F1631]">{order.profiles?.full_name || order.profiles?.email || 'Unknown'}</div>
+                  <div className="text-xs text-gray-400">{order.offers?.title} · {fmt(order.amount_cents)} · {new Date(order.created_at).toLocaleDateString()}</div>
+                </div>
+                <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
+                  order.status === 'paid' ? 'bg-green-50 text-green-700' :
+                  order.status === 'refunded' ? 'bg-gray-100 text-gray-500' :
+                  order.status === 'failed' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-700'}`}>
+                  {order.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === 'coupons' && (
+          <div className="text-center py-12 text-gray-400">Coupon management — connect to Stripe dashboard for coupon creation.</div>
+        )}
+
+        {/* Edit modal */}
+        {editing !== null && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+              <h3 className="font-bold text-lg text-[#0F1631] mb-4">{editing.id ? 'Edit Offer' : 'New Offer'}</h3>
+              <div className="space-y-3">
+                {[['title','Title','text'],['slug','Slug (URL)','text'],['description','Description','text'],['price_cents','Price (cents)','number'],['seat_limit','Seat Limit','number'],['stripe_price_id','Stripe Price ID','text']].map(([key,label,type]) => (
+                  <div key={key}>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
+                    <input type={type} value={editing[key] || ''} onChange={e => setEditing(ed => ({ ...ed, [key]: type === 'number' ? parseInt(e.target.value)||0 : e.target.value }))}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1]" />
+                  </div>
+                ))}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Type</label>
+                  <select value={editing.offer_type || 'bundle'} onChange={e => setEditing(ed => ({ ...ed, offer_type: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1]">
+                    {['single_cert','bundle','org_license','subscription','dwu'].map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={editing.is_featured || false} onChange={e => setEditing(ed => ({ ...ed, is_featured: e.target.checked }))} />
+                  Featured offer
+                </label>
+              </div>
+              <div className="flex gap-3 mt-5">
+                <button onClick={() => setEditing(null)} className="flex-1 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+                <button onClick={() => saveOffer(editing)} disabled={saving} className="flex-1 py-2 bg-[#2D1FB1] text-white font-bold rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                  {saving ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── Org Owner Dashboard ──────────────────────────────────────────────────
+  function OrgDashboard({ user, profile, onSignOut }) {
+    const [seats, setSeats] = useState(null);
+    const [members, setMembers] = useState([]);
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviting, setInviting] = useState(false);
+    const [invitations, setInvitations] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb || !profile?.organization_id) { setLoading(false); return; }
+        const [{ data: s }, { data: m }, { data: inv }] = await Promise.all([
+          sb.from('organization_seats').select('*, offers(title)').eq('organization_id', profile.organization_id).maybeSingle(),
+          sb.from('organization_members').select('*, profiles(full_name,email,role)').eq('organization_id', profile.organization_id),
+          sb.from('seat_invitations').select('*').eq('organization_id', profile.organization_id).eq('status','pending')
+        ]);
+        setSeats(s);
+        setMembers(m || []);
+        setInvitations(inv || []);
+        setLoading(false);
+      })();
+    }, [profile?.organization_id]);
+
+    const sendInvite = async () => {
+      if (!inviteEmail.trim()) return;
+      const available = (seats?.total_seats || 0) - (seats?.used_seats || 0);
+      if (available <= 0) { setError('No seats available. Purchase additional seats to invite more members.'); return; }
+      setInviting(true); setError('');
+      const sb = await getSupabase();
+      if (!sb) { setInviting(false); return; }
+      const { error: invErr } = await sb.from('seat_invitations').upsert({
+        organization_id: profile.organization_id,
+        invited_by: user.id, email: inviteEmail.trim().toLowerCase(),
+        status: 'pending', expires_at: new Date(Date.now() + 7*24*60*60*1000).toISOString()
+      }, { onConflict: 'organization_id,email' });
+      if (invErr) { setError(invErr.message); } else {
+        setInvitations(prev => [...prev, { email: inviteEmail.trim(), status: 'pending', created_at: new Date().toISOString() }]);
+        setInviteEmail('');
+      }
+      setInviting(false);
+    };
+
+    if (loading) return <div className="text-center py-12 text-gray-400">Loading organization…</div>;
+
+    return (
+      <main className="max-w-4xl mx-auto px-4 py-10 fade-in">
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-[#0F1631] mb-1">Organization Dashboard</h1>
+            <p className="text-sm text-gray-500">{user?.email}</p>
+          </div>
+          <button onClick={onSignOut} className="px-4 py-2 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50 transition-colors">Sign Out</button>
+        </div>
+
+        {seats && (
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+              <div className="text-3xl font-black text-[#2D1FB1]">{seats.total_seats}</div>
+              <div className="text-xs text-gray-500 mt-1">Total Seats</div>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+              <div className="text-3xl font-black text-green-600">{seats.used_seats}</div>
+              <div className="text-xs text-gray-500 mt-1">Active Members</div>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+              <div className="text-3xl font-black text-[#F97316]">{seats.total_seats - seats.used_seats}</div>
+              <div className="text-xs text-gray-500 mt-1">Available Seats</div>
+            </div>
+          </div>
+        )}
+
+        {/* Invite */}
+        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+          <div className="font-bold text-[#0F1631] mb-3">Invite a Team Member</div>
+          {error && <div className="text-sm text-red-600 mb-3">{error}</div>}
+          <div className="flex gap-2">
+            <input value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1]"
+              placeholder="colleague@organization.org" type="email" />
+            <button onClick={sendInvite} disabled={inviting || !inviteEmail.trim()}
+              className="px-5 py-2 bg-[#2D1FB1] text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+              {inviting ? 'Sending…' : 'Invite'}
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">An invitation link will be sent to this address. Expires in 7 days.</p>
+        </div>
+
+        {/* Members */}
+        {members.length > 0 && (
+          <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4">
+            <div className="font-bold text-[#0F1631] mb-3">Active Members ({members.length})</div>
+            <div className="space-y-2">
+              {members.map(m => (
+                <div key={m.id} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+                  <div className="w-8 h-8 rounded-full bg-[#2D1FB1] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    {(m.profiles?.full_name || m.profiles?.email || '?')[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-[#0F1631]">{m.profiles?.full_name || m.profiles?.email}</div>
+                    <div className="text-xs text-gray-400">{m.profiles?.email} · {m.role}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Pending invitations */}
+        {invitations.length > 0 && (
+          <div className="bg-amber-50 border border-amber-100 rounded-xl p-5">
+            <div className="font-bold text-amber-800 mb-3">Pending Invitations</div>
+            <div className="space-y-1">
+              {invitations.map((inv, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700">{inv.email}</span>
+                  <span className="text-xs text-amber-600">Pending</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+    );
+  }
+
   // ─── Root App ─────────────────────────────────────────────────────────────
   function App() {
     const [loading, setLoading]         = useState(true);
@@ -1963,7 +2350,7 @@ window.ENV = {
     const [profile, setProfile]         = useState(null);
     const [loginOpen, setLoginOpen]     = useState(false);
     // LMS navigation state
-    const [lmsView, setLmsView]         = useState('dashboard'); // dashboard | admin | catalog | cert | lesson | quiz | scoring
+    const [lmsView, setLmsView]         = useState('dashboard'); // dashboard | admin | catalog | cert | lesson | quiz | scoring | pricing | org
     const [selectedCert, setSelectedCert]     = useState(null);
     const [selectedLesson, setSelectedLesson] = useState(null);
     const [selectedMod, setSelectedMod]       = useState(null);
@@ -2038,12 +2425,16 @@ window.ENV = {
             <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <button onClick={() => setLmsView(isStaff ? 'admin' : 'dashboard')} className="flex items-center">
-                  <img src="/assets/logo.png" alt="Cap Fund Academy" style={{ height: 32, width: 'auto' }} />
+                  <img src="/assets/logo.png" alt="Cap Fund Academy" style={{ height: 52, width: 'auto' }} />
                 </button>
                 <button onClick={() => setLmsView('catalog')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Catalog</button>
                 <button onClick={() => setLmsView('scoring')} className="text-sm font-semibold text-[#F97316] hover:text-orange-600 transition-colors">🤖 Score My App</button>
+                <button onClick={() => setLmsView('pricing')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Pricing</button>
                 {isStaff && <button onClick={() => setLmsView('admin')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Admin</button>}
                 {!isStaff && <button onClick={() => setLmsView('dashboard')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Dashboard</button>}
+                {['organization_owner','organization_manager'].includes(profile?.role) && (
+                  <button onClick={() => setLmsView('org')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">My Org</button>
+                )}
               </div>
               <div className="text-xs text-gray-400">{user?.email}</div>
             </div>
@@ -2061,6 +2452,12 @@ window.ENV = {
           )}
           {lmsView === 'scoring' && (
             <ApplicationWorkspace user={user} profile={profile} onBack={() => setLmsView(isStaff ? 'admin' : 'dashboard')} />
+          )}
+          {lmsView === 'pricing' && (
+            <PricingPage user={user} />
+          )}
+          {lmsView === 'org' && (
+            <OrgDashboard user={user} profile={profile} onSignOut={handleSignOut} />
           )}
           {lmsView === 'cert' && selectedCert && (
             <CertDetail cert={selectedCert} onBack={() => setLmsView('catalog')}

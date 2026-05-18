@@ -2,6 +2,16 @@
   publish = "."
   functions = "netlify/functions"
 
+[functions]
+  included_files = ["netlify/functions/**"]
+
+# Stripe webhook needs raw body for signature verification
+[[redirects]]
+  from = "/.netlify/functions/stripe-webhook"
+  to = "/.netlify/functions/stripe-webhook"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
