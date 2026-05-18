@@ -1519,6 +1519,442 @@ window.ENV = {
     );
   }
 
+  // ─── Application Workspace ───────────────────────────────────────────────
+  const PROGRAM_LABELS = {
+    rmap: 'USDA RMAP — Rural Microentrepreneur Assistance',
+    rbdg: 'USDA RBDG — Rural Business Development Grant',
+    irp:  'IRP — Intermediary Relending Program',
+    rlf_ops: 'RLF Operational Readiness Review',
+    full_binder: 'Full Application Binder Gap Analysis',
+  };
+
+  const READINESS_COLORS = {
+    not_ready:        { bg: 'bg-red-50',    text: 'text-red-700',    border: 'border-red-200',    label: 'Not Ready' },
+    emerging:         { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', label: 'Emerging' },
+    competitive:      { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', label: 'Competitive' },
+    strong:           { bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200',   label: 'Strong' },
+    submission_ready: { bg: 'bg-green-50',  text: 'text-green-700',  border: 'border-green-200',  label: 'Submission Ready' },
+  };
+
+  function ApplicationWorkspace({ user, profile, onBack }) {
+    const [step, setStep] = useState('list'); // list | create | workspace | scoring | results
+    const [workspaces, setWorkspaces] = useState([]);
+    const [activeWS, setActiveWS]     = useState(null);
+    const [criteria, setCriteria]     = useState([]);
+    const [answers, setAnswers]       = useState({});
+    const [evidence, setEvidence]     = useState([]);
+    const [scoringResult, setScoringResult] = useState(null);
+    const [priorResults, setPriorResults]   = useState([]);
+    const [loading, setLoading]   = useState(true);
+    const [scoring, setScoring]   = useState(false);
+    const [scoreError, setScoreError] = useState('');
+    const [context, setContext]   = useState('');
+    const [uploading, setUploading] = useState(false);
+    const [newWS, setNewWS] = useState({ program_type: 'rmap', title: '', applicant_name: '', fiscal_year: new Date().getFullYear() });
+
+    useEffect(() => {
+      loadWorkspaces();
+    }, []);
+
+    const loadWorkspaces = async () => {
+      setLoading(true);
+      const sb = await getSupabase();
+      if (!sb) { setLoading(false); return; }
+      const { data } = await sb.from('application_workspaces').select('*').order('updated_at', { ascending: false });
+      setWorkspaces(data || []);
+      setLoading(false);
+    };
+
+    const createWorkspace = async () => {
+      if (!newWS.title.trim()) return;
+      const sb = await getSupabase();
+      if (!sb) return;
+      const { data } = await sb.from('application_workspaces').insert({
+        user_id: user.id, ...newWS, title: newWS.title.trim()
+      }).select().single();
+      if (data) { await openWorkspace(data); }
+    };
+
+    const openWorkspace = async (ws) => {
+      setActiveWS(ws);
+      setLoading(true);
+      const sb = await getSupabase();
+      if (!sb) { setLoading(false); return; }
+      const [{ data: rubric }, { data: ans }, { data: ev }, { data: results }] = await Promise.all([
+        sb.from('scoring_rubrics').select('id').eq('program_type', ws.program_type).eq('is_active', true).order('version', { ascending: false }).limit(1).maybeSingle(),
+        sb.from('application_answers').select('*').eq('workspace_id', ws.id),
+        sb.from('evidence_files').select('*').eq('workspace_id', ws.id),
+        sb.from('scoring_results').select('*, scoring_runs(started_at, model_used)').eq('workspace_id', ws.id).order('created_at', { ascending: false }).limit(5)
+      ]);
+      if (rubric) {
+        const { data: crit } = await sb.from('scoring_criteria').select('*').eq('rubric_id', rubric.id).order('sort_order');
+        setCriteria(crit || []);
+      }
+      const amap = {}; (ans || []).forEach(a => { amap[a.criterion_id] = a.answer_text || ''; });
+      setAnswers(amap);
+      setEvidence(ev || []);
+      setPriorResults(results || []);
+      setScoringResult(results?.[0] || null);
+      setLoading(false);
+      setStep('workspace');
+    };
+
+    const saveAnswer = async (criterionId, text) => {
+      setAnswers(a => ({ ...a, [criterionId]: text }));
+      const sb = await getSupabase();
+      if (!sb) return;
+      await sb.from('application_answers').upsert({
+        workspace_id: activeWS.id, criterion_id: criterionId, answer_text: text, updated_at: new Date().toISOString()
+      }, { onConflict: 'workspace_id,criterion_id' });
+    };
+
+    const uploadEvidence = async (file, criterionId) => {
+      setUploading(true);
+      const sb = await getSupabase();
+      if (!sb) { setUploading(false); return; }
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        const res = await fetch('/.netlify/functions/sign-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ workspace_id: activeWS.id, file_name: file.name, mime_type: file.type, file_size: file.size })
+        });
+        const { signed_url, path } = await res.json();
+        await fetch(signed_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+        const { data: ef } = await sb.from('evidence_files').insert({
+          workspace_id: activeWS.id, user_id: user.id, file_name: file.name,
+          file_path: path, file_size: file.size, mime_type: file.type,
+          label: file.name, criterion_id: criterionId || null
+        }).select().single();
+        if (ef) setEvidence(prev => [...prev, ef]);
+      } catch (e) { alert('Upload failed: ' + e.message); }
+      setUploading(false);
+    };
+
+    const runScoring = async () => {
+      setScoring(true); setScoreError('');
+      const sb = await getSupabase();
+      if (!sb) { setScoring(false); return; }
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        const res = await fetch('/.netlify/functions/ai-scoring', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ workspace_id: activeWS.id, context })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+        setScoringResult({ ...json.result, created_at: new Date().toISOString() });
+        setPriorResults(prev => [{ ...json.result, created_at: new Date().toISOString() }, ...prev]);
+        setStep('results');
+      } catch (e) { setScoreError(e.message); }
+      setScoring(false);
+    };
+
+    // Group criteria by section
+    const sections = criteria.reduce((acc, c) => {
+      if (!acc[c.section_code]) acc[c.section_code] = { label: c.section_label, items: [] };
+      acc[c.section_code].items.push(c);
+      return acc;
+    }, {});
+
+    if (loading && step !== 'list') return <div className="text-center py-20 text-gray-400">Loading workspace…</div>;
+
+    // LIST view
+    if (step === 'list') return (
+      <main className="max-w-4xl mx-auto px-4 py-10 fade-in">
+        <button onClick={onBack} className="text-sm text-gray-500 hover:text-[#2D1FB1] mb-6 flex items-center gap-1">← Dashboard</button>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-[#0F1631] mb-1">AI Scoring Engine</h1>
+            <p className="text-gray-500 text-sm">Score your RMAP, RBDG, or IRP application readiness against the exact federal criteria.</p>
+          </div>
+          <button onClick={() => setStep('create')} className="px-5 py-2.5 bg-[#F97316] text-white font-bold rounded-xl hover:bg-orange-600 transition-colors text-sm">+ New Workspace</button>
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-xs text-amber-800 leading-relaxed">
+          <strong>Advisory tool only.</strong> AI scoring estimates are based on publicly available federal criteria. Results do not represent USDA's review or determination and do not guarantee funding, eligibility, or approval.
+        </div>
+        {loading ? <div className="text-center py-12 text-gray-400">Loading…</div> : workspaces.length === 0 ? (
+          <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
+            <div className="text-4xl mb-4">📋</div>
+            <div className="font-bold text-[#0F1631] mb-2">No workspaces yet</div>
+            <p className="text-gray-500 text-sm mb-5">Create a workspace for each application you're preparing.</p>
+            <button onClick={() => setStep('create')} className="px-6 py-2.5 bg-[#2D1FB1] text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors text-sm">Create First Workspace</button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {workspaces.map(ws => (
+              <div key={ws.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer flex items-center gap-4" onClick={() => openWorkspace(ws)}>
+                <div className="w-10 h-10 rounded-lg bg-[#2D1FB1] text-white flex items-center justify-center text-xs font-black flex-shrink-0">{ws.program_type.toUpperCase().slice(0,4)}</div>
+                <div className="flex-1">
+                  <div className="font-bold text-[#0F1631]">{ws.title}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{PROGRAM_LABELS[ws.program_type]} · FY {ws.fiscal_year}</div>
+                </div>
+                <span className="text-[#2D1FB1] text-sm font-semibold">Open →</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    );
+
+    // CREATE view
+    if (step === 'create') return (
+      <main className="max-w-2xl mx-auto px-4 py-10 fade-in">
+        <button onClick={() => setStep('list')} className="text-sm text-gray-500 hover:text-[#2D1FB1] mb-6 flex items-center gap-1">← Back</button>
+        <h2 className="text-2xl font-bold text-[#0F1631] mb-6">New Application Workspace</h2>
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Program Type</label>
+            <select value={newWS.program_type} onChange={e => setNewWS(w => ({ ...w, program_type: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#2D1FB1]">
+              {Object.entries(PROGRAM_LABELS).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Workspace Title</label>
+            <input value={newWS.title} onChange={e => setNewWS(w => ({ ...w, title: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#2D1FB1]"
+              placeholder="e.g. Our Organization RMAP 2026 Application" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Applicant Organization Name</label>
+            <input value={newWS.applicant_name} onChange={e => setNewWS(w => ({ ...w, applicant_name: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#2D1FB1]"
+              placeholder="Legal name of your organization" />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Federal Fiscal Year</label>
+            <input type="number" value={newWS.fiscal_year} onChange={e => setNewWS(w => ({ ...w, fiscal_year: parseInt(e.target.value) }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#2D1FB1]" />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button onClick={() => setStep('list')} className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm hover:bg-gray-50 transition-colors">Cancel</button>
+            <button onClick={createWorkspace} disabled={!newWS.title.trim()}
+              className="flex-1 py-2.5 bg-[#2D1FB1] text-white font-bold rounded-xl text-sm hover:bg-indigo-700 disabled:opacity-40 transition-colors">Create Workspace</button>
+          </div>
+        </div>
+      </main>
+    );
+
+    // WORKSPACE view
+    if (step === 'workspace' || step === 'scoring') return (
+      <main className="max-w-5xl mx-auto px-4 py-10 fade-in">
+        <button onClick={() => { setStep('list'); setActiveWS(null); }} className="text-sm text-gray-500 hover:text-[#2D1FB1] mb-4 flex items-center gap-1">← All Workspaces</button>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-[#0F1631]">{activeWS?.title}</h1>
+            <p className="text-sm text-gray-500">{PROGRAM_LABELS[activeWS?.program_type]} · FY {activeWS?.fiscal_year}</p>
+          </div>
+          <div className="flex gap-2">
+            {scoringResult && <button onClick={() => setStep('results')} className="px-4 py-2 border border-[#2D1FB1] text-[#2D1FB1] text-sm font-semibold rounded-lg hover:bg-blue-50 transition-colors">View Last Score</button>}
+            <button onClick={runScoring} disabled={scoring}
+              className="px-5 py-2 bg-[#F97316] text-white text-sm font-bold rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors flex items-center gap-2">
+              {scoring ? '⏳ Scoring…' : '🤖 Run AI Score'}
+            </button>
+          </div>
+        </div>
+        {scoreError && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{scoreError}</div>}
+        <div className="mb-4 bg-amber-50 border border-amber-100 rounded-xl p-3 text-xs text-amber-700">
+          Answer each question as completely as possible. Upload supporting documents below each section. Then click "Run AI Score."
+        </div>
+
+        {/* Evidence upload (global) */}
+        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+          <div className="font-semibold text-[#0F1631] mb-3 text-sm">📎 Evidence Files ({evidence.length} uploaded)</div>
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-[#2D1FB1] font-semibold hover:underline">
+            {uploading ? '⏳ Uploading…' : '+ Upload document'}
+            <input type="file" className="sr-only" disabled={uploading} accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.txt,.csv"
+              onChange={e => { const f = e.target.files?.[0]; if (f) uploadEvidence(f, null); e.target.value = ''; }} />
+          </label>
+          {evidence.length > 0 && (
+            <div className="mt-3 space-y-1">
+              {evidence.map(ef => (
+                <div key={ef.id} className="flex items-center gap-2 text-xs text-gray-600">
+                  <span>📄</span><span>{ef.label || ef.file_name}</span>
+                  <span className="text-gray-400">({ef.file_size ? (ef.file_size/1024).toFixed(0)+'KB' : ''})</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Criteria by section */}
+        {Object.entries(sections).map(([sectionCode, section]) => (
+          <div key={sectionCode} className="mb-6">
+            <div className="bg-[#2D1FB1] text-white px-5 py-3 rounded-t-xl">
+              <div className="text-xs font-mono opacity-70">{sectionCode}</div>
+              <div className="font-bold">{section.label}</div>
+            </div>
+            <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl divide-y divide-gray-100">
+              {section.items.map(criterion => (
+                <div key={criterion.id} className="p-5">
+                  <div className="flex items-start justify-between gap-4 mb-2">
+                    <div>
+                      <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded mr-2">{criterion.criterion_code}</span>
+                      <span className="font-semibold text-sm text-[#0F1631]">{criterion.criterion_label}</span>
+                    </div>
+                    <span className="text-xs font-bold text-[#2D1FB1] flex-shrink-0">Max {criterion.max_points} pts</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-2 leading-relaxed">{criterion.description}</p>
+                  {criterion.evidence_hint && (
+                    <div className="text-xs text-gray-400 mb-2 bg-gray-50 rounded p-2">
+                      <strong>Evidence needed:</strong> {criterion.evidence_hint}
+                    </div>
+                  )}
+                  <textarea
+                    value={answers[criterion.id] || ''}
+                    onChange={e => saveAnswer(criterion.id, e.target.value)}
+                    placeholder="Describe what you have for this criterion. Be specific — include numbers, dates, and details the AI can evaluate…"
+                    rows={3}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1] resize-none"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* Context */}
+        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-6">
+          <div className="font-semibold text-sm text-[#0F1631] mb-2">Additional context for the AI (optional)</div>
+          <textarea value={context} onChange={e => setContext(e.target.value)} rows={3}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1] resize-none"
+            placeholder="Any context that doesn't fit the questions above: your submission timeline, specific USDA state office, prior application history, etc." />
+        </div>
+
+        <div className="text-center">
+          <button onClick={runScoring} disabled={scoring}
+            className="px-10 py-3.5 bg-[#F97316] text-white font-bold rounded-xl hover:bg-orange-600 disabled:opacity-50 transition-colors text-base">
+            {scoring ? '⏳ Running AI Score…' : '🤖 Run AI Score Now'}
+          </button>
+          <p className="text-xs text-gray-400 mt-2">Advisory only · Results do not represent USDA determination</p>
+        </div>
+      </main>
+    );
+
+    // RESULTS view
+    if (step === 'results' && scoringResult) {
+      const r = scoringResult;
+      const rl = READINESS_COLORS[r.readiness_level] || READINESS_COLORS.emerging;
+      const pct = r.max_possible_score ? Math.round((r.total_score_estimate / r.max_possible_score) * 100) : 0;
+      return (
+        <main className="max-w-4xl mx-auto px-4 py-10 fade-in">
+          <div className="flex items-center justify-between mb-6">
+            <button onClick={() => setStep('workspace')} className="text-sm text-gray-500 hover:text-[#2D1FB1] flex items-center gap-1">← Back to Workspace</button>
+            <button onClick={() => window.print()} className="px-4 py-2 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors">🖨 Print Report</button>
+          </div>
+
+          {/* Score header */}
+          <div className={`rounded-2xl p-8 mb-6 text-center border ${rl.bg} ${rl.border}`}>
+            <div className={`text-6xl font-black mb-1 ${rl.text}`}>{r.total_score_estimate}<span className="text-2xl font-bold opacity-60">/{r.max_possible_score}</span></div>
+            <div className={`text-xl font-bold mb-2 ${rl.text}`}>{rl.label}</div>
+            <div className="w-full bg-white/60 rounded-full h-3 max-w-sm mx-auto mb-3">
+              <div className={`h-3 rounded-full ${rl.text.replace('text-','bg-')}`} style={{ width: `${pct}%` }}/>
+            </div>
+            {r.readiness_level_explanation && <p className="text-sm text-gray-600">{r.readiness_level_explanation}</p>}
+          </div>
+
+          {/* Section scores */}
+          {Object.keys(r.section_scores || {}).length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5">
+              <div className="font-bold text-[#0F1631] mb-3">Section Scores</div>
+              <div className="space-y-3">
+                {Object.entries(r.section_scores).map(([code, s]) => (
+                  <div key={code}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium text-gray-700">{s.label || code}</span>
+                      <span className="font-bold text-[#0F1631]">{s.score}/{s.max}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full">
+                      <div className="h-2 bg-[#2D1FB1] rounded-full" style={{ width: `${s.pct || (s.score/s.max*100)}%` }}/>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Plain English Summary */}
+          {r.plain_english_summary && (
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-5">
+              <div className="font-bold text-[#0F1631] mb-2">📝 Summary</div>
+              <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{r.plain_english_summary}</div>
+            </div>
+          )}
+
+          <div className="grid md:grid-cols-2 gap-4 mb-5">
+            {r.strengths?.length > 0 && (
+              <div className="bg-green-50 border border-green-100 rounded-xl p-5">
+                <div className="font-bold text-green-800 mb-2">✅ Strengths</div>
+                <ul className="space-y-1">{r.strengths.map((s,i) => <li key={i} className="text-sm text-green-700">• {s}</li>)}</ul>
+              </div>
+            )}
+            {r.weaknesses?.length > 0 && (
+              <div className="bg-red-50 border border-red-100 rounded-xl p-5">
+                <div className="font-bold text-red-800 mb-2">⚠️ Weaknesses</div>
+                <ul className="space-y-1">{r.weaknesses.map((s,i) => <li key={i} className="text-sm text-red-700">• {s}</li>)}</ul>
+              </div>
+            )}
+          </div>
+
+          {r.priority_fix_list?.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5">
+              <div className="font-bold text-[#0F1631] mb-3">🎯 Priority Action Plan</div>
+              <div className="space-y-2">
+                {r.priority_fix_list.map((item, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                    <span className="text-xs font-black text-white bg-[#F97316] rounded px-1.5 py-0.5 flex-shrink-0">{item.impact_points ? `+${item.impact_points}pts` : ''}</span>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-[#0F1631]">{item.action}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">Effort: {item.effort}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {r.missing_evidence?.length > 0 && (
+            <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5">
+              <div className="font-bold text-[#0F1631] mb-2">📂 Missing Evidence</div>
+              <ul className="space-y-1">{r.missing_evidence.map((e,i) => <li key={i} className="text-sm text-gray-700 flex items-start gap-2"><span className="text-red-400 flex-shrink-0">✗</span>{e}</li>)}</ul>
+            </div>
+          )}
+
+          {r.risk_flags?.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 mb-5">
+              <div className="font-bold text-amber-800 mb-2">🚩 Risk Flags</div>
+              <ul className="space-y-1">{r.risk_flags.map((f,i) => <li key={i} className="text-sm text-amber-700">• {f}</li>)}</ul>
+            </div>
+          )}
+
+          {/* Disclaimer */}
+          <div className="border-t border-gray-200 pt-5 mt-5">
+            <p className="text-xs text-gray-400 leading-relaxed">{r.ai_disclaimer}</p>
+          </div>
+
+          {priorResults.length > 1 && (
+            <div className="mt-6">
+              <div className="font-semibold text-sm text-gray-600 mb-2">Prior scoring runs ({priorResults.length - 1} more)</div>
+              <div className="space-y-2">
+                {priorResults.slice(1).map((pr, i) => (
+                  <button key={i} onClick={() => setScoringResult(pr)}
+                    className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition-colors flex items-center justify-between">
+                    <span className="text-gray-600">{new Date(pr.created_at).toLocaleDateString()}</span>
+                    <span className="font-bold text-[#2D1FB1]">{pr.total_score_estimate}/{pr.max_possible_score}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </main>
+      );
+    }
+
+    return null;
+  }
+
   // ─── Root App ─────────────────────────────────────────────────────────────
   function App() {
     const [loading, setLoading]         = useState(true);
@@ -1527,7 +1963,7 @@ window.ENV = {
     const [profile, setProfile]         = useState(null);
     const [loginOpen, setLoginOpen]     = useState(false);
     // LMS navigation state
-    const [lmsView, setLmsView]         = useState('dashboard'); // dashboard | admin | catalog | cert | lesson | quiz
+    const [lmsView, setLmsView]         = useState('dashboard'); // dashboard | admin | catalog | cert | lesson | quiz | scoring
     const [selectedCert, setSelectedCert]     = useState(null);
     const [selectedLesson, setSelectedLesson] = useState(null);
     const [selectedMod, setSelectedMod]       = useState(null);
@@ -1605,6 +2041,7 @@ window.ENV = {
                   <img src="/assets/logo.png" alt="Cap Fund Academy" style={{ height: 32, width: 'auto' }} />
                 </button>
                 <button onClick={() => setLmsView('catalog')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Catalog</button>
+                <button onClick={() => setLmsView('scoring')} className="text-sm font-semibold text-[#F97316] hover:text-orange-600 transition-colors">🤖 Score My App</button>
                 {isStaff && <button onClick={() => setLmsView('admin')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Admin</button>}
                 {!isStaff && <button onClick={() => setLmsView('dashboard')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Dashboard</button>}
               </div>
@@ -1621,6 +2058,9 @@ window.ENV = {
           )}
           {lmsView === 'catalog' && (
             <CertCatalog onSelectCert={openCert} profile={profile} />
+          )}
+          {lmsView === 'scoring' && (
+            <ApplicationWorkspace user={user} profile={profile} onBack={() => setLmsView(isStaff ? 'admin' : 'dashboard')} />
           )}
           {lmsView === 'cert' && selectedCert && (
             <CertDetail cert={selectedCert} onBack={() => setLmsView('catalog')}
