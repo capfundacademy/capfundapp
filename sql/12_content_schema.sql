@@ -113,10 +113,19 @@ CREATE TABLE IF NOT EXISTS content_campaigns (
   created_at    timestamptz NOT NULL DEFAULT now()
 );
 
--- Add campaign FK after both tables exist
-ALTER TABLE social_posts
-  ADD CONSTRAINT IF NOT EXISTS social_posts_campaign_id_fkey
-  FOREIGN KEY (campaign_id) REFERENCES content_campaigns(id) ON DELETE SET NULL;
+-- Add campaign FK after both tables exist (guard against duplicate)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'social_posts_campaign_id_fkey'
+    AND table_name = 'social_posts'
+  ) THEN
+    ALTER TABLE social_posts
+      ADD CONSTRAINT social_posts_campaign_id_fkey
+      FOREIGN KEY (campaign_id) REFERENCES content_campaigns(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 -- ============================================================
 -- ad_campaigns — paid advertising plans
