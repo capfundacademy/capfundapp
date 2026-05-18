@@ -63,7 +63,7 @@
 <!-- Environment config — replace before deploy -->
 <script>
 window.ENV = {
-  SUPABASE_URL: 'YOUR_SUPABASE_URL',
+  SUPABASE_URL: 'https://vwwjlyacairpuoexltth.supabase.co',
   SUPABASE_ANON_KEY: 'YOUR_SUPABASE_ANON_KEY'
 };
 </script>
@@ -762,9 +762,122 @@ window.ENV = {
   }
 
   // ─── Lesson Player ───────────────────────────────────────────────────────
+  // ─── AI Study Coach (DWY $10K members only) ──────────────────────────────
+  function StudyCoach({ lesson, cert, open, onClose, profile }) {
+    const [messages, setMessages] = useState([]);
+    const [input, setInput]       = useState('');
+    const [loading, setLoading]   = useState(false);
+    const bottomRef = useRef(null);
+
+    useEffect(() => {
+      if (open && messages.length === 0) {
+        setMessages([{
+          role: 'assistant',
+          content: `Hi! I'm your AI Study Coach for **${cert?.title || 'this certification'}**. I'm here to help you understand the material, answer questions about your application, and help you apply what you're learning to your real situation.\n\nWhat would you like to explore?`
+        }]);
+      }
+    }, [open]);
+
+    useEffect(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const send = async () => {
+      const text = input.trim();
+      if (!text || loading) return;
+      setInput('');
+      const newMessages = [...messages, { role: 'user', content: text }];
+      setMessages(newMessages);
+      setLoading(true);
+      try {
+        const sb = await getSupabase();
+        if (!sb) throw new Error('Not connected');
+        const { data: { session } } = await sb.auth.getSession();
+        const res = await fetch('/.netlify/functions/ai-coach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({
+            messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+            context: `You are an expert study coach for Cap Fund Academy, a certification platform for rural capital access programs (RMAP, RBDG, IRP, RLF). The student is currently studying: ${cert?.title || 'a certification'}. Current lesson: ${lesson?.title || 'unknown'}.\n\nYour role: help them understand the material, answer questions about USDA programs, and help them apply concepts to their real organization. Always be accurate about federal regulations. Never guarantee funding or imply USDA endorsement. If asked about their specific application, be helpful but note you cannot review official documents.`
+          })
+        });
+        const json = await res.json();
+        setMessages(prev => [...prev, { role: 'assistant', content: json.answer || 'I had trouble generating a response. Please try again.' }]);
+      } catch (e) {
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Connection error. Please check your internet and try again.' }]);
+      }
+      setLoading(false);
+    };
+
+    const renderMsg = (content) => {
+      return content
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/\n/g, '<br/>');
+    };
+
+    if (!open) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-end justify-end p-4 pointer-events-none">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md h-[600px] flex flex-col pointer-events-auto border border-gray-200">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100" style={{ background: 'linear-gradient(135deg, #2D1FB1, #1a1275)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white font-black text-sm">AI</div>
+              <div>
+                <div className="text-white font-bold text-sm">AI Study Coach</div>
+                <div className="text-indigo-200 text-xs">DWY Member Exclusive</div>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-white/70 hover:text-white transition-colors text-lg leading-none">×</button>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-[#2D1FB1] text-white rounded-br-sm' : 'bg-gray-100 text-[#0F1631] rounded-bl-sm'}`}
+                  dangerouslySetInnerHTML={{ __html: renderMsg(msg.content) }} />
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-gray-100 px-4 py-3 rounded-2xl rounded-bl-sm">
+                  <div className="flex gap-1 items-center">
+                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }}/>
+                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }}/>
+                    <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }}/>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef}/>
+          </div>
+
+          {/* Input */}
+          <div className="px-4 py-3 border-t border-gray-100">
+            <form onSubmit={e => { e.preventDefault(); send(); }} className="flex gap-2">
+              <input value={input} onChange={e => setInput(e.target.value)}
+                className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2D1FB1]"
+                placeholder="Ask anything about this lesson…" disabled={loading} />
+              <button type="submit" disabled={!input.trim() || loading}
+                className="px-4 py-2.5 bg-[#2D1FB1] text-white rounded-xl hover:bg-indigo-700 disabled:opacity-40 transition-colors text-sm font-bold">
+                →
+              </button>
+            </form>
+            <div className="text-[10px] text-gray-400 mt-1.5 text-center">Advisory only · Not legal or financial advice · Cap Fund Academy is not affiliated with USDA</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   function LessonPlayer({ lesson, mod, cert, allLessons, onComplete, onBack, onGoToQuiz, profile }) {
     const [saving, setSaving] = useState(false);
     const [done, setDone] = useState(false);
+    const [coachOpen, setCoachOpen] = useState(false);
+    const hasCoach = profile?.coach_access === true;
 
     const idx = allLessons.findIndex(l => l.id === lesson.id);
     const prev = allLessons[idx - 1];
@@ -796,14 +909,27 @@ window.ENV = {
         </div>
         <div className="flex items-start justify-between gap-4 mb-2">
           <h1 className="text-3xl font-bold text-[#0F1631] leading-tight">{lesson.title}</h1>
-          {lesson.status === 'approved'
-            ? <span className="flex-shrink-0 text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 font-medium">Approved</span>
-            : <span className="flex-shrink-0 text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-700 font-medium">Drafted · Awaiting Review</span>
-          }
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {hasCoach && (
+              <button onClick={() => setCoachOpen(true)}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
+                style={{ background: 'linear-gradient(135deg,#2D1FB1,#F97316)', color: 'white' }}
+                title="AI Study Coach — DWY Member Exclusive">
+                🤖 Ask Coach
+              </button>
+            )}
+            {lesson.status === 'approved'
+              ? <span className="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 font-medium">Approved</span>
+              : <span className="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-700 font-medium">Drafted · Awaiting Review</span>
+            }
+          </div>
         </div>
         {lesson.read_time_minutes && <p className="text-sm text-gray-400 mb-8">{lesson.read_time_minutes} min read</p>}
         <article className="prose max-w-none"
           dangerouslySetInnerHTML={{ __html: renderMarkdown(lesson.content) }} />
+
+        {/* AI Study Coach drawer */}
+        <StudyCoach lesson={lesson} cert={cert} open={coachOpen} onClose={() => setCoachOpen(false)} profile={profile} />
         <div className="mt-12 pt-6 border-t border-gray-200 flex items-center justify-between gap-4">
           <button onClick={() => prev ? onComplete(lesson, prev, true) : onBack()}
             className="px-4 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">

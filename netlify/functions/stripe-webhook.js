@@ -83,6 +83,12 @@ exports.handler = async (event) => {
           }
         }
 
+        // Grant AI Study Coach access for DWY purchasers
+        if (offer?.offer_type === 'dwu') {
+          await admin.from('profiles').update({ coach_access: true }).eq('id', order.user_id);
+          console.log('Coach access granted to user:', order.user_id);
+        }
+
         // For org licenses: create organization_seats record
         if (offer?.offer_type === 'org_license' && order.organization_id) {
           await admin.from('organization_seats').upsert({
