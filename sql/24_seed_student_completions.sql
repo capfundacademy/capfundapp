@@ -263,15 +263,15 @@ END $$;
 -- Readable summary with scores and dates
 SELECT
   p.full_name,
-  c.cert_number,
+  cert.cert_number,
   cert.title,
-  c.completed_at::date AS completed_date,
-  cert_rec.score,
-  c.certificate_number
-FROM certification_completions c
-JOIN profiles p ON p.id = c.user_id
-JOIN certifications cert ON cert.id = c.certification_id
-JOIN certificates cert_rec ON cert_rec.completion_id = c.id
+  cc.completed_at::date AS completed_date,
+  cr.score,
+  cc.certificate_number
+FROM certification_completions cc
+JOIN profiles p    ON p.id    = cc.user_id
+JOIN certifications cert ON cert.id = cc.certification_id
+JOIN certificates cr     ON cr.completion_id = cc.id
 WHERE p.email IN (
   'julius@lifehousereentry.com',
   'kai@lifehousereentry.com',
