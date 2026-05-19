@@ -83,7 +83,12 @@ window.ENV = {
       return null;
     }
     try {
-      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.58.0');
+      // Race the CDN import against a 6-second timeout so a slow network never hangs the app
+      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 6000));
+      const { createClient } = await Promise.race([
+        import('https://esm.sh/@supabase/supabase-js@2.58.0'),
+        timeout,
+      ]);
       _supabase = createClient(url, key);
       return _supabase;
     } catch {
@@ -218,7 +223,8 @@ window.ENV = {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#2D1FB1]">
         <div className="flex flex-col items-center gap-6">
-          <img src="/assets/logo-white.png" alt="Cap Fund Academy" style={{ height: 120, width: 'auto', display: 'block' }} />
+          {/* Use SVG so background is always transparent regardless of PNG export settings */}
+          <img src="/assets/logo.svg" alt="Cap Fund Academy" style={{ height: 120, width: 'auto', display: 'block', filter: 'brightness(0) invert(1)' }} />
           <div className="text-center">
             <div className="text-indigo-200 text-sm tracking-widest uppercase">Capital Access Training Platform</div>
           </div>
@@ -4407,6 +4413,8 @@ window.ENV = {
     const loggedIn = !!user;
 
     useEffect(() => {
+      // Hard safety valve — never show loading screen for more than 7 seconds
+      const safetyTimer = setTimeout(() => setLoading(false), 7000);
       (async () => {
         try {
           const sb = await getSupabase();
@@ -4419,7 +4427,7 @@ window.ENV = {
             });
           }
         } catch {}
-        finally { setLoading(false); }
+        finally { clearTimeout(safetyTimer); setLoading(false); }
       })();
     }, []);
 
