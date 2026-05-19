@@ -1,8 +1,8 @@
 // ============================================================================
 // daily-content.js — Daily AI content generation + Buffer sync
 // Scheduled: daily at 8 AM UTC via netlify.toml
-// Generates: 1 blog post + 4 platform-optimized social posts per day
-// Platforms: LinkedIn, Facebook, Instagram, TikTok (script)
+// Generates: 1 blog post + 3 platform-optimized social posts per day
+// Platforms: LinkedIn, Instagram, TikTok (script)
 // Buffer sync: pushes each post to the configured Buffer queue
 // ============================================================================
 
@@ -12,15 +12,13 @@ const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENAI_API_KEY       = process.env.OPENAI_API_KEY;
 const BUFFER_ACCESS_TOKEN  = process.env.BUFFER_ACCESS_TOKEN;
-const MODEL                = 'gpt-4o';   // Use full GPT-4o for daily flagship content
+const MODEL                = 'gpt-4o';
 
-// Buffer profile IDs — set each in Netlify env vars
-// Get yours from: https://api.bufferapp.com/1/profiles.json?access_token=YOUR_TOKEN
+// Buffer profile IDs — known channel IDs + LinkedIn pending
 const BUFFER_PROFILES = {
   linkedin:  process.env.BUFFER_PROFILE_LINKEDIN,
-  facebook:  process.env.BUFFER_PROFILE_FACEBOOK,
-  instagram: process.env.BUFFER_PROFILE_INSTAGRAM,
-  tiktok:    process.env.BUFFER_PROFILE_TIKTOK,
+  instagram: process.env.BUFFER_PROFILE_INSTAGRAM || '6a0bf854090476fb99360cd8',
+  tiktok:    process.env.BUFFER_PROFILE_TIKTOK    || '6a0bf90e090476fb99360eb3',
 };
 
 // ── Rotating topic bank ──────────────────────────────────────────────────────
@@ -68,15 +66,6 @@ const PLATFORM_SPECS = {
 - Maximum 3 relevant hashtags at the very end: #RuralFinance #Microlending #USDA
 - NO generic hashtag stacks
 - Professional tone, written from authority`,
-  },
-  facebook: {
-    maxChars: 1000,
-    instructions: `Write an engaging Facebook post for rural nonprofits and CDFI professionals. Structure:
-- Conversational opening that speaks directly to the reader's pain point
-- Concise, scannable content (2-3 short paragraphs)
-- End with a question to drive comments
-- Include 1-2 emojis naturally placed (not spammy)
-- Accessible tone — approachable, not academic`,
   },
   instagram: {
     maxChars: 480,
@@ -259,12 +248,12 @@ Output only these two lines, no labels.`;
     else results.blog = { id: blogPost.id, title: blogPost.title, status: blogPost.status };
 
     // ── 2. Generate platform-optimized social posts ──────────────────────────
-    const platforms = ['linkedin', 'facebook', 'instagram', 'tiktok'];
+    const platforms = ['linkedin', 'instagram', 'tiktok'];
 
-    // Schedule posts 2 hours apart starting at 10 AM UTC today
+    // Schedule posts 3 hours apart starting at 10 AM UTC today
     const today     = new Date();
     today.setUTCHours(10, 0, 0, 0);
-    const schedules = platforms.map((_, i) => new Date(today.getTime() + i * 2 * 3600000).toISOString());
+    const schedules = platforms.map((_, i) => new Date(today.getTime() + i * 3 * 3600000).toISOString());
 
     for (let i = 0; i < platforms.length; i++) {
       const platform = platforms[i];
