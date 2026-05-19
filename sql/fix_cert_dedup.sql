@@ -13,7 +13,7 @@ WHERE id IN (
       id,
       ROW_NUMBER() OVER (
         PARTITION BY user_id, certification_id
-        ORDER BY issued_at ASC, created_at ASC
+        ORDER BY issued_at ASC
       ) AS rn
     FROM certificates
   ) ranked

@@ -87,7 +87,7 @@ exports.handler = async (event) => {
   const name      = recipient_name || profile.full_name || 'there';
   const certNum   = Number(cert_number);
   const upsell    = CREDENTIAL_UPSELLS.find(u => u.after_cert === certNum);
-  const nextCert  = certNum < 17 ? certNum + 1 : null;
+  const nextCert  = certNum < 36 ? certNum + 1 : null;
 
   // ── Build email HTML ──────────────────────────────────────────────────────
   let upsellBlock = '';
@@ -111,10 +111,23 @@ exports.handler = async (event) => {
       </div>`;
   } else if (certNum === 17) {
     upsellBlock = `
+      <div style="background:#2D1FB1;border-radius:12px;padding:24px;margin:24px 0;text-align:center;">
+        <div style="font-size:18px;font-weight:900;color:#FFD23F;margin-bottom:8px;">🏆 RMAP/RLF Core Track Complete!</div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.85);margin-bottom:16px;">
+          You've mastered the RMAP/RLF curriculum. Now expand into the full All Things Lender ecosystem —
+          SBA, CDFI, EDA, FHA, EPA, tribal lending, infrastructure finance, and more.
+        </div>
+        <a href="${SITE_URL}"
+           style="display:inline-block;background:#F97316;color:#fff;font-weight:700;padding:12px 28px;border-radius:10px;text-decoration:none;font-size:14px;">
+          Continue to Cert 18: Government Lending Models →
+        </a>
+      </div>`;
+  } else if (certNum === 36) {
+    upsellBlock = `
       <div style="background:#0F1631;border-radius:12px;padding:24px;margin:24px 0;text-align:center;">
-        <div style="font-size:20px;font-weight:900;color:#FFD23F;margin-bottom:8px;">🎓 You did it. All 17 Certifications.</div>
+        <div style="font-size:20px;font-weight:900;color:#FFD23F;margin-bottom:8px;">🎓 You did it. All 36 Certifications.</div>
         <div style="font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:16px;">
-          Share your Master credential with your network — and help your team get certified too.
+          You are a Master Capital Access Architect. Share your credential with your network — and help your team get certified too.
         </div>
         <a href="${SITE_URL}?offer=org-license-5-seats"
            style="display:inline-block;background:#F97316;color:#fff;font-weight:700;padding:12px 28px;border-radius:10px;text-decoration:none;font-size:14px;margin-right:8px;">

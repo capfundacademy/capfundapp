@@ -63,7 +63,7 @@ exports.handler = async () => {
       const name     = profile.full_name?.split(' ')[0] || 'there';
       const certName = row.certifications?.title || 'your current certification';
       const certNum  = row.certifications?.cert_number || '';
-      const remaining = 17 - (certsComplete || 0);
+      const remaining = 36 - (certsComplete || 0);
 
       const emailHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
       <body style="font-family:Inter,sans-serif;background:#F8FAFC;margin:0;padding:20px;">
@@ -76,7 +76,7 @@ exports.handler = async () => {
           <p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0 0 20px;">
             It looks like you haven't logged in for a few days. You've come a long way —
             <strong>${lessonsTotal || 0} lessons completed</strong> and
-            <strong>${certsComplete || 0} of 17 certifications earned</strong>.
+            <strong>${certsComplete || 0} of 36 certifications earned</strong>.
             Don't let the momentum slip now.
           </p>
           <div style="background:#eff6ff;border-radius:10px;padding:16px;margin-bottom:20px;">

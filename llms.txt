@@ -1,7 +1,7 @@
 # Cap Fund Academy
 > Independent certification platform for rural capital access, microfinance, and USDA program readiness training.
 
-Cap Fund Academy (capfundacademy.com) offers 17 stackable certifications for nonprofits, CDFIs, rural development organizations, tribal entities, and community lenders preparing to apply for or operate USDA rural capital programs including RMAP, RBDG, and IRP.
+Cap Fund Academy (capfundacademy.com) offers 36 stackable certifications for nonprofits, CDFIs, rural development organizations, tribal entities, and community lenders. The curriculum covers the full government lending ecosystem: USDA RMAP/RBDG/IRP/OneRD, SBA 7(a)/Microloan/504, CDFI certification, EDA RLF, EPA environmental RLF, FHA/VA/USDA mortgage, FHA multifamily, secondary markets, SSBCI, tribal lending, infrastructure finance, export finance, and capital stack design.
 
 ## What Cap Fund Academy Is
 - An independent online certification and training platform
@@ -9,7 +9,9 @@ Cap Fund Academy (capfundacademy.com) offers 17 stackable certifications for non
 - Founded to help rural organizations understand and prepare for federal microlending programs
 - Offers self-paced certifications, AI-assisted application scoring, downloadable templates, and an AI Study Coach
 
-## Certification Tracks
+## Certification Tracks (36 total)
+
+### RMAP/RLF Core Track (Certs 1–17)
 - Microfinance Foundations & Borrower-Centered Lending ($497)
 - Revolving Loan Fund Design & Capitalization ($497)
 - USDA RMAP Eligibility, Application & Scoring ($597)
@@ -28,23 +30,68 @@ Cap Fund Academy (capfundacademy.com) offers 17 stackable certifications for non
 - CRM, Applications, Customer Success & Business Operations ($497)
 - Master Capstone: USDA-Ready Microlending/RLF Program ($997)
 
+### All Things Lender Expanded Track (Certs 18–36)
+- Government Lending Models Foundations ($497)
+- Lending Entity, Licensing & Compliance Readiness ($597)
+- SBA 7(a) & Small Business Lending ($597)
+- SBA Microloan, CDC/504 & SBIC ($597)
+- USDA Rural Business & OneRD Guaranteed Lending ($697)
+- USDA Housing & Multifamily Lending ($697)
+- USDA Farm & Agriculture Credit ($597)
+- FHA, VA, USDA Mortgage & Native Housing Lending ($697)
+- FHA Multifamily, Healthcare & HUD Risk-Sharing ($697)
+- Secondary Market & Mortgage Liquidity ($597)
+- CDFI, Treasury & Community Investment ($797)
+- SSBCI, State & Local Capital Access ($597)
+- EDA Revolving Loan Fund ($697)
+- EPA, Water & Environmental RLF ($597)
+- Infrastructure, Energy, Transportation & Utility Finance ($697)
+- Export, Trade & International Sales Finance ($497)
+- Tribal & Native Lending Programs ($697)
+- Student Loan & Legacy Servicing Awareness ($397)
+- Capital Stack Design & Partnership Strategy ($597)
+
 ## Master Credentials
 - Rural Microfinance Associate (Certs 1–4): $1,497
 - Revolving Loan Fund Practitioner (Certs 1–9): $2,997
 - USDA Rural Capital Program Specialist (Certs 1–13): $3,997
 - Certified RLF Executive (Certs 1–15): $4,997
-- Master Rural Microfinance & RLF Administrator (All 17): $5,997
+- Master RLF Administrator (All 17): $5,997
+- Capital Access Foundations Certificate (Certs 18–19): $997
+- Government Lending Program Associate (Certs 18–25): $3,997
+- RLF & Relending Practitioner (Expanded, Certs 18–19 + core): $4,997
+- Government Lending & Capital Access Strategist: $5,997
+- Master Capital Access Architect (All 36): $9,997
 
-## USDA Programs Covered
-- RMAP (Rural Microentrepreneur Assistance Program) — 7 CFR Part 4280 Subpart D
-- RBDG (Rural Business Development Grant) — 7 CFR Part 4280 Subpart E
-- IRP (Intermediary Relending Program) — 7 U.S.C. 1932(b)
+## Specialty Tracks
+- Certified Microloan & RLF Builder
+- Certified Small Business Capital Access Specialist
+- Certified USDA Rural Capital Specialist
+- Certified Housing Capital Access Specialist
+- Certified CDFI & Community Investment Specialist
+- Certified Infrastructure & Environmental Finance Specialist
+- Certified Tribal Capital Access Specialist
+
+## Programs Covered
+- USDA: RMAP, RBDG, IRP, OneRD B&I, Community Facilities, Section 502/538, Farm Loans, ReConnect
+- SBA: 7(a), Express, Export Express, CAPLines, Microloan, CDC/504, SBIC, Community Advantage SBLC
+- FHA/HUD: Title II, Title I, FHA 221(d)(4), 223(f), 232 healthcare, HUD 542 risk-sharing, Section 184/184A
+- VA: VA Loan Guarantee
+- CDFI Fund: Financial Assistance, Capital Magnet Fund, NMTC, Bond Guarantee
+- EDA: Revolving Loan Fund (Economic Adjustment Assistance)
+- EPA: Clean Water SRF, Drinking Water SRF, Brownfields RLF, WIFIA
+- DOE: Title 17, Tribal Energy Loan Guarantee, Rural Energy Savings
+- DOT: TIFIA, RRIF
+- SSBCI: State loan guarantees, participation, collateral support, CAP, venture
+- Secondary Markets: Ginnie Mae, Fannie Mae, Freddie Mac, correspondent lending
+- Export: EXIM Working Capital Guarantee, export credit insurance, SBA EWCP, ITL
+- Tribal: BIA Indian Loan Guarantee, Native CDFI, Tribal SSBCI, HUD Section 184
 
 ## Target Audience
 Rural nonprofits, Community Development Financial Institutions (CDFIs), tribal economic development organizations, county economic development agencies, community development corporations, reentry organizations, and mission-driven lenders seeking to build, fund, launch, manage, and sustain microlending and revolving loan fund programs.
 
 ## Key Features
-- 17 stackable certifications with 15-question quizzes (80% passing)
+- 36 stackable certifications with 10-15 question quizzes (75-80% passing)
 - AI Study Coach powered by GPT-4o
 - AI application scoring for RMAP, RBDG, and IRP readiness
 - Downloadable templates: RMAP checklists, evidence crosswalks, loan policies, TA logs, and more
