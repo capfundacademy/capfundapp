@@ -137,24 +137,23 @@ Brand voice: authoritative but accessible, practitioner-focused, regulatory-spec
 }
 
 // ── Buffer publish ───────────────────────────────────────────────────────────
+// Buffer v1 API requires a classic OAuth access token (NOT an OIDC session token).
+// To get a classic token: buffer.com/developers/apps → create app → OAuth flow
+// OR: buffer.com/account → Settings → Apps → Access Token (legacy page)
 async function pushToBuffer(profileId, text, platform, scheduledAt) {
-  if (!BUFFER_ACCESS_TOKEN || !profileId) return { skipped: true, reason: !BUFFER_ACCESS_TOKEN ? 'no access token' : 'no profile id' };
+  if (!BUFFER_ACCESS_TOKEN || !profileId) {
+    return { skipped: true, reason: !BUFFER_ACCESS_TOKEN ? 'BUFFER_ACCESS_TOKEN not set' : `no profile id for ${platform}` };
+  }
 
-  // Buffer recommends scheduling 15 min + from now if not specifying a slot
-  const scheduleTime = scheduledAt || new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  const scheduleTime = scheduledAt || new Date(Date.now() + 30 * 60 * 1000).toISOString();
+  const maxLen = platform === 'linkedin' ? 3000 : 2200;
 
-  // TikTok scripts go as reminder posts (Buffer supports TikTok reminders)
-  const params = new URLSearchParams({
-    access_token: BUFFER_ACCESS_TOKEN,
-    'profile_ids[]': profileId,
-    text: text.slice(0, platform === 'instagram' ? 2200 : platform === 'tiktok' ? 2200 : 63206),
-    scheduled_at: scheduleTime,
-    now: 'false',
-    top: 'false',
-  });
-
-  // For TikTok, add reminder flag
-  if (platform === 'tiktok') params.set('content[type]', 'link');
+  const params = new URLSearchParams();
+  params.set('access_token', BUFFER_ACCESS_TOKEN);
+  params.append('profile_ids[]', profileId);
+  params.set('text', text.slice(0, maxLen));
+  params.set('scheduled_at', scheduleTime);
+  params.set('now', 'false');
 
   const res = await fetch('https://api.bufferapp.com/1/updates/create.json', {
     method: 'POST',
@@ -162,8 +161,16 @@ async function pushToBuffer(profileId, text, platform, scheduledAt) {
     body: params.toString(),
   });
 
-  const body = await res.json();
-  if (!res.ok || body.error) return { success: false, error: body.error || body.message, status: res.status };
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || body.error) {
+    // If OIDC token error, return helpful message instead of failing silently
+    const isOIDC = body.error?.includes('OIDC');
+    return {
+      success: false,
+      error: isOIDC ? 'Buffer requires a classic OAuth token — see docs/ENVIRONMENT-VARIABLES.md' : (body.error || body.message),
+      status: res.status,
+    };
+  }
   return { success: true, buffer_id: body.updates?.[0]?.id, scheduled_at: scheduleTime };
 }
 

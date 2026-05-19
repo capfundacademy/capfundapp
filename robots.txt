@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Disallow internal/auth paths
+Disallow: /.netlify/
+Disallow: /api/
+
+Sitemap: https://capfundacademy.com/sitemap.xml

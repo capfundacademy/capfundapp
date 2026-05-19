@@ -10,7 +10,7 @@ const { createClient } = require('@supabase/supabase-js');
 const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENAI_API_KEY       = process.env.OPENAI_API_KEY;
-const MODEL_DEFAULT        = 'gpt-4o-mini';
+const MODEL_DEFAULT        = 'gpt-4o';
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
