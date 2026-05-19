@@ -579,7 +579,7 @@ VALUES
   5),
 (quiz_id,
   'An NPS score of 9 or 10 on the post-completion survey indicates:',
-  '[{"id":"a","text":"The student completed the certification in 9-10 weeks"},{"id":"b","text":"The student is a "promoter" — highly likely to recommend the program and a prime referral source"},{"id":"c","text":"The student scored 9 or 10 on the final certification exam"},{"id":"d","text":"The student has enrolled in 9 or 10 certifications"}]',
+  '[{"id":"a","text":"The student completed the certification in 9-10 weeks"},{"id":"b","text":"The student is a promoter — highly likely to recommend the program and a prime referral source"},{"id":"c","text":"The student scored 9 or 10 on the final certification exam"},{"id":"d","text":"The student has enrolled in 9 or 10 certifications"}]',
   'b',
   'Net Promoter Score (NPS) measures likelihood to recommend on a 0-10 scale. Scores of 9-10 are "promoters" — highly satisfied students who are likely to refer colleagues. These are the students to contact for testimonials, case studies, and active referral program participation.',
   6),

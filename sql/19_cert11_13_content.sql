@@ -403,7 +403,7 @@ VALUES
   11),
 (quiz_id,
   'Which narrative language pattern should be completely avoided in USDA applications?',
-  '[{"id":"a","text":"Passive voice constructions such as "the loan was approved by the committee""},{"id":"b","text":"Future tense describing capabilities that should already exist, such as "we plan to implement a succession policy""},{"id":"c","text":"Bullet points instead of prose paragraphs"},{"id":"d","text":"Direct references to the regulatory section number being addressed"}]',
+  '[{"id":"a","text":"Passive voice constructions such as: the loan was approved by the committee"},{"id":"b","text":"Future tense describing capabilities that should already exist, such as: we plan to implement a succession policy"},{"id":"c","text":"Bullet points instead of prose paragraphs"},{"id":"d","text":"Direct references to the regulatory section number being addressed"}]',
   'b',
   'Future tense for capabilities that should already exist ("we plan to," "we will implement") signals to reviewers that the organizational infrastructure is aspirational, not operational. Reviewers score what exists, not what is planned.',
   12),
