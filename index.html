@@ -118,6 +118,7 @@
     .spinner { animation: spin 1s linear infinite; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .fade-in { animation: fadeIn 0.4s ease both; }
+    @media print { .no-print { display: none !important; } body > *:not(#cfa-certificate) { display: none !important; } }
   </style>
 </head>
 <body>
@@ -1638,28 +1639,150 @@ window.ENV = {
 
   // ─── Certificate View ─────────────────────────────────────────────────────
   function CertificateView({ cert, onClose }) {
+    const issueDate = new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const print = () => {
+      const el = document.getElementById('cfa-certificate');
+      const win = window.open('', '_blank', 'width=1000,height=720');
+      win.document.write(`<!DOCTYPE html><html><head>
+        <title>Cap Fund Academy — ${cert.cert_title}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: 'Inter', sans-serif; background: #fff; }
+          @page { size: landscape; margin: 0; }
+          @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+        </style>
+      </head><body>${el.outerHTML}<script>window.onload=()=>{window.print();}<\/script></body></html>`);
+      win.document.close();
+    };
+
     return (
-      <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden">
-          <div className="p-8 border-4 border-[#2D1FB1] m-4 rounded-xl text-center" id="cert-print">
-            <div className="text-xs tracking-widest text-gray-400 uppercase mb-4">Cap Fund Academy</div>
-            <div className="text-2xl font-black text-[#0F1631] mb-1">Certificate of Completion</div>
-            <div className="w-16 h-0.5 bg-[#FFD23F] mx-auto my-4"/>
-            <div className="text-sm text-gray-500 mb-2">This certifies that</div>
-            <div className="text-3xl font-black text-[#2D1FB1] mb-2">{cert.recipient_name}</div>
-            <div className="text-sm text-gray-500 mb-1">has successfully completed</div>
-            <div className="text-xl font-bold text-[#0F1631] mb-4 max-w-md mx-auto leading-tight">{cert.cert_title}</div>
-            <div className="text-sm text-gray-500 mb-4">Score: {cert.score}% · Issued {new Date(cert.issued_at).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</div>
-            <div className="text-xs font-mono text-gray-400 mb-6">{cert.cert_number}</div>
-            <div className="text-[10px] text-gray-400 max-w-sm mx-auto leading-relaxed border-t border-gray-100 pt-4">
-              This certificate is issued by Cap Fund Academy, an independent training platform not affiliated with USDA or any government agency. Completion does not guarantee funding, eligibility, or approval for any federal program.
+      <div className="fixed inset-0 bg-black/70 z-50 flex flex-col items-center justify-center p-4 overflow-y-auto">
+
+        {/* Certificate — landscape A4 proportions */}
+        <div id="cfa-certificate" style={{
+          width: '900px', height: '636px', position: 'relative', background: '#fff',
+          fontFamily: "'Inter', sans-serif", overflow: 'hidden', flexShrink: 0,
+        }}>
+
+          {/* Navy left bar */}
+          <div style={{ position:'absolute', left:0, top:0, width:12, height:'100%', background:'#0F1631' }} />
+
+          {/* Orange right bar */}
+          <div style={{ position:'absolute', right:0, top:0, width:12, height:'100%', background:'#F97316' }} />
+
+          {/* Royal blue top bar */}
+          <div style={{ position:'absolute', left:12, top:0, right:12, height:10, background:'#2D1FB1' }} />
+
+          {/* Yellow bottom bar */}
+          <div style={{ position:'absolute', left:12, bottom:0, right:12, height:10, background:'#FFD23F' }} />
+
+          {/* Deep navy header band */}
+          <div style={{ position:'absolute', left:12, top:10, right:12, height:90, background:'#0F1631', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 32px' }}>
+            <img src="/assets/logo-cfa.png" alt="Cap Fund Academy" style={{ height:60, width:'auto' }} />
+            <div style={{ textAlign:'right' }}>
+              <div style={{ color:'#FFD23F', fontSize:11, fontWeight:700, letterSpacing:3, textTransform:'uppercase' }}>Certificate of Completion</div>
+              <div style={{ color:'rgba(255,255,255,0.5)', fontSize:10, marginTop:2 }}>capfundacademy.com</div>
             </div>
           </div>
-          <div className="flex gap-3 px-6 pb-6 justify-center">
-            <button onClick={() => window.print()} className="px-6 py-2.5 bg-[#2D1FB1] text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors text-sm">Print / Save PDF</button>
-            <button onClick={onClose} className="px-6 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors text-sm">Close</button>
+
+          {/* Decorative blue band under header */}
+          <div style={{ position:'absolute', left:12, top:100, right:12, height:6, background:'#2D1FB1' }} />
+
+          {/* Main content area */}
+          <div style={{ position:'absolute', left:12, top:106, right:12, bottom:10, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px 64px', textAlign:'center' }}>
+
+            {/* Presented to */}
+            <div style={{ fontSize:12, color:'#9ca3af', letterSpacing:2, textTransform:'uppercase', marginBottom:8 }}>This certifies that</div>
+
+            {/* Recipient name */}
+            <div style={{ fontSize:44, fontWeight:900, color:'#0F1631', lineHeight:1.1, marginBottom:12, letterSpacing:-1 }}>
+              {cert.recipient_name}
+            </div>
+
+            {/* Yellow rule */}
+            <div style={{ width:80, height:3, background:'#FFD23F', marginBottom:14, borderRadius:2 }} />
+
+            {/* "has successfully completed" */}
+            <div style={{ fontSize:13, color:'#6b7280', marginBottom:10 }}>has successfully completed</div>
+
+            {/* Cert title */}
+            <div style={{ fontSize:18, fontWeight:800, color:'#2D1FB1', maxWidth:580, lineHeight:1.3, marginBottom:20 }}>
+              {cert.cert_title}
+            </div>
+
+            {/* Meta row */}
+            <div style={{ display:'flex', gap:32, alignItems:'center', marginBottom:24 }}>
+              <div style={{ textAlign:'center' }}>
+                <div style={{ fontSize:10, color:'#9ca3af', textTransform:'uppercase', letterSpacing:1 }}>Date Issued</div>
+                <div style={{ fontSize:13, fontWeight:700, color:'#0F1631', marginTop:2 }}>{issueDate}</div>
+              </div>
+              {cert.score && (
+                <div style={{ textAlign:'center' }}>
+                  <div style={{ fontSize:10, color:'#9ca3af', textTransform:'uppercase', letterSpacing:1 }}>Score</div>
+                  <div style={{ fontSize:13, fontWeight:700, color:'#0F1631', marginTop:2 }}>{cert.score}%</div>
+                </div>
+              )}
+              <div style={{ textAlign:'center' }}>
+                <div style={{ fontSize:10, color:'#9ca3af', textTransform:'uppercase', letterSpacing:1 }}>Certificate No.</div>
+                <div style={{ fontSize:11, fontWeight:600, color:'#0F1631', fontFamily:'monospace', marginTop:2 }}>{cert.cert_number}</div>
+              </div>
+            </div>
+
+            {/* Signature area */}
+            <div style={{ display:'flex', gap:64, alignItems:'flex-end' }}>
+              <div style={{ textAlign:'center' }}>
+                <div style={{ borderTop:'2px solid #0F1631', width:160, paddingTop:6 }}>
+                  <div style={{ fontSize:12, fontWeight:800, color:'#0F1631' }}>Julius Jackson</div>
+                  <div style={{ fontSize:10, color:'#6b7280', marginTop:2 }}>Executive Director</div>
+                </div>
+              </div>
+              {/* Seal */}
+              <div style={{ position:'relative', width:80, height:80, flexShrink:0 }}>
+                <svg viewBox="0 0 80 80" style={{ position:'absolute', inset:0, width:'100%', height:'100%' }}>
+                  <circle cx="40" cy="40" r="38" fill="#0F1631" />
+                  <circle cx="40" cy="40" r="33" fill="none" stroke="#FFD23F" strokeWidth="1.5" />
+                  <circle cx="40" cy="40" r="28" fill="#2D1FB1" />
+                  <text x="40" y="36" textAnchor="middle" fill="#FFD23F" fontSize="7" fontWeight="800" letterSpacing="0.5" fontFamily="Inter,sans-serif">CAP FUND</text>
+                  <text x="40" y="46" textAnchor="middle" fill="#fff" fontSize="6.5" fontWeight="700" fontFamily="Inter,sans-serif">ACADEMY</text>
+                  <text x="40" y="57" textAnchor="middle" fill="#F97316" fontSize="5.5" fontWeight="600" fontFamily="Inter,sans-serif">CERTIFIED</text>
+                </svg>
+              </div>
+              <div style={{ textAlign:'center' }}>
+                <div style={{ borderTop:'2px solid #0F1631', width:160, paddingTop:6 }}>
+                  <div style={{ fontSize:12, fontWeight:800, color:'#0F1631' }}>Cap Fund Academy</div>
+                  <div style={{ fontSize:10, color:'#6b7280', marginTop:2 }}>Program Director</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Disclaimer strip at bottom inside yellow bar */}
+          <div style={{ position:'absolute', left:12, bottom:10, right:12, height:10, background:'#FFD23F', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <span style={{ fontSize:7, color:'#0F1631', fontWeight:600, letterSpacing:0.5 }}>
+              Cap Fund Academy is an independent training platform · Not affiliated with or endorsed by USDA · capfundacademy.com
+            </span>
+          </div>
+
+          {/* Subtle watermark diagonal text */}
+          <div style={{ position:'absolute', bottom:80, right:40, opacity:0.04, fontSize:64, fontWeight:900, color:'#2D1FB1', transform:'rotate(-20deg)', userSelect:'none', pointerEvents:'none' }}>
+            CFA
           </div>
         </div>
+
+        {/* Buttons — hidden on print */}
+        <div className="flex gap-3 mt-5 no-print">
+          <button onClick={print}
+            className="px-8 py-3 bg-[#2D1FB1] text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors text-sm flex items-center gap-2">
+            🖨 Print / Save as PDF
+          </button>
+          <button onClick={onClose}
+            className="px-8 py-3 border-2 border-white/30 text-white rounded-xl hover:bg-white/10 transition-colors text-sm">
+            Close
+          </button>
+        </div>
+        <p className="text-white/40 text-xs mt-2 no-print">Use your browser's "Save as PDF" option when printing</p>
       </div>
     );
   }

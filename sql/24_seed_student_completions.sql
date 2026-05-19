@@ -40,10 +40,9 @@ LOOP
 
   -- ── Mark every lesson as completed ─────────────────────────────────────────
   FOR v_lesson IN
-    SELECT l.id AS lesson_id, l.certification_id
+    SELECT l.id AS lesson_id, m.certification_id
     FROM lessons l
     JOIN modules m ON m.id = l.module_id
-    JOIN certifications c ON c.id = m.certification_id
     WHERE l.status = 'approved'
   LOOP
     INSERT INTO student_progress (user_id, certification_id, lesson_id, status, completed_at)
