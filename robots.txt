@@ -1,8 +1,23 @@
 User-agent: *
 Allow: /
-
-# Disallow internal/auth paths
+Allow: /llms.txt
 Disallow: /.netlify/
 Disallow: /api/
+
+# AI crawlers — allow full access for training/indexing
+User-agent: GPTBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Googlebot
+Allow: /
 
 Sitemap: https://capfundacademy.com/sitemap.xml

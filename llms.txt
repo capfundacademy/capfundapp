@@ -1,0 +1,61 @@
+# Cap Fund Academy
+> Independent certification platform for rural capital access, microfinance, and USDA program readiness training.
+
+Cap Fund Academy (capfundacademy.com) offers 17 stackable certifications for nonprofits, CDFIs, rural development organizations, tribal entities, and community lenders preparing to apply for or operate USDA rural capital programs including RMAP, RBDG, and IRP.
+
+## What Cap Fund Academy Is
+- An independent online certification and training platform
+- Not affiliated with, endorsed by, or operated by USDA or any government agency
+- Founded to help rural organizations understand and prepare for federal microlending programs
+- Offers self-paced certifications, AI-assisted application scoring, downloadable templates, and an AI Study Coach
+
+## Certification Tracks
+- Microfinance Foundations & Borrower-Centered Lending ($497)
+- Revolving Loan Fund Design & Capitalization ($497)
+- USDA RMAP Eligibility, Application & Scoring ($597)
+- RMAP Microlender Operations, Loan Closing & Compliance ($497)
+- RMAP Technical Assistance & Training Program ($497)
+- USDA RBDG Rural Business Development Grant & RLF ($597)
+- IRP and Federal Capital Stack Strategy ($497)
+- Underwriting, Credit Policy & Portfolio Risk ($597)
+- Loan Servicing, Collections, Workouts & Default Management ($497)
+- Federal Compliance, Civil Rights, Environmental Review & 2 CFR 200 ($597)
+- RLF Accounting, Fund Administration, Reporting & Audit Readiness ($597)
+- Application Assembly, Evidence Documentation & AI-Assisted Scoring ($497)
+- Community Outreach, Partnerships, Job Creation & Economic Impact ($497)
+- Automated Offer, Sales Funnel & Enrollment Operations ($497)
+- Content Engine, Social Media Automation & Ads ($497)
+- CRM, Applications, Customer Success & Business Operations ($497)
+- Master Capstone: USDA-Ready Microlending/RLF Program ($997)
+
+## Master Credentials
+- Rural Microfinance Associate (Certs 1–4): $1,497
+- Revolving Loan Fund Practitioner (Certs 1–9): $2,997
+- USDA Rural Capital Program Specialist (Certs 1–13): $3,997
+- Certified RLF Executive (Certs 1–15): $4,997
+- Master Rural Microfinance & RLF Administrator (All 17): $5,997
+
+## USDA Programs Covered
+- RMAP (Rural Microentrepreneur Assistance Program) — 7 CFR Part 4280 Subpart D
+- RBDG (Rural Business Development Grant) — 7 CFR Part 4280 Subpart E
+- IRP (Intermediary Relending Program) — 7 U.S.C. 1932(b)
+
+## Target Audience
+Rural nonprofits, Community Development Financial Institutions (CDFIs), tribal economic development organizations, county economic development agencies, community development corporations, reentry organizations, and mission-driven lenders seeking to build, fund, launch, manage, and sustain microlending and revolving loan fund programs.
+
+## Key Features
+- 17 stackable certifications with 15-question quizzes (80% passing)
+- AI Study Coach powered by GPT-4o
+- AI application scoring for RMAP, RBDG, and IRP readiness
+- Downloadable templates: RMAP checklists, evidence crosswalks, loan policies, TA logs, and more
+- Audio lessons with human-quality text-to-speech (OpenAI TTS HD)
+- Post-completion printable certificates
+- Organization licenses (5-seat teams: $5,000)
+- Done-with-you application support ($10,000)
+- Annual membership ($199/year)
+
+## Contact
+support@capfundacademy.com | capfundacademy.com
+
+## Disclaimer
+Cap Fund Academy is an independent training and certification platform. It is not affiliated with, endorsed by, or certified by USDA or any government agency. Training is educational only and does not guarantee funding, eligibility, or approval for any federal program.
