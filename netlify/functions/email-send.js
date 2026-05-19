@@ -91,22 +91,30 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS, body: '' };
   if (event.httpMethod !== 'POST')    return err(405, 'Method not allowed');
 
-  const authHeader = event.headers.authorization || event.headers.Authorization;
-  if (!authHeader?.startsWith('Bearer ')) return err(401, 'Missing bearer token');
+  let body;
+  try { body = JSON.parse(event.body || '{}'); }
+  catch { return err(400, 'Invalid JSON'); }
 
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false }
   });
 
-  const { data: userData, error: userErr } = await admin.auth.getUser(authHeader.slice(7));
-  if (userErr || !userData?.user) return err(401, 'Invalid session');
+  const isInternal = body._internal === true;
+  let userId = null;
 
-  const { data: requester } = await admin.from('profiles').select('role').eq('id', userData.user.id).maybeSingle();
-  if (!['super_admin','admin'].includes(requester?.role)) return err(403, 'Admin access required');
+  if (!isInternal) {
+    // External calls require admin Bearer token
+    const authHeader = event.headers.authorization || event.headers.Authorization;
+    if (!authHeader?.startsWith('Bearer ')) return err(401, 'Missing bearer token');
 
-  let body;
-  try { body = JSON.parse(event.body || '{}'); }
-  catch { return err(400, 'Invalid JSON'); }
+    const { data: userData, error: userErr } = await admin.auth.getUser(authHeader.slice(7));
+    if (userErr || !userData?.user) return err(401, 'Invalid session');
+
+    const { data: requester } = await admin.from('profiles').select('role').eq('id', userData.user.id).maybeSingle();
+    if (!['super_admin','admin'].includes(requester?.role)) return err(403, 'Admin access required');
+
+    userId = userData.user.id;
+  }
 
   const { to, subject, html, template_slug, template_vars, lead_id, sequence_step_id } = body;
 
@@ -133,24 +141,24 @@ exports.handler = async (event) => {
     for (const email of recipients) {
       await admin.from('email_sends').insert({
         lead_id: lead_id || null,
-        user_id: userData.user.id,
+        user_id: userId || null,
         step_id: sequence_step_id || null,
         to_email: email,
         subject: finalSubject,
         status: 'sent',
         provider_id: result?.id || null,
-      });
+      }).catch(() => {}); // log silently
     }
 
     // Log CRM event if lead_id provided
     if (lead_id) {
       await admin.from('crm_events').insert({
         lead_id,
-        user_id: userData.user.id,
+        user_id: userId || null,
         event_type: 'email_sent',
         title: `Email sent: ${finalSubject}`,
         metadata: { template_slug, provider: EMAIL_PROVIDER }
-      });
+      }).catch(() => {});
     }
 
     return ok({ sent: true, provider: EMAIL_PROVIDER, id: result?.id });

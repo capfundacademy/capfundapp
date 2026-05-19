@@ -570,22 +570,20 @@ window.ENV = {
       e.preventDefault();
       setStatus('loading');
       try {
-        const sb = await getSupabase();
-        if (sb) {
-          const { error } = await sb.from('leads').insert([{
+        await fetch('/.netlify/functions/lead-capture', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             name: form.name,
             email: form.email,
             organization: form.organization,
             source: 'checklist',
-          }]);
-          if (error) {
-            // Silent — still show success to user
-          }
-        }
+          }),
+        });
         setStatus('success');
         setForm({ name: '', email: '', organization: '' });
       } catch {
-        setStatus('success'); // Show success regardless of backend state
+        setStatus('success');
       }
     };
 
@@ -4508,35 +4506,41 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
       if (!sb) { setLoading(false); return; }
 
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
       const [
         { count: leads7d },
+        { count: leadsTotal },
         { count: students },
         { data: orders7d },
+        { data: ordersTotal },
+        { count: completionsTotal },
         { count: completions7d },
         { count: scoringRuns7d },
         { count: postsGenerated7d },
         { count: pendingApprovals },
         { count: pendingContent },
-        { count: pendingWaivers },
         { data: recentExceptions },
         { data: recentRuns }
       ] = await Promise.all([
         sb.from('leads').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
-        sb.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
-        sb.from('orders').select('amount_cents').eq('status', 'paid').gte('created_at', sevenDaysAgo),
+        sb.from('leads').select('*', { count: 'exact', head: true }),
+        sb.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['student','organization_owner','organization_manager']),
+        sb.from('orders').select('amount_cents').eq('status', 'paid').gte('created_at', thirtyDaysAgo),
+        sb.from('orders').select('amount_cents').eq('status', 'paid'),
+        sb.from('certification_completions').select('*', { count: 'exact', head: true }),
         sb.from('certification_completions').select('*', { count: 'exact', head: true }).gte('completed_at', sevenDaysAgo),
         sb.from('scoring_runs').select('*', { count: 'exact', head: true }).eq('status', 'complete').gte('started_at', sevenDaysAgo),
         sb.from('social_posts').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
         sb.from('quiz_responses').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
         sb.from('social_posts').select('*', { count: 'exact', head: true }).eq('status', 'review'),
-        sb.from('prerequisite_waivers').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         sb.from('exception_events').select('*').eq('resolved', false).order('created_at', { ascending: false }).limit(20),
         sb.from('autopilot_runs').select('*').order('started_at', { ascending: false }).limit(15),
       ]);
 
-      const revenue7d = (orders7d || []).reduce((s, o) => s + (o.amount_cents || 0), 0);
-      setMetrics({ leads7d, students, revenue7d, completions7d, scoringRuns7d, postsGenerated7d, pendingApprovals, pendingContent, pendingWaivers });
+      const revenue30d = (orders7d || []).reduce((s, o) => s + (o.amount_cents || 0), 0);
+      const revenueTotal = (ordersTotal || []).reduce((s, o) => s + (o.amount_cents || 0), 0);
+      setMetrics({ leads7d, leadsTotal, students, revenue30d, revenueTotal, completionsTotal, completions7d, scoringRuns7d, postsGenerated7d, pendingApprovals, pendingContent });
       setExceptions(recentExceptions || []);
       setRuns(recentRuns || []);
       setLoading(false);
@@ -4566,7 +4570,7 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
 
     if (loading) return <div className="text-center py-16 text-gray-400">Loading autopilot dashboard…</div>;
 
-    const pendingTotal = (metrics?.pendingContent || 0) + (metrics?.pendingWaivers || 0);
+    const pendingTotal = metrics?.pendingContent || 0;
 
     return (
       <div className="fade-in space-y-6">
@@ -4574,7 +4578,7 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-[#0F1631]">Autopilot Health</h2>
-            <p className="text-sm text-gray-500">Live metrics · last 7 days · {new Date().toLocaleDateString()}</p>
+            <p className="text-sm text-gray-500">All-time totals + 7-day activity · {new Date().toLocaleDateString()}</p>
           </div>
           <button onClick={loadDashboard} className="px-4 py-2 border border-gray-200 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors">↻ Refresh</button>
         </div>
@@ -4582,19 +4586,20 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
         {/* KPI grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'New Leads (7d)',       value: metrics?.leads7d || 0,        color: '#2D1FB1', icon: '👥' },
-            { label: 'Revenue (7d)',          value: fmt(metrics?.revenue7d),      color: '#16A34A', icon: '💰' },
-            { label: 'Total Students',        value: metrics?.students || 0,       color: '#F97316', icon: '🎓' },
-            { label: 'Certs Completed (7d)',  value: metrics?.completions7d || 0,  color: '#7C3AED', icon: '🏆' },
-            { label: 'AI Scores Run (7d)',    value: metrics?.scoringRuns7d || 0,  color: '#0891B2', icon: '🤖' },
-            { label: 'Content Generated (7d)',value: metrics?.postsGenerated7d||0, color: '#2D1FB1', icon: '✍️' },
-            { label: 'Quiz Completions (7d)', value: metrics?.pendingApprovals||0, color: '#D97706', icon: '📊' },
-            { label: 'Pending Approvals',     value: pendingTotal,                 color: pendingTotal > 0 ? '#DC2626' : '#16A34A', icon: pendingTotal > 0 ? '🔔' : '✅' },
-          ].map(({ label, value, color, icon }) => (
+            { label: 'Total Leads',            value: metrics?.leadsTotal || 0,        sub: `+${metrics?.leads7d||0} this week`,     color: '#2D1FB1', icon: '👥' },
+            { label: 'Total Revenue',          value: fmt(metrics?.revenueTotal),       sub: fmt(metrics?.revenue30d) + ' (30d)',      color: '#16A34A', icon: '💰' },
+            { label: 'Active Students',        value: metrics?.students || 0,           sub: 'enrolled users',                         color: '#F97316', icon: '🎓' },
+            { label: 'Certs Completed',        value: metrics?.completionsTotal || 0,   sub: `+${metrics?.completions7d||0} this week`,color: '#7C3AED', icon: '🏆' },
+            { label: 'AI Scores Run (7d)',     value: metrics?.scoringRuns7d || 0,      sub: 'application scorecards',                color: '#0891B2', icon: '🤖' },
+            { label: 'Content Posts (7d)',     value: metrics?.postsGenerated7d || 0,   sub: 'auto-published posts',                  color: '#2D1FB1', icon: '✍️' },
+            { label: 'Quiz Completions (7d)',  value: metrics?.pendingApprovals || 0,   sub: 'free quiz responses',                   color: '#D97706', icon: '📊' },
+            { label: 'Pending Review',         value: pendingTotal,                     sub: pendingTotal > 0 ? 'needs action' : 'all clear', color: pendingTotal > 0 ? '#DC2626' : '#16A34A', icon: pendingTotal > 0 ? '🔔' : '✅' },
+          ].map(({ label, value, color, icon, sub }) => (
             <div key={label} className="bg-white border border-gray-200 rounded-xl p-4">
               <div className="text-lg mb-1">{icon}</div>
               <div className="text-2xl font-black" style={{ color }}>{value}</div>
               <div className="text-xs text-gray-500 mt-0.5 leading-tight">{label}</div>
+              {sub && <div className="text-xs text-gray-400 mt-0.5">{sub}</div>}
             </div>
           ))}
         </div>
