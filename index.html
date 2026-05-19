@@ -1560,6 +1560,8 @@ window.ENV = {
     const [certificates, setMyCerts] = useState([]);
     const [viewingCert, setViewingCert] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [selectedCertIds, setSelectedCertIds] = useState(new Set());
+    const [bulkPrinting, setBulkPrinting] = useState(false);
 
     useEffect(() => {
       (async () => {
@@ -1586,6 +1588,87 @@ window.ENV = {
     const lessonsPct = (cert) => {
       const certProgress = progress.filter(p => p.certification_id === cert.id && p.status === 'completed');
       return certProgress.length;
+    };
+
+    const toggleSelect = (id) => setSelectedCertIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+    const selectAll = () => setSelectedCertIds(new Set(certificates.map(c => c.id)));
+    const clearAll  = () => setSelectedCertIds(new Set());
+
+    const buildCertHtml = (cert) => {
+      const issueDate = new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      return `
+        <div class="cert-page" style="width:900px;height:636px;position:relative;background:#fff;font-family:'Inter',sans-serif;overflow:hidden;page-break-after:always;">
+          <div style="position:absolute;left:0;top:0;width:12px;height:100%;background:#0F1631;"></div>
+          <div style="position:absolute;right:0;top:0;width:12px;height:100%;background:#F97316;"></div>
+          <div style="position:absolute;left:12px;top:0;right:12px;height:10px;background:#2D1FB1;"></div>
+          <div style="position:absolute;left:12px;bottom:0;right:12px;height:10px;background:#FFD23F;"></div>
+          <div style="position:absolute;left:12px;top:10px;right:12px;height:90px;background:#0F1631;display:flex;align-items:center;justify-content:space-between;padding:0 32px;">
+            <img src="/assets/logo-cfa.png" alt="Cap Fund Academy" style="height:60px;width:auto;"/>
+            <div style="text-align:right;">
+              <div style="color:#FFD23F;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">Certificate of Completion</div>
+              <div style="color:rgba(255,255,255,0.5);font-size:10px;margin-top:2px;">capfundacademy.com</div>
+            </div>
+          </div>
+          <div style="position:absolute;left:12px;top:100px;right:12px;height:6px;background:#2D1FB1;"></div>
+          <div style="position:absolute;left:12px;top:106px;right:12px;bottom:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 64px;text-align:center;">
+            <div style="font-size:12px;color:#9ca3af;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">This certifies that</div>
+            <div style="font-size:44px;font-weight:900;color:#0F1631;line-height:1.1;margin-bottom:12px;letter-spacing:-1px;">${cert.recipient_name}</div>
+            <div style="width:80px;height:3px;background:#FFD23F;margin-bottom:14px;border-radius:2px;"></div>
+            <div style="font-size:13px;color:#6b7280;margin-bottom:10px;">has successfully completed</div>
+            <div style="font-size:18px;font-weight:800;color:#2D1FB1;max-width:580px;line-height:1.3;margin-bottom:20px;">${cert.cert_title}</div>
+            <div style="display:flex;gap:32px;align-items:center;margin-bottom:24px;">
+              <div style="text-align:center;">
+                <div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">Date Issued</div>
+                <div style="font-size:13px;font-weight:700;color:#0F1631;margin-top:2px;">${issueDate}</div>
+              </div>
+              ${cert.score ? `<div style="text-align:center;"><div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">Score</div><div style="font-size:13px;font-weight:700;color:#0F1631;margin-top:2px;">${cert.score}%</div></div>` : ''}
+              <div style="text-align:center;">
+                <div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">Certificate No.</div>
+                <div style="font-size:11px;font-weight:600;color:#0F1631;font-family:monospace;margin-top:2px;">${cert.cert_number}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:64px;align-items:flex-end;">
+              <div style="text-align:center;"><div style="border-top:2px solid #0F1631;width:160px;padding-top:6px;"><div style="font-size:12px;font-weight:800;color:#0F1631;">Julius Jackson</div><div style="font-size:10px;color:#6b7280;margin-top:2px;">Executive Director</div></div></div>
+              <svg viewBox="0 0 80 80" style="width:80px;height:80px;flex-shrink:0;">
+                <circle cx="40" cy="40" r="38" fill="#0F1631"/>
+                <circle cx="40" cy="40" r="33" fill="none" stroke="#FFD23F" stroke-width="1.5"/>
+                <circle cx="40" cy="40" r="28" fill="#2D1FB1"/>
+                <text x="40" y="36" text-anchor="middle" fill="#FFD23F" font-size="7" font-weight="800" letter-spacing="0.5" font-family="Inter,sans-serif">CAP FUND</text>
+                <text x="40" y="46" text-anchor="middle" fill="#fff" font-size="6.5" font-weight="700" font-family="Inter,sans-serif">ACADEMY</text>
+                <text x="40" y="57" text-anchor="middle" fill="#F97316" font-size="5.5" font-weight="600" font-family="Inter,sans-serif">CERTIFIED</text>
+              </svg>
+              <div style="text-align:center;"><div style="border-top:2px solid #0F1631;width:160px;padding-top:6px;"><div style="font-size:12px;font-weight:800;color:#0F1631;">Cap Fund Academy</div><div style="font-size:10px;color:#6b7280;margin-top:2px;">Program Director</div></div></div>
+            </div>
+          </div>
+          <div style="position:absolute;left:12px;bottom:10px;right:12px;height:10px;background:#FFD23F;display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:7px;color:#0F1631;font-weight:600;letter-spacing:0.5px;">Cap Fund Academy is an independent training platform · Not affiliated with or endorsed by USDA · capfundacademy.com</span>
+          </div>
+        </div>`;
+    };
+
+    const printSelected = (ids) => {
+      const toPrint = certificates.filter(c => ids.has(c.id));
+      if (!toPrint.length) return;
+      setBulkPrinting(true);
+      const certsHtml = toPrint.map(buildCertHtml).join('');
+      const win = window.open('', '_blank', 'width=1000,height=800');
+      win.document.write(`<!DOCTYPE html><html><head>
+        <title>Cap Fund Academy Certificates</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: 'Inter', sans-serif; background: #fff; }
+          @page { size: landscape; margin: 0; }
+          @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .cert-page { page-break-after: always; } }
+        </style>
+      </head><body>${certsHtml}<script>window.onload=()=>{window.print();setTimeout(()=>window.close(),2000);}<\/script></body></html>`);
+      win.document.close();
+      setBulkPrinting(false);
     };
 
     if (loading) return <div className="text-center py-20 text-gray-400">Loading your dashboard…</div>;
@@ -1639,22 +1722,55 @@ window.ENV = {
 
         {certificates.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-bold text-[#0F1631] mb-4">My Certificates</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-[#0F1631]">My Certificates ({certificates.length})</h2>
+              <div className="flex items-center gap-2">
+                {selectedCertIds.size > 0 ? (
+                  <>
+                    <span className="text-xs text-gray-500">{selectedCertIds.size} selected</span>
+                    <button onClick={() => printSelected(selectedCertIds)} disabled={bulkPrinting}
+                      className="px-3 py-1.5 bg-[#2D1FB1] text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50">
+                      🖨 Download Selected
+                    </button>
+                    <button onClick={clearAll} className="px-3 py-1.5 border border-gray-200 text-gray-500 text-xs rounded-lg hover:bg-gray-50 transition-colors">
+                      Clear
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={selectAll} className="px-3 py-1.5 border border-gray-200 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                      Select All
+                    </button>
+                    <button onClick={() => printSelected(new Set(certificates.map(c => c.id)))} disabled={bulkPrinting}
+                      className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
+                      🖨 Download All
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
             <div className="space-y-3">
               {certificates.map(cert => {
                 const fullCert = certs.find(c => c.id === cert.certification_id);
+                const isSelected = selectedCertIds.has(cert.id);
                 return (
-                <div key={cert.id} className="bg-white border border-green-200 rounded-xl p-5 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0">🏆</div>
-                  <div className="flex-1">
-                    <div className="font-semibold text-[#0F1631] text-sm">{cert.certifications?.title || cert.cert_title}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">{cert.cert_number} · {new Date(cert.issued_at).toLocaleDateString()}</div>
+                <div key={cert.id}
+                  className={`bg-white rounded-xl p-5 flex items-center gap-4 transition-all cursor-pointer ${isSelected ? 'border-2 border-[#2D1FB1] shadow-md' : 'border border-green-200'}`}
+                  onClick={() => toggleSelect(cert.id)}>
+                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? 'bg-[#2D1FB1] border-[#2D1FB1]' : 'border-gray-300'}`}>
+                    {isSelected && <span className="text-white text-xs font-bold">✓</span>}
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0">🏆</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-[#0F1631] text-sm truncate">{cert.certifications?.title || cert.cert_title}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">{cert.cert_number} · {new Date(cert.issued_at).toLocaleDateString()}{cert.score ? ` · Score: ${cert.score}%` : ''}</div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0" onClick={e => e.stopPropagation()}>
                     {fullCert && (
-                      <button onClick={() => onSelectCert(fullCert)} className="px-4 py-1.5 bg-[#2D1FB1] text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors">Review Course</button>
+                      <button onClick={() => onSelectCert(fullCert)} className="px-3 py-1.5 bg-[#2D1FB1] text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors">Review</button>
                     )}
-                    <button onClick={() => setViewingCert(cert)} className="px-4 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition-colors">View Cert</button>
+                    <button onClick={() => setViewingCert(cert)} className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition-colors">View</button>
+                    <button onClick={() => printSelected(new Set([cert.id]))} className="px-3 py-1.5 border border-gray-200 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors">🖨</button>
                   </div>
                 </div>
                 );
