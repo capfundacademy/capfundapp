@@ -4020,7 +4020,14 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
         const sb = await getSupabase();
         if (!sb) { setLoading(false); return; }
         const { data } = await sb.from('public_quiz_questions').select('*').eq('is_active', true).order('sort_order');
-        setQuestions(data || []);
+        // Deduplicate by question_text in case of DB duplicates
+        const seen = new Set();
+        const unique = (data || []).filter(q => {
+          if (seen.has(q.question_text)) return false;
+          seen.add(q.question_text);
+          return true;
+        });
+        setQuestions(unique);
         setLoading(false);
       })();
     }, []);
