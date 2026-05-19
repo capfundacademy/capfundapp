@@ -8,23 +8,20 @@
 -- Run after: 27_cert_seeds_18_35.sql
 -- ============================================================
 
-DO $block$
-DECLARE
-  v_cert uuid; v_mod uuid; v_quiz uuid;
-BEGIN
 
 -- ═══════════════════════════════════════════════════════════════
 -- CERT 22: USDA Rural Business & OneRD Guaranteed Lending
 -- ═══════════════════════════════════════════════════════════════
-SELECT id INTO v_cert FROM certifications WHERE cert_number = 22;
+
+-- ── Cert 22 ─────────────────────────────────────
 
 INSERT INTO modules (certification_id, title, sort_order, status)
-VALUES (v_cert, 'USDA Rural Development & OneRD Platform Overview', 1, 'approved')
-ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
-IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
+SELECT id, 'USDA Rural Development & OneRD Platform Overview', 1, 'approved' FROM certifications WHERE cert_number = 22
+ON CONFLICT DO NOTHING;
 
-INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'USDA Rural Development: The Full Lending Ecosystem', 'usda-rural-development-the-full-lending-ecosystem',
+
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status)
+SELECT m.id, 'USDA Rural Development: The Full Lending Ecosystem', 'usda-rural-development-the-full-lending-ecosystem',
 $BODY$## USDA Rural Development: The Full Lending Ecosystem
 
 USDA Rural Development (RD) is one of the most comprehensive rural financing ecosystems in the United States. It encompasses business lending, housing finance, water and utility infrastructure, telecommunications, energy, and community facilities — all within a single agency. Understanding the full scope of what RD does is the foundation for building capital access strategies for rural communities.
@@ -54,9 +51,13 @@ All OneRD programs require that projects be in eligible rural areas — defined 
 - [ ] Identify USDA-approved lenders operating in your region
 - [ ] Attend a USDA Rural Development lender training webinar
 - [ ] Map your target borrowers to specific OneRD programs
-$BODY$, 1, 10, 'approved'),
+$BODY$, 1, 10, 'approved'
+FROM modules m JOIN certifications c ON m.certification_id = c.id
+WHERE c.cert_number = 22 AND m.sort_order = 1
+ON CONFLICT DO NOTHING;
 
-(v_mod, 'B&I Loan Packaging, Eligibility & Lender Requirements', 'bi-loan-packaging-eligibility-lender-requirements',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status)
+SELECT m.id, 'B&I Loan Packaging, Eligibility & Lender Requirements', 'bi-loan-packaging-eligibility-lender-requirements',
 $BODY$## B&I Loan Packaging, Eligibility & Lender Requirements
 
 The Business & Industry Guaranteed Loan program is USDA's most widely used rural business lending tool. As a community lender or technical assistance provider, understanding how to package a B&I loan — or refer a borrower to an approved lender — is a high-value skill.
@@ -83,39 +84,50 @@ For community organizations that cannot be direct B&I lenders, the most effectiv
 - [ ] Review the B&I eligibility checklist in 7 CFR Part 5001
 - [ ] Develop a borrower preparation checklist for B&I applications
 - [ ] Learn USDA's environmental review requirements for guaranteed loans
-$BODY$, 2, 9, 'approved')
+$BODY$, 2, 9, 'approved'
+FROM modules m JOIN certifications c ON m.certification_id = c.id
+WHERE c.cert_number = 22 AND m.sort_order = 1
 ON CONFLICT DO NOTHING;
 
-INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
-VALUES (v_cert, 'USDA Rural Business & OneRD Assessment', 75, 50, 'approved')
-ON CONFLICT DO NOTHING RETURNING id INTO v_quiz;
-IF v_quiz IS NULL THEN SELECT id INTO v_quiz FROM quizzes WHERE certification_id = v_cert; END IF;
 
-INSERT INTO quiz_questions (quiz_id, question_text, options, correct_option_id, explanation, sort_order) VALUES
-(v_quiz, 'The OneRD platform consolidates which four USDA programs?', '[{"id":"a","text":"RMAP, IRP, RBDG, REDLG"},{"id":"b","text":"B&I, Community Facilities, Water & Waste, REAP"},{"id":"c","text":"Section 502, 504, 515, 538"},{"id":"d","text":"FSA Farm Loans, BIA, CDFI, EDA"}]', 'b', 'OneRD consolidates Business & Industry (B&I), Community Facilities (CF), Water & Waste Disposal (WWD), and Rural Energy for America Program (REAP) under a single regulatory framework (7 CFR Part 5001).', 1),
-(v_quiz, 'What is the maximum B&I loan amount?', '[{"id":"a","text":"$5 million"},{"id":"b","text":"$10 million"},{"id":"c","text":"$25 million"},{"id":"d","text":"$50 million"}]', 'c', 'The Business & Industry Guaranteed Loan program has a maximum loan amount of $25 million.', 2),
-(v_quiz, 'What guarantee rate does the B&I program provide for loans up to $5 million?', '[{"id":"a","text":"60%"},{"id":"b","text":"70%"},{"id":"c","text":"80%"},{"id":"d","text":"90%"}]', 'c', 'B&I guarantee rates are 80% for loans up to $5 million, 70% for loans $5-10 million, and 60% for loans over $10 million.', 3),
-(v_quiz, 'Can a nonprofit CDFI be a direct B&I lender?', '[{"id":"a","text":"Yes, any nonprofit can apply"},{"id":"b","text":"No, only federally regulated financial institutions can be approved B&I lenders"},{"id":"c","text":"Yes, if they have CDFI certification"},{"id":"d","text":"Only if they partner with a commercial bank"}]', 'b', 'B&I approved lenders must be federally regulated financial institutions (banks, credit unions, insurance companies). Nonprofits can partner with approved lenders but generally cannot be direct B&I lenders.', 4),
-(v_quiz, 'Under what regulation does the OneRD platform operate?', '[{"id":"a","text":"7 CFR Part 4280"},{"id":"b","text":"7 CFR Part 5001"},{"id":"c","text":"2 CFR Part 200"},{"id":"d","text":"13 CFR Part 120"}]', 'b', 'The OneRD Guarantee Loan Initiative operates under 7 CFR Part 5001, which standardized the application and servicing processes for B&I, CF, WWD, and REAP programs.', 5),
-(v_quiz, 'What tool can be used to verify rural eligibility for USDA programs?', '[{"id":"a","text":"SAM.gov"},{"id":"b","text":"Grants.gov"},{"id":"c","text":"eligibility.sc.egov.usda.gov"},{"id":"d","text":"sba.gov/funding-programs"}]', 'c', 'USDA provides an online eligibility mapping tool at eligibility.sc.egov.usda.gov for verifying whether a specific address or area qualifies as rural under various USDA programs.', 6),
-(v_quiz, 'What is a feasibility study, and when is it required for B&I loans?', '[{"id":"a","text":"A credit report — required for all loans"},{"id":"b","text":"An environmental analysis — required for loans over $1 million"},{"id":"c","text":"An analysis of financial and market viability — required for larger or complex projects"},{"id":"d","text":"A demographic study — required for all rural loans"}]', 'c', 'A feasibility study analyzes the financial projections, market demand, and viability of a project. USDA requires feasibility studies for larger B&I loans and complex projects.', 7),
-(v_quiz, 'Which of the following is an eligible use of B&I loan proceeds?', '[{"id":"a","text":"Political campaign contributions"},{"id":"b","text":"Purchase of a rural manufacturing facility"},{"id":"c","text":"Charitable grants to community organizations"},{"id":"d","text":"Personal expenses of business owners"}]', 'b', 'B&I loans can be used for eligible business purposes including real estate, equipment, working capital, and business acquisition — all in eligible rural areas.', 8),
-(v_quiz, 'The Rural Energy for America Program (REAP) is part of which platform?', '[{"id":"a","text":"SBA programs"},{"id":"b","text":"USDA OneRD"},{"id":"c","text":"HUD risk-sharing"},{"id":"d","text":"EPA environmental finance"}]', 'b', 'REAP (Rural Energy for America Program) is one of the four programs consolidated under the USDA OneRD platform, providing guaranteed loans and grants for renewable energy and energy efficiency projects.', 9),
-(v_quiz, 'A community organization wants to help rural businesses access B&I financing. What is their most effective role?', '[{"id":"a","text":"Apply to become an approved B&I lender"},{"id":"b","text":"Provide technical assistance to borrowers and build referral relationships with approved lenders"},{"id":"c","text":"Establish a state-chartered bank"},{"id":"d","text":"Apply for CDFI certification first"}]', 'b', 'Community organizations are most effective as technical assistance providers and referral partners — helping borrowers prepare applications and connecting them with approved B&I lenders.', 10)
+
+INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
+SELECT id, 'USDA Rural Business & OneRD Assessment', 75, 50, 'approved' FROM certifications WHERE cert_number = 22
+ON CONFLICT DO NOTHING;
+
+
+WITH qid AS (
+  SELECT q.id AS quiz_id FROM quizzes q JOIN certifications c ON q.certification_id = c.id
+  WHERE c.cert_number = 22 AND q.title = 'USDA Rural Business & OneRD Assessment')
+INSERT INTO quiz_questions (quiz_id, question_text, options, correct_option_id, explanation, sort_order)
+SELECT qid.quiz_id, v.question_text, v.options::jsonb, v.correct_option_id, v.explanation, v.sort_order
+FROM qid CROSS JOIN (VALUES
+  ('The OneRD platform consolidates which four USDA programs?', '[{"id":"a","text":"RMAP, IRP, RBDG, REDLG"},{"id":"b","text":"B&I, Community Facilities, Water & Waste, REAP"},{"id":"c","text":"Section 502, 504, 515, 538"},{"id":"d","text":"FSA Farm Loans, BIA, CDFI, EDA"}]', 'b', 'OneRD consolidates Business & Industry (B&I), Community Facilities (CF), Water & Waste Disposal (WWD), and Rural Energy for America Program (REAP) under a single regulatory framework (7 CFR Part 5001).', 1),
+  ('What is the maximum B&I loan amount?', '[{"id":"a","text":"$5 million"},{"id":"b","text":"$10 million"},{"id":"c","text":"$25 million"},{"id":"d","text":"$50 million"}]', 'c', 'The Business & Industry Guaranteed Loan program has a maximum loan amount of $25 million.', 2),
+  ('What guarantee rate does the B&I program provide for loans up to $5 million?', '[{"id":"a","text":"60%"},{"id":"b","text":"70%"},{"id":"c","text":"80%"},{"id":"d","text":"90%"}]', 'c', 'B&I guarantee rates are 80% for loans up to $5 million, 70% for loans $5-10 million, and 60% for loans over $10 million.', 3),
+  ('Can a nonprofit CDFI be a direct B&I lender?', '[{"id":"a","text":"Yes, any nonprofit can apply"},{"id":"b","text":"No, only federally regulated financial institutions can be approved B&I lenders"},{"id":"c","text":"Yes, if they have CDFI certification"},{"id":"d","text":"Only if they partner with a commercial bank"}]', 'b', 'B&I approved lenders must be federally regulated financial institutions (banks, credit unions, insurance companies). Nonprofits can partner with approved lenders but generally cannot be direct B&I lenders.', 4),
+  ('Under what regulation does the OneRD platform operate?', '[{"id":"a","text":"7 CFR Part 4280"},{"id":"b","text":"7 CFR Part 5001"},{"id":"c","text":"2 CFR Part 200"},{"id":"d","text":"13 CFR Part 120"}]', 'b', 'The OneRD Guarantee Loan Initiative operates under 7 CFR Part 5001, which standardized the application and servicing processes for B&I, CF, WWD, and REAP programs.', 5),
+  ('What tool can be used to verify rural eligibility for USDA programs?', '[{"id":"a","text":"SAM.gov"},{"id":"b","text":"Grants.gov"},{"id":"c","text":"eligibility.sc.egov.usda.gov"},{"id":"d","text":"sba.gov/funding-programs"}]', 'c', 'USDA provides an online eligibility mapping tool at eligibility.sc.egov.usda.gov for verifying whether a specific address or area qualifies as rural under various USDA programs.', 6),
+  ('What is a feasibility study, and when is it required for B&I loans?', '[{"id":"a","text":"A credit report — required for all loans"},{"id":"b","text":"An environmental analysis — required for loans over $1 million"},{"id":"c","text":"An analysis of financial and market viability — required for larger or complex projects"},{"id":"d","text":"A demographic study — required for all rural loans"}]', 'c', 'A feasibility study analyzes the financial projections, market demand, and viability of a project. USDA requires feasibility studies for larger B&I loans and complex projects.', 7),
+  ('Which of the following is an eligible use of B&I loan proceeds?', '[{"id":"a","text":"Political campaign contributions"},{"id":"b","text":"Purchase of a rural manufacturing facility"},{"id":"c","text":"Charitable grants to community organizations"},{"id":"d","text":"Personal expenses of business owners"}]', 'b', 'B&I loans can be used for eligible business purposes including real estate, equipment, working capital, and business acquisition — all in eligible rural areas.', 8),
+  ('The Rural Energy for America Program (REAP) is part of which platform?', '[{"id":"a","text":"SBA programs"},{"id":"b","text":"USDA OneRD"},{"id":"c","text":"HUD risk-sharing"},{"id":"d","text":"EPA environmental finance"}]', 'b', 'REAP (Rural Energy for America Program) is one of the four programs consolidated under the USDA OneRD platform, providing guaranteed loans and grants for renewable energy and energy efficiency projects.', 9),
+  ('A community organization wants to help rural businesses access B&I financing. What is their most effective role?', '[{"id":"a","text":"Apply to become an approved B&I lender"},{"id":"b","text":"Provide technical assistance to borrowers and build referral relationships with approved lenders"},{"id":"c","text":"Establish a state-chartered bank"},{"id":"d","text":"Apply for CDFI certification first"}]', 'b', 'Community organizations are most effective as technical assistance providers and referral partners — helping borrowers prepare applications and connecting them with approved B&I lenders.', 10)
+) AS v(question_text, options, correct_option_id, explanation, sort_order)
 ON CONFLICT DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════════
 -- CERT 23: USDA Housing & Multifamily Lending
 -- ═══════════════════════════════════════════════════════════════
-SELECT id INTO v_cert FROM certifications WHERE cert_number = 23;
+
+-- ── Cert 23 ─────────────────────────────────────
 
 INSERT INTO modules (certification_id, title, sort_order, status)
-VALUES (v_cert, 'USDA Single-Family Housing Programs', 1, 'approved')
-ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
-IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
+SELECT id, 'USDA Single-Family Housing Programs', 1, 'approved' FROM certifications WHERE cert_number = 23
+ON CONFLICT DO NOTHING;
 
-INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'Section 502 Guaranteed and Direct Home Loan Programs', 'section-502-guaranteed-and-direct-home-loan-programs',
+
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status)
+SELECT m.id, 'Section 502 Guaranteed and Direct Home Loan Programs', 'section-502-guaranteed-and-direct-home-loan-programs',
 $BODY$## Section 502 Guaranteed and Direct Home Loan Programs
 
 USDA's Section 502 programs help low- and moderate-income rural residents purchase, build, rehabilitate, or repair homes. There are two distinct pathways: the Section 502 Guaranteed Loan Program (administered through private lenders) and the Section 502 Direct Loan Program (administered directly by USDA).
@@ -143,9 +155,13 @@ As a community organization, your role with the direct program is typically as a
 - [ ] Review income limits for your county at rd.usda.gov
 - [ ] Develop a homebuyer readiness checklist for rural clients
 - [ ] Create a referral process for clients who qualify for Section 502 Direct
-$BODY$, 1, 9, 'approved'),
+$BODY$, 1, 9, 'approved'
+FROM modules m JOIN certifications c ON m.certification_id = c.id
+WHERE c.cert_number = 23 AND m.sort_order = 1
+ON CONFLICT DO NOTHING;
 
-(v_mod, 'Rural Multifamily Housing: Section 538, 515 & Farm Labor Housing', 'rural-multifamily-housing-section-538-515-farm-labor-housing',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status)
+SELECT m.id, 'Rural Multifamily Housing: Section 538, 515 & Farm Labor Housing', 'rural-multifamily-housing-section-538-515-farm-labor-housing',
 $BODY$## Rural Multifamily Housing: Section 538, 515 & Farm Labor Housing
 
 USDA's multifamily housing programs finance affordable rental housing development in rural areas. For developers, housing organizations, and community lenders building rural capital stacks, understanding these programs opens significant financing opportunities.
@@ -175,39 +191,50 @@ Most rural affordable housing projects require multiple capital layers. A typica
 - [ ] Research your State Housing Finance Agency's rural housing programs
 - [ ] Learn the LIHTC application timeline in your state
 - [ ] Develop a capital stack template for a hypothetical rural housing project
-$BODY$, 1, 9, 'approved')
+$BODY$, 1, 9, 'approved'
+FROM modules m JOIN certifications c ON m.certification_id = c.id
+WHERE c.cert_number = 23 AND m.sort_order = 1
 ON CONFLICT DO NOTHING;
 
-INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
-VALUES (v_cert, 'USDA Housing & Multifamily Lending Assessment', 75, 45, 'approved')
-ON CONFLICT DO NOTHING RETURNING id INTO v_quiz;
-IF v_quiz IS NULL THEN SELECT id INTO v_quiz FROM quizzes WHERE certification_id = v_cert; END IF;
 
-INSERT INTO quiz_questions (quiz_id, question_text, options, correct_option_id, explanation, sort_order) VALUES
-(v_quiz, 'What is the maximum USDA guarantee percentage for Section 502 Guaranteed loans?', '[{"id":"a","text":"75%"},{"id":"b","text":"80%"},{"id":"c","text":"90%"},{"id":"d","text":"100%"}]', 'c', 'USDA guarantees up to 90% of Section 502 Guaranteed loans, significantly reducing lender risk for rural mortgage origination.', 1),
-(v_quiz, 'Who administers the Section 502 Direct Loan Program?', '[{"id":"a","text":"FHA-approved mortgage lenders"},{"id":"b","text":"State housing finance agencies"},{"id":"c","text":"USDA Rural Development directly"},{"id":"d","text":"Ginnie Mae-approved issuers"}]', 'c', 'USDA Rural Development is the direct lender in the Section 502 Direct program — USDA makes the loans itself to very low- and low-income rural borrowers.', 2),
-(v_quiz, 'Section 538 guarantees loans for what type of rural property?', '[{"id":"a","text":"Single-family homeownership"},{"id":"b","text":"Multifamily affordable rental housing"},{"id":"c","text":"Commercial real estate"},{"id":"d","text":"Agricultural land"}]', 'b', 'Section 538 provides loan guarantees for the construction or improvement of affordable rural rental housing (multifamily).', 3),
-(v_quiz, 'What income level does Section 502 Direct primarily serve?', '[{"id":"a","text":"150% of area median income"},{"id":"b","text":"115% of area median income"},{"id":"c","text":"Very low- and low-income households"},{"id":"d","text":"Moderate-income households only"}]', 'c', 'The Section 502 Direct Loan Program targets very low- and low-income rural households who cannot obtain financing through conventional or guaranteed programs.', 4),
-(v_quiz, 'Farm Labor Housing (Section 514/516) serves which population?', '[{"id":"a","text":"Rural homebuyers seeking first mortgages"},{"id":"b","text":"Domestic farm laborers in need of affordable housing"},{"id":"c","text":"Farmers seeking operating loans"},{"id":"d","text":"Rural seniors needing repair assistance"}]', 'b', 'USDA Sections 514 and 516 specifically address the housing needs of domestic farm laborers in rural areas — one of the most underserved rural populations.', 5),
-(v_quiz, 'What is a Section 502 Guaranteed borrower income limit?', '[{"id":"a","text":"Below poverty level only"},{"id":"b","text":"80% of area median income"},{"id":"c","text":"115% of area median income"},{"id":"d","text":"No income limit"}]', 'c', 'Section 502 Guaranteed borrowers must generally have incomes at or below 115% of the area median income.', 6),
-(v_quiz, 'Section 515 is best described as:', '[{"id":"a","text":"A state-level housing grant program"},{"id":"b","text":"A USDA direct loan program for affordable rural rental housing"},{"id":"c","text":"An FHA insurance program for rural mortgages"},{"id":"d","text":"A CDFI program for rural developers"}]', 'b', 'Section 515 is a USDA direct loan program that has financed affordable rural rental housing at below-market interest rates — the existing portfolio represents decades of rural housing investment.', 7),
-(v_quiz, 'A rural affordable housing project typically requires multiple capital layers. This is called:', '[{"id":"a","text":"A USDA consolidated application"},{"id":"b","text":"A capital stack"},{"id":"c","text":"A guarantee pool"},{"id":"d","text":"A relending structure"}]', 'b', 'A capital stack is the combination of multiple financing sources — grants, debt, equity, tax credits — that together fund a single project.', 8),
-(v_quiz, 'To originate Section 502 Guaranteed loans directly, an organization must:', 'Be a nonprofit with CDFI certification', 'Meet USDA lender eligibility as a regulated financial institution', 'Have five years of rural housing experience', 'Submit a feasibility study to USDA', 'B', 'Section 502 Guaranteed lenders must meet USDA's lender eligibility requirements, which generally require being a federally regulated financial institution.', 9),
-(v_quiz, 'What is the role of a community organization in the Section 502 Direct program?', '[{"id":"a","text":"Originate and service direct USDA loans"},{"id":"b","text":"Provide referrals, application assistance, and homebuyer counseling"},{"id":"c","text":"Administer the USDA guarantee"},{"id":"d","text":"Manage the Section 502 loan servicing portfolio"}]', 'b', 'Since USDA originates Section 502 Direct loans itself, community organizations serve most effectively as referral partners and application assistance providers.', 10)
+
+INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
+SELECT id, 'USDA Housing & Multifamily Lending Assessment', 75, 45, 'approved' FROM certifications WHERE cert_number = 23
+ON CONFLICT DO NOTHING;
+
+
+WITH qid AS (
+  SELECT q.id AS quiz_id FROM quizzes q JOIN certifications c ON q.certification_id = c.id
+  WHERE c.cert_number = 23 AND q.title = 'USDA Housing & Multifamily Lending Assessment')
+INSERT INTO quiz_questions (quiz_id, question_text, options, correct_option_id, explanation, sort_order)
+SELECT qid.quiz_id, v.question_text, v.options::jsonb, v.correct_option_id, v.explanation, v.sort_order
+FROM qid CROSS JOIN (VALUES
+  ('What is the maximum USDA guarantee percentage for Section 502 Guaranteed loans?', '[{"id":"a","text":"75%"},{"id":"b","text":"80%"},{"id":"c","text":"90%"},{"id":"d","text":"100%"}]', 'c', 'USDA guarantees up to 90% of Section 502 Guaranteed loans, significantly reducing lender risk for rural mortgage origination.', 1),
+  ('Who administers the Section 502 Direct Loan Program?', '[{"id":"a","text":"FHA-approved mortgage lenders"},{"id":"b","text":"State housing finance agencies"},{"id":"c","text":"USDA Rural Development directly"},{"id":"d","text":"Ginnie Mae-approved issuers"}]', 'c', 'USDA Rural Development is the direct lender in the Section 502 Direct program — USDA makes the loans itself to very low- and low-income rural borrowers.', 2),
+  ('Section 538 guarantees loans for what type of rural property?', '[{"id":"a","text":"Single-family homeownership"},{"id":"b","text":"Multifamily affordable rental housing"},{"id":"c","text":"Commercial real estate"},{"id":"d","text":"Agricultural land"}]', 'b', 'Section 538 provides loan guarantees for the construction or improvement of affordable rural rental housing (multifamily).', 3),
+  ('What income level does Section 502 Direct primarily serve?', '[{"id":"a","text":"150% of area median income"},{"id":"b","text":"115% of area median income"},{"id":"c","text":"Very low- and low-income households"},{"id":"d","text":"Moderate-income households only"}]', 'c', 'The Section 502 Direct Loan Program targets very low- and low-income rural households who cannot obtain financing through conventional or guaranteed programs.', 4),
+  ('Farm Labor Housing (Section 514/516) serves which population?', '[{"id":"a","text":"Rural homebuyers seeking first mortgages"},{"id":"b","text":"Domestic farm laborers in need of affordable housing"},{"id":"c","text":"Farmers seeking operating loans"},{"id":"d","text":"Rural seniors needing repair assistance"}]', 'b', 'USDA Sections 514 and 516 specifically address the housing needs of domestic farm laborers in rural areas — one of the most underserved rural populations.', 5),
+  ('What is a Section 502 Guaranteed borrower income limit?', '[{"id":"a","text":"Below poverty level only"},{"id":"b","text":"80% of area median income"},{"id":"c","text":"115% of area median income"},{"id":"d","text":"No income limit"}]', 'c', 'Section 502 Guaranteed borrowers must generally have incomes at or below 115% of the area median income.', 6),
+  ('Section 515 is best described as:', '[{"id":"a","text":"A state-level housing grant program"},{"id":"b","text":"A USDA direct loan program for affordable rural rental housing"},{"id":"c","text":"An FHA insurance program for rural mortgages"},{"id":"d","text":"A CDFI program for rural developers"}]', 'b', 'Section 515 is a USDA direct loan program that has financed affordable rural rental housing at below-market interest rates — the existing portfolio represents decades of rural housing investment.', 7),
+  ('A rural affordable housing project typically requires multiple capital layers. This is called:', '[{"id":"a","text":"A USDA consolidated application"},{"id":"b","text":"A capital stack"},{"id":"c","text":"A guarantee pool"},{"id":"d","text":"A relending structure"}]', 'b', 'A capital stack is the combination of multiple financing sources — grants, debt, equity, tax credits — that together fund a single project.', 8),
+  ('To originate Section 502 Guaranteed loans directly, an organization must:', 'Be a nonprofit with CDFI certification', 'Meet USDA lender eligibility as a regulated financial institution', 'Have five years of rural housing experience', 'Submit a feasibility study to USDA', 'B', 'Section 502 Guaranteed lenders must meet USDA's lender eligibility requirements, which generally require being a federally regulated financial institution.', 9),
+  ('What is the role of a community organization in the Section 502 Direct program?', '[{"id":"a","text":"Originate and service direct USDA loans"},{"id":"b","text":"Provide referrals, application assistance, and homebuyer counseling"},{"id":"c","text":"Administer the USDA guarantee"},{"id":"d","text":"Manage the Section 502 loan servicing portfolio"}]', 'b', 'Since USDA originates Section 502 Direct loans itself, community organizations serve most effectively as referral partners and application assistance providers.', 10)
+) AS v(question_text, options, correct_option_id, explanation, sort_order)
 ON CONFLICT DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════════
 -- CERT 24: USDA Farm & Agriculture Credit
 -- ═══════════════════════════════════════════════════════════════
-SELECT id INTO v_cert FROM certifications WHERE cert_number = 24;
+
+-- ── Cert 24 ─────────────────────────────────────
 
 INSERT INTO modules (certification_id, title, sort_order, status)
-VALUES (v_cert, 'FSA Guaranteed and Direct Farm Loan Programs', 1, 'approved')
-ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
-IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
+SELECT id, 'FSA Guaranteed and Direct Farm Loan Programs', 1, 'approved' FROM certifications WHERE cert_number = 24
+ON CONFLICT DO NOTHING;
 
-INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'USDA FSA Loan Programs: Overview for Lenders and TA Providers', 'usda-fsa-loan-programs-overview-for-lenders-and-ta-providers',
+
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status)
+SELECT m.id, 'USDA FSA Loan Programs: Overview for Lenders and TA Providers', 'usda-fsa-loan-programs-overview-for-lenders-and-ta-providers',
 $BODY$## USDA FSA Loan Programs: Overview for Lenders and TA Providers
 
 The USDA Farm Service Agency (FSA) operates the primary federal agricultural lending system. FSA provides both guaranteed and direct loans for farm ownership, operating costs, and equipment — with special programs for beginning, socially disadvantaged, and veteran farmers.
@@ -239,39 +266,50 @@ FSA prioritizes access for beginning farmers (defined as those with less than 10
 - [ ] Review the Down Payment Farm Loan program for beginning farmer homesteaders
 - [ ] Develop a referral process for agricultural borrowers who need FSA assistance
 - [ ] Learn the Farm Credit System lenders in your region for partnership opportunities
-$BODY$, 1, 9, 'approved')
+$BODY$, 1, 9, 'approved'
+FROM modules m JOIN certifications c ON m.certification_id = c.id
+WHERE c.cert_number = 24 AND m.sort_order = 1
 ON CONFLICT DO NOTHING;
 
-INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
-VALUES (v_cert, 'USDA Farm & Agriculture Credit Assessment', 75, 40, 'approved')
-ON CONFLICT DO NOTHING RETURNING id INTO v_quiz;
-IF v_quiz IS NULL THEN SELECT id INTO v_quiz FROM quizzes WHERE certification_id = v_cert; END IF;
 
-INSERT INTO quiz_questions (quiz_id, question_text, options, correct_option_id, explanation, sort_order) VALUES
-(v_quiz, 'What percentage does FSA guarantee on guaranteed farm loans?', '[{"id":"a","text":"Up to 75%"},{"id":"b","text":"Up to 80%"},{"id":"c","text":"Up to 90%"},{"id":"d","text":"Up to 95%"}]', 'd', 'FSA guarantees up to 95% of guaranteed farm ownership and operating loans, one of the highest guarantee rates in any federal lending program.', 1),
-(v_quiz, 'What is the maximum FSA Microloan amount?', '[{"id":"a","text":"$25,000"},{"id":"b","text":"$50,000"},{"id":"c","text":"$100,000"},{"id":"d","text":"$150,000"}]', 'b', 'FSA Microloans have a maximum of $50,000 and use a simplified application process designed for small-scale and beginning farmers.', 2),
-(v_quiz, 'How is a "beginning farmer" defined for FSA purposes?', '[{"id":"a","text":"First-time loan applicant"},{"id":"b","text":"Farmer with less than 10 years of experience"},{"id":"c","text":"Farmer under age 35"},{"id":"d","text":"Farmer with less than 100 acres"}]', 'b', 'FSA defines a beginning farmer as someone with 10 years or fewer of farming experience — not age-based.', 3),
-(v_quiz, 'Which FSA program can guarantee a seller-financed land sale?', '[{"id":"a","text":"Guaranteed Farm Ownership Loan"},{"id":"b","text":"Land Contract Guarantee"},{"id":"c","text":"FSA Microloan"},{"id":"d","text":"Beginning Farmer Down Payment Loan"}]', 'b', 'The FSA Land Contract Guarantee protects a seller who finances the purchase of their farm directly to a buyer — FSA guarantees the buyer''s payments to the seller.', 4),
-(v_quiz, 'What is the maximum Guaranteed Farm Ownership loan amount?', '[{"id":"a","text":"$300,000"},{"id":"b","text":"$400,000"},{"id":"c","text":"$600,000"},{"id":"d","text":"$1 million"}]', 'c', 'The maximum Guaranteed Farm Ownership loan amount is $600,000 (subject to inflation adjustments), compared to $300,000 for the Direct Farm Ownership loan.', 5),
-(v_quiz, 'Who administers the FSA guaranteed farm loan program?', '[{"id":"a","text":"FSA makes the loans directly"},{"id":"b","text":"Approved commercial lenders with FSA guarantees"},{"id":"c","text":"State agricultural agencies"},{"id":"d","text":"Farm Credit System only"}]', 'b', 'FSA guaranteed loans are made by approved commercial lenders (primarily banks and credit unions) with FSA providing the guarantee — FSA does not originate these loans.', 6),
-(v_quiz, 'Socially disadvantaged farmers are defined as:', '[{"id":"a","text":"Farmers below the poverty line"},{"id":"b","text":"Members of racial or ethnic minority groups"},{"id":"c","text":"Farmers in designated disaster areas"},{"id":"d","text":"Farmers with more than $100,000 in debt"}]', 'b', 'For FSA purposes, socially disadvantaged farmers are members of racial or ethnic minority groups — a classification that unlocks priority access to certain loan programs and reserved funds.', 7),
-(v_quiz, 'What is the Farm Credit System?', '[{"id":"a","text":"USDA''s direct lending division"},{"id":"b","text":"A network of federally chartered cooperative lenders serving agricultural markets"},{"id":"c","text":"SBA''s rural lending program"},{"id":"d","text":"A group of state agricultural agencies"}]', 'b', 'The Farm Credit System is a nationwide network of federally chartered cooperative lending institutions (Farm Credit Banks, Agricultural Credit Associations) that serve farmers, rural homeowners, and agricultural businesses.', 8),
-(v_quiz, 'FSA Direct Operating Loans can be used for which purpose?', '[{"id":"a","text":"Purchasing farmland only"},{"id":"b","text":"Annual farm expenses including seed, feed, fertilizer, and equipment"},{"id":"c","text":"Building farm structures only"},{"id":"d","text":"Paying off existing farm debt"}]', 'b', 'FSA Direct Operating Loans cover annual production expenses — seed, feed, fertilizer, pesticides, fuel, farm supplies, and the personal living expenses of farmers during the growing season.', 9),
-(v_quiz, 'A community organization working with beginning farmers wants to help them access federal credit. What is the most appropriate first step?', '[{"id":"a","text":"Apply to become an FSA-approved lender"},{"id":"b","text":"Contact the local FSA county office and learn about current program availability"},{"id":"c","text":"Establish a Farm Credit Association"},{"id":"d","text":"Apply for CDFI certification"}]', 'b', 'The local FSA county office is the primary point of contact for beginning farmer loans, program availability, and application assistance. Community organizations should build relationships with their county FSA office.', 10)
+
+INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
+SELECT id, 'USDA Farm & Agriculture Credit Assessment', 75, 40, 'approved' FROM certifications WHERE cert_number = 24
+ON CONFLICT DO NOTHING;
+
+
+WITH qid AS (
+  SELECT q.id AS quiz_id FROM quizzes q JOIN certifications c ON q.certification_id = c.id
+  WHERE c.cert_number = 24 AND q.title = 'USDA Farm & Agriculture Credit Assessment')
+INSERT INTO quiz_questions (quiz_id, question_text, options, correct_option_id, explanation, sort_order)
+SELECT qid.quiz_id, v.question_text, v.options::jsonb, v.correct_option_id, v.explanation, v.sort_order
+FROM qid CROSS JOIN (VALUES
+  ('What percentage does FSA guarantee on guaranteed farm loans?', '[{"id":"a","text":"Up to 75%"},{"id":"b","text":"Up to 80%"},{"id":"c","text":"Up to 90%"},{"id":"d","text":"Up to 95%"}]', 'd', 'FSA guarantees up to 95% of guaranteed farm ownership and operating loans, one of the highest guarantee rates in any federal lending program.', 1),
+  ('What is the maximum FSA Microloan amount?', '[{"id":"a","text":"$25,000"},{"id":"b","text":"$50,000"},{"id":"c","text":"$100,000"},{"id":"d","text":"$150,000"}]', 'b', 'FSA Microloans have a maximum of $50,000 and use a simplified application process designed for small-scale and beginning farmers.', 2),
+  ('How is a "beginning farmer" defined for FSA purposes?', '[{"id":"a","text":"First-time loan applicant"},{"id":"b","text":"Farmer with less than 10 years of experience"},{"id":"c","text":"Farmer under age 35"},{"id":"d","text":"Farmer with less than 100 acres"}]', 'b', 'FSA defines a beginning farmer as someone with 10 years or fewer of farming experience — not age-based.', 3),
+  ('Which FSA program can guarantee a seller-financed land sale?', '[{"id":"a","text":"Guaranteed Farm Ownership Loan"},{"id":"b","text":"Land Contract Guarantee"},{"id":"c","text":"FSA Microloan"},{"id":"d","text":"Beginning Farmer Down Payment Loan"}]', 'b', 'The FSA Land Contract Guarantee protects a seller who finances the purchase of their farm directly to a buyer — FSA guarantees the buyer''s payments to the seller.', 4),
+  ('What is the maximum Guaranteed Farm Ownership loan amount?', '[{"id":"a","text":"$300,000"},{"id":"b","text":"$400,000"},{"id":"c","text":"$600,000"},{"id":"d","text":"$1 million"}]', 'c', 'The maximum Guaranteed Farm Ownership loan amount is $600,000 (subject to inflation adjustments), compared to $300,000 for the Direct Farm Ownership loan.', 5),
+  ('Who administers the FSA guaranteed farm loan program?', '[{"id":"a","text":"FSA makes the loans directly"},{"id":"b","text":"Approved commercial lenders with FSA guarantees"},{"id":"c","text":"State agricultural agencies"},{"id":"d","text":"Farm Credit System only"}]', 'b', 'FSA guaranteed loans are made by approved commercial lenders (primarily banks and credit unions) with FSA providing the guarantee — FSA does not originate these loans.', 6),
+  ('Socially disadvantaged farmers are defined as:', '[{"id":"a","text":"Farmers below the poverty line"},{"id":"b","text":"Members of racial or ethnic minority groups"},{"id":"c","text":"Farmers in designated disaster areas"},{"id":"d","text":"Farmers with more than $100,000 in debt"}]', 'b', 'For FSA purposes, socially disadvantaged farmers are members of racial or ethnic minority groups — a classification that unlocks priority access to certain loan programs and reserved funds.', 7),
+  ('What is the Farm Credit System?', '[{"id":"a","text":"USDA''s direct lending division"},{"id":"b","text":"A network of federally chartered cooperative lenders serving agricultural markets"},{"id":"c","text":"SBA''s rural lending program"},{"id":"d","text":"A group of state agricultural agencies"}]', 'b', 'The Farm Credit System is a nationwide network of federally chartered cooperative lending institutions (Farm Credit Banks, Agricultural Credit Associations) that serve farmers, rural homeowners, and agricultural businesses.', 8),
+  ('FSA Direct Operating Loans can be used for which purpose?', '[{"id":"a","text":"Purchasing farmland only"},{"id":"b","text":"Annual farm expenses including seed, feed, fertilizer, and equipment"},{"id":"c","text":"Building farm structures only"},{"id":"d","text":"Paying off existing farm debt"}]', 'b', 'FSA Direct Operating Loans cover annual production expenses — seed, feed, fertilizer, pesticides, fuel, farm supplies, and the personal living expenses of farmers during the growing season.', 9),
+  ('A community organization working with beginning farmers wants to help them access federal credit. What is the most appropriate first step?', '[{"id":"a","text":"Apply to become an FSA-approved lender"},{"id":"b","text":"Contact the local FSA county office and learn about current program availability"},{"id":"c","text":"Establish a Farm Credit Association"},{"id":"d","text":"Apply for CDFI certification"}]', 'b', 'The local FSA county office is the primary point of contact for beginning farmer loans, program availability, and application assistance. Community organizations should build relationships with their county FSA office.', 10)
+) AS v(question_text, options, correct_option_id, explanation, sort_order)
 ON CONFLICT DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════════
 -- CERT 25: FHA, VA, USDA Mortgage & Native Housing Lending
 -- ═══════════════════════════════════════════════════════════════
-SELECT id INTO v_cert FROM certifications WHERE cert_number = 25;
+
+-- ── Cert 25 ─────────────────────────────────────
 
 INSERT INTO modules (certification_id, title, sort_order, status)
-VALUES (v_cert, 'Government Mortgage Program Ecosystem', 1, 'approved')
-ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
-IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
+SELECT id, 'Government Mortgage Program Ecosystem', 1, 'approved' FROM certifications WHERE cert_number = 25
+ON CONFLICT DO NOTHING;
 
-INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'FHA, VA, and USDA Mortgage Programs: How They Work Together', 'fha-va-and-usda-mortgage-programs-how-they-work-together',
+
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status)
+SELECT m.id, 'FHA, VA, and USDA Mortgage Programs: How They Work Together', 'fha-va-and-usda-mortgage-programs-how-they-work-together',
 $BODY$## FHA, VA, and USDA Mortgage Programs: How They Work Together
 
 Government mortgage insurance and guarantee programs — FHA, VA, and USDA — make homeownership accessible to millions of Americans who cannot qualify for conventional mortgages. Together, they represent the backbone of the affordable homeownership ecosystem.
@@ -303,9 +341,13 @@ Many rural communities have borrowers eligible for multiple programs. A veteran 
 - [ ] Review HUD's approved mortgagee list for local lenders
 - [ ] Learn VA eligibility requirements for veterans in your network
 - [ ] Develop a homebuyer counseling curriculum covering all three programs
-$BODY$, 1, 9, 'approved'),
+$BODY$, 1, 9, 'approved'
+FROM modules m JOIN certifications c ON m.certification_id = c.id
+WHERE c.cert_number = 25 AND m.sort_order = 1
+ON CONFLICT DO NOTHING;
 
-(v_mod, 'Native Housing Lending: HUD Indian Home Loan Guarantee Programs', 'native-housing-hud-indian-home-loan-guarantee',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status)
+SELECT m.id, 'Native Housing Lending: HUD Indian Home Loan Guarantee Programs', 'native-housing-hud-indian-home-loan-guarantee',
 $BODY$## HUD Section 184 & 184-A: Native Housing Lending Programs
 
 The HUD Section 184 Indian Home Loan Guarantee Program is one of the most important and underutilized government mortgage programs in the United States. It was created specifically to address barriers to conventional mortgage lending in tribal communities — and it is growing rapidly.
@@ -336,25 +378,33 @@ Organizations serving tribal communities should: (1) build relationships with Se
 - [ ] Develop a homebuyer education curriculum for tribal members
 - [ ] Connect with your state's HUD-approved housing counseling agencies
 - [ ] Research tribal CDFI programs that provide homeownership support
-$BODY$, 2, 9, 'approved')
+$BODY$, 2, 9, 'approved'
+FROM modules m JOIN certifications c ON m.certification_id = c.id
+WHERE c.cert_number = 25 AND m.sort_order = 1
 ON CONFLICT DO NOTHING;
+
+
 
 INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
-VALUES (v_cert, 'FHA, VA, USDA Mortgage & Native Housing Assessment', 75, 45, 'approved')
-ON CONFLICT DO NOTHING RETURNING id INTO v_quiz;
-IF v_quiz IS NULL THEN SELECT id INTO v_quiz FROM quizzes WHERE certification_id = v_cert; END IF;
-
-INSERT INTO quiz_questions (quiz_id, question_text, options, correct_option_id, explanation, sort_order) VALUES
-(v_quiz, 'FHA mortgage insurance is administered by which agency?', '[{"id":"a","text":"USDA Rural Development"},{"id":"b","text":"Department of Veterans Affairs"},{"id":"c","text":"HUD Federal Housing Administration"},{"id":"d","text":"Fannie Mae"}]', 'c', 'The Federal Housing Administration (FHA) is a division of HUD that insures mortgage loans made by approved private lenders.', 1),
-(v_quiz, 'What is the minimum down payment for FHA Title II loans with a credit score of 580 or higher?', '[{"id":"a","text":"0%"},{"id":"b","text":"3.5%"},{"id":"c","text":"5%"},{"id":"d","text":"10%"}]', 'b', 'FHA requires a 3.5% down payment for borrowers with credit scores of 580 or higher — one of the lowest down payment requirements among conventional mortgage programs.', 2),
-(v_quiz, 'VA loans are available to which group?', '[{"id":"a","text":"All low-income borrowers in rural areas"},{"id":"b","text":"Veterans, service members, and eligible surviving spouses"},{"id":"c","text":"Native American borrowers only"},{"id":"d","text":"First-time homebuyers nationwide"}]', 'b', 'VA mortgage guarantees are available to eligible veterans, active-duty service members, and qualifying surviving spouses as a benefit of military service.', 3),
-(v_quiz, 'What is the primary purpose of HUD Section 184?', '[{"id":"a","text":"To insure multifamily housing loans"},{"id":"b","text":"To provide mortgage guarantees for loans on tribal trust land and to Native borrowers"},{"id":"c","text":"To finance rural multifamily development"},{"id":"d","text":"To guarantee farm operating loans"}]', 'b', 'HUD Section 184 was created specifically to address barriers to mortgage lending in tribal communities, providing guarantees for loans to Native American and Alaska Native borrowers.', 4),
-(v_quiz, 'Which mortgage program requires NO down payment and NO private mortgage insurance?', '[{"id":"a","text":"FHA Title II"},{"id":"b","text":"USDA Section 502 Guaranteed"},{"id":"c","text":"VA Loan Guarantee"},{"id":"d","text":"Fannie Mae HomeReady"}]', 'c', 'VA loans require no down payment and no private mortgage insurance — the most favorable terms available to eligible borrowers.', 5),
-(v_quiz, 'To originate FHA-insured mortgages, a lender must:', '[{"id":"a","text":"Have CDFI certification"},{"id":"b","text":"Be an FHA-approved mortgagee with a net worth of at least $1 million"},{"id":"c","text":"Be a state-chartered bank"},{"id":"d","text":"Register with NMLS only"}]', 'b', 'FHA approval requires institutional accreditation, minimum net worth ($1 million for supervised lenders), a quality control plan, and compliance with HUD handbook requirements.', 6),
-(v_quiz, 'Section 184-A serves which population?', '[{"id":"a","text":"Alaska Native communities"},{"id":"b","text":"Native Hawaiian families"},{"id":"c","text":"American Indian tribal members in the continental U.S."},{"id":"d","text":"All indigenous peoples in the United States"}]', 'b', 'Section 184-A specifically serves Native Hawaiian families, providing mortgage guarantees for loans on Hawaiian home lands — a parallel program to Section 184.', 7),
-(v_quiz, 'What is a key reason conventional mortgage lending has historically been limited on tribal trust land?', '[{"id":"a","text":"Tribal members have low credit scores"},{"id":"b","text":"Title insurance and conventional mortgage underwriting cannot apply to trust land"},{"id":"c","text":"USDA prohibits mortgage lending in tribal areas"},{"id":"d","text":"There is no demand for homeownership in tribal communities"}]', 'b', 'Tribal trust land cannot be foreclosed on through conventional processes, and title insurance is difficult or impossible to obtain, making conventional mortgage lending impractical without a federal guarantee.', 8),
-(v_quiz, 'A rural housing counseling agency wants to help veteran borrowers in a rural area find the best mortgage terms. Which program combination should they explore first?', '[{"id":"a","text":"FHA and Fannie Mae"},{"id":"b","text":"VA Loan Guarantee and USDA Section 502 Guaranteed"},{"id":"c","text":"USDA B&I and REAP"},{"id":"d","text":"HUD Section 184 and SBA Microloan"}]', 'b', 'Veterans living in eligible rural areas may qualify for both VA and USDA Section 502 programs. The VA typically offers better terms (no down payment, no MIP), but USDA can be an alternative for veterans who don''t use VA benefits.', 9),
-(v_quiz, 'Which of the following is a key first step for a community organization serving tribal members who want to buy homes?', '[{"id":"a","text":"Obtain a state lending license"},{"id":"b","text":"Identify Section 184-approved lenders and build homebuyer education capacity"},{"id":"c","text":"Apply to become a Ginnie Mae issuer"},{"id":"d","text":"Apply for an FSA guarantee"}]', 'b', 'Building relationships with Section 184-approved lenders and developing homebuyer education programming are the most actionable first steps for organizations serving tribal homebuyers.', 10)
+SELECT id, 'FHA, VA, USDA Mortgage & Native Housing Assessment', 75, 45, 'approved' FROM certifications WHERE cert_number = 25
 ON CONFLICT DO NOTHING;
 
-END $block$;
+
+WITH qid AS (
+  SELECT q.id AS quiz_id FROM quizzes q JOIN certifications c ON q.certification_id = c.id
+  WHERE c.cert_number = 25 AND q.title = 'FHA, VA, USDA Mortgage & Native Housing Assessment')
+INSERT INTO quiz_questions (quiz_id, question_text, options, correct_option_id, explanation, sort_order)
+SELECT qid.quiz_id, v.question_text, v.options::jsonb, v.correct_option_id, v.explanation, v.sort_order
+FROM qid CROSS JOIN (VALUES
+  ('FHA mortgage insurance is administered by which agency?', '[{"id":"a","text":"USDA Rural Development"},{"id":"b","text":"Department of Veterans Affairs"},{"id":"c","text":"HUD Federal Housing Administration"},{"id":"d","text":"Fannie Mae"}]', 'c', 'The Federal Housing Administration (FHA) is a division of HUD that insures mortgage loans made by approved private lenders.', 1),
+  ('What is the minimum down payment for FHA Title II loans with a credit score of 580 or higher?', '[{"id":"a","text":"0%"},{"id":"b","text":"3.5%"},{"id":"c","text":"5%"},{"id":"d","text":"10%"}]', 'b', 'FHA requires a 3.5% down payment for borrowers with credit scores of 580 or higher — one of the lowest down payment requirements among conventional mortgage programs.', 2),
+  ('VA loans are available to which group?', '[{"id":"a","text":"All low-income borrowers in rural areas"},{"id":"b","text":"Veterans, service members, and eligible surviving spouses"},{"id":"c","text":"Native American borrowers only"},{"id":"d","text":"First-time homebuyers nationwide"}]', 'b', 'VA mortgage guarantees are available to eligible veterans, active-duty service members, and qualifying surviving spouses as a benefit of military service.', 3),
+  ('What is the primary purpose of HUD Section 184?', '[{"id":"a","text":"To insure multifamily housing loans"},{"id":"b","text":"To provide mortgage guarantees for loans on tribal trust land and to Native borrowers"},{"id":"c","text":"To finance rural multifamily development"},{"id":"d","text":"To guarantee farm operating loans"}]', 'b', 'HUD Section 184 was created specifically to address barriers to mortgage lending in tribal communities, providing guarantees for loans to Native American and Alaska Native borrowers.', 4),
+  ('Which mortgage program requires NO down payment and NO private mortgage insurance?', '[{"id":"a","text":"FHA Title II"},{"id":"b","text":"USDA Section 502 Guaranteed"},{"id":"c","text":"VA Loan Guarantee"},{"id":"d","text":"Fannie Mae HomeReady"}]', 'c', 'VA loans require no down payment and no private mortgage insurance — the most favorable terms available to eligible borrowers.', 5),
+  ('To originate FHA-insured mortgages, a lender must:', '[{"id":"a","text":"Have CDFI certification"},{"id":"b","text":"Be an FHA-approved mortgagee with a net worth of at least $1 million"},{"id":"c","text":"Be a state-chartered bank"},{"id":"d","text":"Register with NMLS only"}]', 'b', 'FHA approval requires institutional accreditation, minimum net worth ($1 million for supervised lenders), a quality control plan, and compliance with HUD handbook requirements.', 6),
+  ('Section 184-A serves which population?', '[{"id":"a","text":"Alaska Native communities"},{"id":"b","text":"Native Hawaiian families"},{"id":"c","text":"American Indian tribal members in the continental U.S."},{"id":"d","text":"All indigenous peoples in the United States"}]', 'b', 'Section 184-A specifically serves Native Hawaiian families, providing mortgage guarantees for loans on Hawaiian home lands — a parallel program to Section 184.', 7),
+  ('What is a key reason conventional mortgage lending has historically been limited on tribal trust land?', '[{"id":"a","text":"Tribal members have low credit scores"},{"id":"b","text":"Title insurance and conventional mortgage underwriting cannot apply to trust land"},{"id":"c","text":"USDA prohibits mortgage lending in tribal areas"},{"id":"d","text":"There is no demand for homeownership in tribal communities"}]', 'b', 'Tribal trust land cannot be foreclosed on through conventional processes, and title insurance is difficult or impossible to obtain, making conventional mortgage lending impractical without a federal guarantee.', 8),
+  ('A rural housing counseling agency wants to help veteran borrowers in a rural area find the best mortgage terms. Which program combination should they explore first?', '[{"id":"a","text":"FHA and Fannie Mae"},{"id":"b","text":"VA Loan Guarantee and USDA Section 502 Guaranteed"},{"id":"c","text":"USDA B&I and REAP"},{"id":"d","text":"HUD Section 184 and SBA Microloan"}]', 'b', 'Veterans living in eligible rural areas may qualify for both VA and USDA Section 502 programs. The VA typically offers better terms (no down payment, no MIP), but USDA can be an alternative for veterans who don''t use VA benefits.', 9),
+  ('Which of the following is a key first step for a community organization serving tribal members who want to buy homes?', '[{"id":"a","text":"Obtain a state lending license"},{"id":"b","text":"Identify Section 184-approved lenders and build homebuyer education capacity"},{"id":"c","text":"Apply to become a Ginnie Mae issuer"},{"id":"d","text":"Apply for an FSA guarantee"}]', 'b', 'Building relationships with Section 184-approved lenders and developing homebuyer education programming are the most actionable first steps for organizations serving tribal homebuyers.', 10)
+) AS v(question_text, options, correct_option_id, explanation, sort_order)
+ON CONFLICT DO NOTHING;
