@@ -8,7 +8,7 @@
 -- Run after: 27_cert_seeds_18_35.sql
 -- ============================================================
 
-DO $$
+DO $block$
 DECLARE
   v_cert uuid; v_mod uuid; v_quiz uuid;
 BEGIN
@@ -440,4 +440,4 @@ INSERT INTO quiz_questions (quiz_id, question_text, option_a, option_b, option_c
 (v_quiz, 'A nonprofit wants to help small rural water systems access DWSRF funding. What is the most appropriate role?', 'Become a state SRF fund administrator', 'Provide technical assistance and help systems navigate the state SRF application', 'Apply for SRF funds on the water system''s behalf', 'Obtain an EPA brownfields grant', 'B', 'Nonprofits most effectively serve as technical assistance providers — helping small and disadvantaged water systems understand SRF eligibility, prepare applications, and navigate the state SRF program.', 10)
 ON CONFLICT DO NOTHING;
 
-END $$;
+END $block$;

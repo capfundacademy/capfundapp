@@ -7,7 +7,7 @@
 -- Run after: 27_cert_seeds_18_35.sql
 -- ============================================================
 
-DO $$
+DO $block$
 DECLARE
   v_cert18 uuid; v_cert19 uuid; v_cert20 uuid; v_cert21 uuid;
   v_mod uuid; v_quiz uuid;
@@ -474,4 +474,4 @@ INSERT INTO quiz_questions (quiz_id, question_text, option_a, option_b, option_c
 (v_quiz, 'If a community organization wants to help borrowers access SBA 504 financing without becoming a CDC, what is the best strategy?', 'Apply for SBA lender status', 'Build referral partnerships with regional CDCs', 'Apply directly to SBA for 504 guarantee authority', 'Create a separate for-profit CDC entity', 'B', 'Building referral relationships with CDCs is the most efficient strategy for organizations that want to help borrowers access 504 financing without the complexity of becoming a CDC.', 10)
 ON CONFLICT DO NOTHING;
 
-END $$;
+END $block$;

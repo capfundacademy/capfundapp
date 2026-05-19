@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Primary SEO — optimized for brand + USDA program keywords -->
-  <title>Cap Fund Academy | USDA RMAP, RBDG & Rural Microlending Certifications</title>
+  <title>Cap Fund Academy | Government Lending & Capital Access Certifications</title>
   <meta name="description" content="Cap Fund Academy offers 36 stackable certifications for rural nonprofits, CDFIs, tribal organizations, and community lenders. Master USDA RMAP, RBDG, IRP, SBA, CDFI, EDA, EPA, FHA, VA, and government lending programs. Independent training platform." />
-  <meta name="keywords" content="Cap Fund Academy, USDA RMAP certification, RBDG training, revolving loan fund certification, rural microlending certification, IRP program training, microfinance certification, CDFI certification training, rural capital access, 7 CFR 4280, RLF compliance training, RMAP application training, rural nonprofit certification, microloan program training, rural economic development certification, USDA rural development training, revolving loan fund training, rural business development grant, how to start a revolving loan fund, RMAP eligibility requirements, rural microlender certification" />
+  <meta name="keywords" content="Cap Fund Academy, government lending certification, USDA RMAP certification, RBDG training, revolving loan fund certification, rural microlending certification, IRP program training, microfinance certification, CDFI certification training, rural capital access, SBA 7a lender training, SBA microloan intermediary, EDA revolving loan fund, EPA brownfields RLF, FHA multifamily lending, CDFI certification requirements, SSBCI training, tribal lending programs, capital stack design, infrastructure finance training, export finance certification, secondary market training, community development finance, 7 CFR 4280, RLF compliance training, rural nonprofit certification, rural economic development certification" />
   <meta name="author" content="Cap Fund Academy" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <link rel="canonical" href="https://capfundacademy.com/" />
@@ -377,6 +377,14 @@ window.ENV = {
       cta: 'Contact for Pricing',
       ctaStyle: 'bg-[#0F1631] text-white hover:bg-gray-800',
       contact: true,
+    },
+    {
+      name: 'Annual Membership',
+      price: '$199/mo',
+      desc: 'All certifications, policy updates, new content, office hours, and regulatory change alerts — renewed annually.',
+      cta: 'Join Now',
+      ctaStyle: 'bg-[#FFD23F] text-[#0F1631] hover:bg-yellow-300',
+      contact: false,
     },
   ];
 
@@ -1086,7 +1094,7 @@ window.ENV = {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
           body: JSON.stringify({
             messages: newMessages.map(m => ({ role: m.role, content: m.content })),
-            context: `You are an expert study coach for Cap Fund Academy, a certification platform for rural capital access programs (RMAP, RBDG, IRP, RLF). The student is currently studying: ${cert?.title || 'a certification'}. Current lesson: ${lesson?.title || 'unknown'}.\n\nYour role: help them understand the material, answer questions about USDA programs, and help them apply concepts to their real organization. Always be accurate about federal regulations. Never guarantee funding or imply USDA endorsement. If asked about their specific application, be helpful but note you cannot review official documents.`
+            context: `You are an expert study coach for Cap Fund Academy, a certification platform covering the full government lending ecosystem. The student is currently studying: ${cert?.title || 'a certification'}. Current lesson: ${lesson?.title || 'unknown'}.\n\nYou have deep expertise in: USDA RMAP (7 CFR 4280 Subpart D), RBDG (7 CFR 4280 Subpart E), IRP (7 U.S.C. 1932(b)), USDA OneRD/B&I guaranteed lending, USDA housing programs (Section 502, 538), USDA farm credit (FSA), SBA 7(a) and Community Advantage SBLC, SBA Microloan intermediary program, CDC/504 and SBIC, CDFI certification (Treasury CDFI Fund), Capital Magnet Fund, New Markets Tax Credit, EDA Revolving Loan Funds (13 CFR 307), EPA Brownfields RLF and State Revolving Funds, FHA mortgage programs (Title II, 221(d)(4), 223(f), 232), VA loan guarantee, HUD Section 184 Native housing, secondary markets (Ginnie Mae, Fannie Mae, Freddie Mac), SSBCI state capital programs, tribal lending (BIA Indian Loan Guarantee, Native CDFIs), infrastructure finance (DOE Title 17, DOT TIFIA, USDA Community Facilities, ReConnect), export finance (EXIM, SBA EWCP), and capital stack design.\n\nYour role: help students understand the material, answer questions about government lending programs and regulations, and help them apply concepts to their real organization. Always be accurate about federal regulations and cite CFR sections when relevant. Never guarantee funding or imply government endorsement. If asked about a specific application, be helpful but note you cannot review official documents.`
           })
         });
         const json = await res.json();
@@ -1840,6 +1848,57 @@ window.ENV = {
           </div>
         </div>
 
+        {/* Specialty Tracks */}
+        <div className="mb-8">
+          <h2 className="text-lg font-bold text-[#0F1631] mb-4">Specialty Credential Tracks</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              { label: 'Microloan & RLF Builder',           icon: '🏦', certs: [18,19,1,2,3,4,5,6,7,30,8,9,11,22] },
+              { label: 'Small Business Capital Specialist',  icon: '🏢', certs: [20,21,29,8,9,36] },
+              { label: 'USDA Rural Capital Specialist',      icon: '🌾', certs: [22,1,2,3,4,5,6,7,23,24] },
+              { label: 'Housing Capital Specialist',         icon: '🏠', certs: [23,25,26,27,29] },
+              { label: 'CDFI & Community Investment',        icon: '🤝', certs: [28,29,30,36,11] },
+              { label: 'Infrastructure & Environmental',     icon: '⚡', certs: [31,32,22,36] },
+              { label: 'Tribal Capital Access Specialist',   icon: '🦅', certs: [34,28,25,32,36] },
+            ].map(track => {
+              const completedNums = new Set(certs.filter(c => completedCertIds.has(c.id)).map(c => c.cert_number));
+              const earned = track.certs.filter(n => completedNums.has(n)).length;
+              const pct = Math.round((earned / track.certs.length) * 100);
+              return (
+                <div key={track.label} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-3">
+                  <div className="text-2xl flex-shrink-0">{track.icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-[#0F1631] truncate">{track.label}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-[#2D1FB1] rounded-full" style={{ width: `${pct}%` }}/>
+                      </div>
+                      <span className="text-xs text-gray-400 flex-shrink-0">{earned}/{track.certs.length}</span>
+                    </div>
+                  </div>
+                  {pct === 100 && <span className="text-green-600 text-sm flex-shrink-0">✓</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Master Capstone */}
+        <div className="mb-8 bg-gradient-to-r from-[#0F1631] to-[#2D1FB1] rounded-2xl p-6 text-white">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="text-xs font-bold text-[#FFD23F] uppercase tracking-widest mb-1">Master Credential</div>
+              <div className="text-lg font-black mb-1">Master Capital Access Architect</div>
+              <div className="text-sm text-white/70 mb-3">Complete required core certifications + one specialty track + submit 15-piece capstone portfolio for review.</div>
+            </div>
+            <div className="text-4xl flex-shrink-0">🎓</div>
+          </div>
+          <a href="mailto:support@capfundacademy.com?subject=Master Capital Access Architect — Schedule Final Review"
+             className="inline-block bg-[#F97316] text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-orange-500 transition-colors">
+            Schedule Final Review →
+          </a>
+        </div>
+
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 flex items-center justify-between">
           <div>
             <div className="font-bold text-[#0F1631] mb-1">Browse all 36 certifications</div>
@@ -2490,11 +2549,18 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
 
   // ─── Application Workspace ───────────────────────────────────────────────
   const PROGRAM_LABELS = {
-    rmap: 'USDA RMAP — Rural Microentrepreneur Assistance',
-    rbdg: 'USDA RBDG — Rural Business Development Grant',
-    irp:  'IRP — Intermediary Relending Program',
-    rlf_ops: 'RLF Operational Readiness Review',
-    full_binder: 'Full Application Binder Gap Analysis',
+    rmap:         'USDA RMAP — Rural Microentrepreneur Assistance',
+    rbdg:         'USDA RBDG — Rural Business Development Grant',
+    irp:          'IRP — Intermediary Relending Program',
+    rlf_ops:      'RLF Operational Readiness Review',
+    full_binder:  'Full Application Binder Gap Analysis',
+    eda_rlf:      'EDA Revolving Loan Fund Readiness',
+    cdfi:         'CDFI Certification Readiness',
+    sba_micro:    'SBA Microloan Intermediary Readiness',
+    ssbci:        'SSBCI Lender Readiness',
+    usda_onerd:   'USDA OneRD Guaranteed Lending Readiness',
+    tribal:       'Tribal Capital Access Readiness',
+    general:      'General Capital Access Platform Readiness',
   };
 
   const READINESS_COLORS = {

@@ -8,7 +8,7 @@
 -- Run after: 27_cert_seeds_18_35.sql
 -- ============================================================
 
-DO $$
+DO $block$
 DECLARE
   v_cert uuid; v_mod uuid; v_quiz uuid;
 BEGIN
@@ -420,4 +420,4 @@ INSERT INTO quiz_questions (quiz_id, question_text, option_a, option_b, option_c
 (v_quiz, 'The most productive reason for a CDFI to build relationships with CRA officers at local banks is:', 'To receive regulatory approval for new lending programs', 'Because banks need CRA credit and CDFIs can offer investments, loans, and CRA-qualified deposits', 'To gain access to Federal Reserve borrowing facilities', 'To replace the CDFI''s foundation funding', 'B', 'Banks have CRA obligations to fulfill and need documented community development investments — CDFIs can offer them exactly what they need (investments in CDFI funds, LIHTC equity, CRA-qualified loans) in exchange for the capital CDFIs need.', 10)
 ON CONFLICT DO NOTHING;
 
-END $$;
+END $block$;

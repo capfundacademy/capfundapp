@@ -52,7 +52,7 @@ const CREDENTIAL_UPSELLS = [
     after_cert: 15,
     credential: 'Certified RLF Executive',
     slug: 'certified-rlf-executive',
-    next_label: 'Master Administrator — All 17 Certs',
+    next_label: 'Master Capital Access Architect — All 36 Certs',
     next_slug: 'master-administrator',
     price: '$5,997',
     savings: 'Save $1,965 vs. buying individually',
@@ -162,7 +162,7 @@ exports.handler = async (event) => {
       <div style="background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:20px;text-align:center;">
         <div style="font-size:36px;font-weight:900;color:#2D1FB1;">${score}%</div>
         <div style="font-size:12px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;">Final Score</div>
-        <div style="font-size:13px;color:#0F1631;font-weight:600;margin-top:4px;">Cert ${certNum} of 17 Complete</div>
+        <div style="font-size:13px;color:#0F1631;font-weight:600;margin-top:4px;">Cert ${certNum} of 36 Complete</div>
       </div>
       ${upsellBlock}
       <div style="text-align:center;margin-top:20px;">

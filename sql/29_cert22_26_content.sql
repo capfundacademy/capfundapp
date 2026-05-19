@@ -8,7 +8,7 @@
 -- Run after: 27_cert_seeds_18_35.sql
 -- ============================================================
 
-DO $$
+DO $block$
 DECLARE
   v_cert uuid; v_mod uuid; v_quiz uuid;
 BEGIN
@@ -422,4 +422,4 @@ INSERT INTO quiz_questions (quiz_id, question_text, option_a, option_b, option_c
 (v_quiz, 'HUD Section 108 provides which type of financing?', 'Mortgage insurance for single-family homes', 'Community development loan guarantees using CDBG entitlement funds as security', 'Multifamily insurance for rural areas', 'Healthcare facility construction grants', 'B', 'HUD Section 108 allows CDBG entitlement communities to borrow against future CDBG allocations for community and economic development projects, leveraging grant dollars into larger loan capacity.', 10)
 ON CONFLICT DO NOTHING;
 
-END $$;
+END $block$;
