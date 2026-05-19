@@ -36,3 +36,7 @@ out/
 
 # Netlify
 .netlify/
+
+# Build temp files
+_tmp_app.jsx
+_tmp_input.css
