@@ -77,18 +77,22 @@ ALTER TABLE capstone_submissions       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE capstone_deliverables      ENABLE ROW LEVEL SECURITY;
 
 -- Public read for tracks
-CREATE POLICY IF NOT EXISTS "tracks_public_read"
+DROP POLICY IF EXISTS "tracks_public_read" ON certification_tracks;
+CREATE POLICY "tracks_public_read"
   ON certification_tracks FOR SELECT USING (status = 'active');
 
 -- Students see own enrollments
-CREATE POLICY IF NOT EXISTS "track_enrollments_own"
+DROP POLICY IF EXISTS "track_enrollments_own" ON student_track_enrollments;
+CREATE POLICY "track_enrollments_own"
   ON student_track_enrollments FOR ALL USING (auth.uid() = user_id);
 
 -- Students see own capstone
-CREATE POLICY IF NOT EXISTS "capstone_own"
+DROP POLICY IF EXISTS "capstone_own" ON capstone_submissions;
+CREATE POLICY "capstone_own"
   ON capstone_submissions FOR ALL USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "capstone_deliverables_own"
+DROP POLICY IF EXISTS "capstone_deliverables_own" ON capstone_deliverables;
+CREATE POLICY "capstone_deliverables_own"
   ON capstone_deliverables FOR ALL
   USING (EXISTS (
     SELECT 1 FROM capstone_submissions cs
