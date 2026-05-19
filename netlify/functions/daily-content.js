@@ -13,6 +13,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENAI_API_KEY       = process.env.OPENAI_API_KEY;
 const BUFFER_ACCESS_TOKEN  = process.env.BUFFER_ACCESS_TOKEN;
 const MODEL                = 'gpt-4o';
+const IMAGE_BUCKET         = 'social-images'; // Supabase Storage bucket for generated images
 
 // Buffer profile IDs — known channel IDs + LinkedIn pending
 const BUFFER_PROFILES = {
@@ -136,6 +137,78 @@ Brand voice: authoritative but accessible, practitioner-focused, regulatory-spec
   return d.choices?.[0]?.message?.content?.trim() || '';
 }
 
+// ── Generate image via DALL-E 3, upload to Supabase Storage, return public URL ─
+async function generateAndCacheImage(topic, keyword, date, admin) {
+  const dateStr = date.toISOString().slice(0, 10);
+  const storePath = `daily/${dateStr}-${keyword.replace(/\s+/g, '-').toLowerCase().slice(0, 40)}.png`;
+
+  // 1. Check cache first
+  try {
+    const { data: exists } = await admin.storage.from(IMAGE_BUCKET).list('daily', { search: storePath.replace('daily/', '') });
+    if (exists?.length) {
+      const { data: url } = await admin.storage.from(IMAGE_BUCKET).getPublicUrl(storePath);
+      if (url?.publicUrl) return url.publicUrl;
+    }
+  } catch {}
+
+  // 2. Generate with DALL-E 3
+  // Prompt designed for professional, branded rural finance imagery
+  const imagePrompt = `Create a professional, modern social media image for a rural finance certification platform.
+
+Topic: ${topic}
+
+Style requirements:
+- Clean, professional infographic or illustration style
+- Color palette: deep navy blue (#0F1631), royal blue (#2D1FB1), bright orange (#F97316), warm yellow (#FFD23F), white
+- Include subtle visual elements: bar charts, loan documents, rural landscape silhouette, or community icons
+- Bold headline text area (leave space at bottom third for text overlay)
+- NO clipart, NO cartoon style, NO stock-photo faces
+- Square format (1:1), suitable for Instagram and LinkedIn
+- Modern, institutional feel — appropriate for nonprofits, CDFIs, government grant training
+- Include subtle "Cap Fund Academy" branding watermark in corner if possible
+
+The image should evoke: rural community development, financial empowerment, federal program expertise, professional certification.`;
+
+  const dalleRes = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
+    body: JSON.stringify({
+      model: 'dall-e-3',
+      prompt: imagePrompt,
+      n: 1,
+      size: '1024x1024',
+      quality: 'hd',
+      style: 'natural',
+      response_format: 'url',
+    }),
+  });
+
+  if (!dalleRes.ok) {
+    const errText = await dalleRes.text();
+    throw new Error(`DALL-E failed: ${errText.slice(0, 200)}`);
+  }
+
+  const dalleData = await dalleRes.json();
+  const tempUrl   = dalleData.data?.[0]?.url;
+  if (!tempUrl) throw new Error('DALL-E returned no image URL');
+
+  // 3. Download the image (DALL-E URLs expire in ~1 hour)
+  const imgRes = await fetch(tempUrl);
+  if (!imgRes.ok) throw new Error(`Failed to download DALL-E image: ${imgRes.status}`);
+  const imgBuffer = Buffer.from(await imgRes.arrayBuffer());
+
+  // 4. Upload to Supabase Storage
+  const { error: upErr } = await admin.storage
+    .from(IMAGE_BUCKET)
+    .upload(storePath, imgBuffer, { contentType: 'image/png', upsert: true });
+
+  if (upErr) throw new Error(`Storage upload failed: ${upErr.message}`);
+
+  // 5. Return public URL
+  const { data: urlData } = await admin.storage.from(IMAGE_BUCKET).getPublicUrl(storePath);
+  return urlData?.publicUrl || null;
+}
+
 // ── Buffer GraphQL API ────────────────────────────────────────────────────────
 // Buffer uses GraphQL at https://api.buffer.com/graphql with Bearer token auth.
 // LinkedIn: posted directly to queue (text-only supported)
@@ -156,17 +229,15 @@ async function bufferGQL(query, variables) {
   return { ok: res.ok, json };
 }
 
-async function pushToBuffer(channelId, text, platform) {
+async function pushToBuffer(channelId, text, platform, imageUrl) {
   if (!BUFFER_ACCESS_TOKEN || !channelId) {
     return { skipped: true, reason: !BUFFER_ACCESS_TOKEN ? 'BUFFER_ACCESS_TOKEN not set' : `no channel id for ${platform}` };
   }
 
-  // LinkedIn supports text-only → add directly to queue
-  // Instagram and TikTok require media → save as draft so user adds image/video in Buffer UI
-  const isDraft    = platform === 'instagram' || platform === 'tiktok';
-  const mode       = isDraft ? 'draft' : 'addToQueue';
-  const maxLen     = platform === 'linkedin' ? 3000 : 2200;
-  const postText   = text.slice(0, maxLen);
+  const maxLen   = platform === 'linkedin' ? 3000 : 2200;
+  const postText = text.slice(0, maxLen);
+  // TikTok needs a video recorded manually — save as draft; others go to queue with image
+  const isTikTok = platform === 'tiktok';
 
   const mutation = `
     mutation CreatePost($input: CreatePostInput!) {
@@ -176,30 +247,39 @@ async function pushToBuffer(channelId, text, platform) {
       }
     }`;
 
-  const variables = {
-    input: {
-      text:           postText,
-      channelId,
-      schedulingType: 'automatic',
-      mode,
-    },
+  const input = {
+    text:           postText,
+    channelId,
+    schedulingType: 'automatic',
+    mode:           'addToQueue',
+    saveToDraft:    isTikTok,
   };
 
-  const { ok, json } = await bufferGQL(mutation, variables);
+  // Attach generated image to LinkedIn and Instagram
+  if (imageUrl && !isTikTok) {
+    input.assets = [{
+      image: {
+        url:      imageUrl,
+        metadata: { altText: 'Cap Fund Academy — rural capital access certification training' },
+      },
+    }];
+  }
+
+  const { ok, json } = await bufferGQL(mutation, { input });
   const result = json?.data?.createPost;
 
   if (!ok || result?.message) {
-    return { success: false, error: result?.message || 'GraphQL error', platform, mode };
+    return { success: false, error: result?.message || 'GraphQL error', platform };
   }
 
   return {
-    success:    true,
-    buffer_id:  result?.post?.id,
-    due_at:     result?.post?.dueAt,
-    mode,
-    is_draft:   isDraft,
-    note:       isDraft ? `Saved as draft — add ${platform === 'instagram' ? 'image' : 'video'} in Buffer before publishing` : undefined,
+    success:   true,
+    buffer_id: result?.post?.id,
+    due_at:    result?.post?.dueAt,
+    mode:      isTikTok ? 'draft' : 'addToQueue',
+    has_image: !!imageUrl && !isTikTok,
     platform,
+    note:      isTikTok ? 'TikTok saved as draft — record video and upload in Buffer' : undefined,
   };
 }
 
@@ -283,11 +363,23 @@ Output only these two lines, no labels.`;
     if (blogErr) results.errors.push(`Blog post: ${blogErr.message}`);
     else results.blog = { id: blogPost.id, title: blogPost.title, status: blogPost.status };
 
-    // ── 2. Generate platform-optimized social posts ──────────────────────────
+    // ── 2. Generate today's image with DALL-E 3 (shared across all platforms) ──
+    const today = new Date();
+    let sharedImageUrl = null;
+    try {
+      log('Generating DALL-E image…');
+      sharedImageUrl = await generateAndCacheImage(topic.topic, topic.keyword, today, admin);
+      results.image_url = sharedImageUrl;
+      ok(`Image generated: ${sharedImageUrl?.slice(0, 60)}…`);
+    } catch (imgErr) {
+      results.errors.push(`Image generation: ${imgErr.message}`);
+      console.warn('[daily-content] Image generation failed, continuing without image:', imgErr.message);
+    }
+
+    // ── 3. Generate platform-optimized social posts ──────────────────────────
     const platforms = ['linkedin', 'instagram', 'tiktok'];
 
     // Schedule posts 3 hours apart starting at 10 AM UTC today
-    const today     = new Date();
     today.setUTCHours(10, 0, 0, 0);
     const schedules = platforms.map((_, i) => new Date(today.getTime() + i * 3 * 3600000).toISOString());
 
@@ -322,16 +414,15 @@ Output the post content only — ready to publish with no additional editing nee
 
         results.posts[platform] = { id: savedPost?.id, status: postStatus, chars: content.length };
 
-        // ── 3. Push to Buffer ──────────────────────────────────────────────
-        const profileId = BUFFER_PROFILES[platform];
-        const bufResult = await pushToBuffer(profileId, content, platform, scheduledAt);
+        // ── 4. Push to Buffer with image ───────────────────────────────────
+        const channelId = BUFFER_PROFILES[platform];
+        const bufResult = await pushToBuffer(channelId, content, platform, sharedImageUrl);
         results.buffer[platform] = bufResult;
 
-        // Update post with Buffer ID if synced
+        // Update post record with schedule time
         if (bufResult.success && savedPost?.id) {
           await admin.from('social_posts').update({
             scheduled_at: scheduledAt,
-            // Store buffer_id in metadata via a notes field or just log it
           }).eq('id', savedPost.id);
         }
 
