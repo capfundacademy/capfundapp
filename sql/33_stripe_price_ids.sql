@@ -128,7 +128,7 @@ VALUES
    'annual-membership',
    'Annual membership: all curriculum updates, regulatory change alerts, alumni community, and monthly live Q&A.',
    ARRAY['All curriculum updates','Regulatory change alerts','Monthly live Q&A','Alumni community','$199/year'],
-   ARRAY[], 19900,
+   ARRAY[]::integer[], 19900,
    'price_1TYsoyPZzqlygATGnV84UtBe', 'prod_UXymPC9SVuvs0u',
    true, false, 9)
 
