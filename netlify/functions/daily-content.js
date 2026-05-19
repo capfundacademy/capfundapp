@@ -16,7 +16,7 @@ const MODEL                = 'gpt-4o';
 
 // Buffer profile IDs — known channel IDs + LinkedIn pending
 const BUFFER_PROFILES = {
-  linkedin:  process.env.BUFFER_PROFILE_LINKEDIN,
+  linkedin:  process.env.BUFFER_PROFILE_LINKEDIN  || '6a0bf991090476fb99360fd1',
   instagram: process.env.BUFFER_PROFILE_INSTAGRAM || '6a0bf854090476fb99360cd8',
   tiktok:    process.env.BUFFER_PROFILE_TIKTOK    || '6a0bf90e090476fb99360eb3',
 };
