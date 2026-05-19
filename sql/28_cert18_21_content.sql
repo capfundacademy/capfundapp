@@ -26,7 +26,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'The Decision to Lend: Responsibilities and Realities', 'the-decision-to-lend-responsibilities-and-realities',
-$$## The Decision to Lend: Responsibilities and Realities
+$BODY$## The Decision to Lend: Responsibilities and Realities
 
 Becoming a lender is not a transaction — it is a transformation. When your organization decides to lend capital to borrowers, you take on legal, regulatory, ethical, and fiduciary responsibilities that define how you operate for years to come.
 
@@ -54,10 +54,10 @@ Understanding which model your organization is pursuing is the first step. Each 
 - [ ] Review your organizational bylaws to confirm lending authority
 - [ ] Assess your board's appetite for credit risk
 - [ ] Identify a legal advisor with nonprofit lending experience
-$$, 1, 8, 'approved'),
+$BODY$, 1, 8, 'approved'),
 
 (v_mod, 'The Five Major Government Lending Models', 'the-five-major-government-lending-models',
-$$## The Five Major Government Lending Models
+$BODY$## The Five Major Government Lending Models
 
 The United States government supports community and commercial lending through five distinct structural models. Understanding each model helps you determine where your organization fits and which programs are accessible to you without becoming a federally regulated bank.
 
@@ -87,7 +87,7 @@ Some organizations capitalize a loan fund or investment vehicle using equity or 
 - [ ] Research whether your organization type is eligible for that model
 - [ ] Identify the federal agency or program that governs the model
 - [ ] Determine what approval or certification is required to participate
-$$, 2, 9, 'approved')
+$BODY$, 2, 9, 'approved')
 ON CONFLICT DO NOTHING;
 
 -- Module 2
@@ -98,7 +98,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'Matching Your Mission to a Lending Program', 'matching-your-mission-to-a-lending-program',
-$$## Matching Your Mission to a Lending Program
+$BODY$## Matching Your Mission to a Lending Program
 
 Not every lending program is the right fit for every organization. Before pursuing lender approval, applying for intermediary status, or establishing a revolving loan fund, you must honestly assess your organization's mission, capacity, financial health, and community relationships.
 
@@ -127,7 +127,7 @@ When evaluating lending programs, ask: (1) Who are my target borrowers? (2) What
 - [ ] List your current staff with lending or financial management experience
 - [ ] Pull your last two years of audited financial statements
 - [ ] List three to five community organizations that could refer borrowers to you
-$$, 1, 7, 'approved')
+$BODY$, 1, 7, 'approved')
 ON CONFLICT DO NOTHING;
 
 -- Quiz for Cert 18
@@ -161,7 +161,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'Nonprofit Loan Fund vs. CDFI vs. For-Profit Lender', 'nonprofit-loan-fund-vs-cdfi-vs-for-profit-lender',
-$$## Nonprofit Loan Fund vs. CDFI vs. For-Profit Lender
+$BODY$## Nonprofit Loan Fund vs. CDFI vs. For-Profit Lender
 
 The entity structure you choose will determine which programs you can access, what regulations apply, and how investors and grantors perceive your organization. Most community lenders start as nonprofit loan funds, but the choice has long-term consequences worth understanding before you begin.
 
@@ -188,10 +188,10 @@ Certified Development Companies (CDCs) administer SBA 504 loans. Small Business 
 - [ ] Research CDFI certification eligibility requirements
 - [ ] Consult a nonprofit attorney before changing entity structure
 - [ ] Identify which programs you are targeting and their entity requirements
-$$, 1, 8, 'approved'),
+$BODY$, 1, 8, 'approved'),
 
 (v_mod, 'State Lending Licenses, NMLS, and SAM.gov Registration', 'state-lending-licenses-nmls-and-samgov-registration',
-$$## State Lending Licenses, NMLS, and SAM.gov Registration
+$BODY$## State Lending Licenses, NMLS, and SAM.gov Registration
 
 Before you make a single loan, you must understand whether your organization needs a state lending license, how to register with the Nationwide Multistate Licensing System (NMLS), and whether you need to be registered in SAM.gov to receive federal funds.
 
@@ -217,7 +217,7 @@ SAM.gov (System for Award Management) is the federal database for organizations 
 - [ ] Register or update your SAM.gov record before any federal application deadline
 - [ ] Confirm your UEI number is current and active
 - [ ] If making mortgage loans, assess NMLS entity and individual licensing needs
-$$, 2, 9, 'approved')
+$BODY$, 2, 9, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO modules (certification_id, title, sort_order, status)
@@ -227,7 +227,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'Bank Secrecy Act, Anti-Money Laundering & OFAC Screening', 'bank-secrecy-act-anti-money-laundering-ofac-screening',
-$$## Bank Secrecy Act, Anti-Money Laundering & OFAC Screening
+$BODY$## Bank Secrecy Act, Anti-Money Laundering & OFAC Screening
 
 Every organization that handles loan proceeds must comply with federal anti-money laundering laws. Even nonprofit microlenders are subject to the Bank Secrecy Act (BSA), and failure to comply can result in civil penalties, criminal prosecution, and loss of program eligibility.
 
@@ -253,7 +253,7 @@ The Office of Foreign Assets Control (OFAC) administers U.S. economic sanctions.
 - [ ] Implement OFAC screening for every new borrower before disbursement
 - [ ] Train all lending staff on BSA/AML responsibilities
 - [ ] Maintain records of all screening and monitoring activities
-$$, 1, 9, 'approved')
+$BODY$, 1, 9, 'approved')
 ON CONFLICT DO NOTHING;
 
 -- Quiz for Cert 19
@@ -287,7 +287,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'SBA 7(a) Overview: Programs, Eligibility, and Lender Types', 'sba-7a-overview-programs-eligibility-and-lender-types',
-$$## SBA 7(a) Overview: Programs, Eligibility, and Lender Types
+$BODY$## SBA 7(a) Overview: Programs, Eligibility, and Lender Types
 
 The SBA 7(a) program is the U.S. Small Business Administration's primary loan guarantee program. It is the most flexible and widely used government small business lending tool in the country, with over $27 billion in annual loan volume. Understanding the full 7(a) ecosystem is essential for any lender working in small business capital access.
 
@@ -322,7 +322,7 @@ Borrowers must be: for-profit businesses, operate in the U.S., have invested equ
 - [ ] Determine if your organization could qualify as a Community Advantage SBLC
 - [ ] Review SBA lender eligibility requirements for your entity type
 - [ ] Identify two to three SBA-approved lenders in your area for partnership
-$$, 1, 10, 'approved')
+$BODY$, 1, 10, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO modules (certification_id, title, sort_order, status)
@@ -332,7 +332,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'Partnering with SBA Lenders: Strategy for Community Organizations', 'partnering-with-sba-lenders-strategy-for-community-organizations',
-$$## Partnering with SBA Lenders: Strategy for Community Organizations
+$BODY$## Partnering with SBA Lenders: Strategy for Community Organizations
 
 Most community development organizations will not become SBA 7(a) lenders directly — the capital requirements, compliance burden, and operational demands are significant. However, building strong referral and co-lending relationships with existing SBA lenders is a high-value strategy that helps your borrowers access capital you cannot provide alone.
 
@@ -360,7 +360,7 @@ When referring a borrower to an SBA lender: (1) prepare a one-page borrower summ
 - [ ] Create a one-page borrower summary format for referrals
 - [ ] Research the Community Advantage SBLC application requirements
 - [ ] Establish a tracking system for referred borrowers
-$$, 1, 8, 'approved')
+$BODY$, 1, 8, 'approved')
 ON CONFLICT DO NOTHING;
 
 -- Quiz for Cert 20
@@ -394,7 +394,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'SBA Microloan Program: How Intermediaries Work', 'sba-microloan-program-how-intermediaries-work',
-$$## SBA Microloan Program: How Intermediaries Work
+$BODY$## SBA Microloan Program: How Intermediaries Work
 
 The SBA Microloan program provides small loans — up to $50,000 — through nonprofit intermediary lenders. Unlike most SBA programs that guarantee loans made by banks, the Microloan program provides direct federal funds to intermediaries, who then relend those funds to eligible small businesses and nonprofit childcare centers.
 
@@ -421,10 +421,10 @@ To become an SBA Microloan intermediary, you must: (1) be a nonprofit with a tax
 - [ ] Identify existing SBA Microloan intermediaries in your region for partnership
 - [ ] Develop a concept for your TA program
 - [ ] Contact your local SBA district office for application information
-$$, 1, 9, 'approved'),
+$BODY$, 1, 9, 'approved'),
 
 (v_mod, 'CDC/504 Program: Fixed-Rate Project Finance for Small Business', 'cdc504-program-fixed-rate-project-finance-for-small-business',
-$$## CDC/504 Program: Fixed-Rate Project Finance for Small Business
+$BODY$## CDC/504 Program: Fixed-Rate Project Finance for Small Business
 
 The SBA 504 program is one of the most powerful and underutilized tools in small business lending. It provides long-term, fixed-rate financing for major assets — commercial real estate, heavy equipment, and facility improvements — at below-market rates. But it requires a Certified Development Company (CDC) to administer, and the structure involves three parties.
 
@@ -452,7 +452,7 @@ Most community organizations will not become CDCs — the licensing process requ
 - [ ] Understand the job creation documentation requirements
 - [ ] Map your borrowers with real estate or equipment needs to the 504 program
 - [ ] Build a referral relationship with your regional CDC
-$$, 2, 8, 'approved')
+$BODY$, 2, 8, 'approved')
 ON CONFLICT DO NOTHING;
 
 -- Quiz for Cert 21

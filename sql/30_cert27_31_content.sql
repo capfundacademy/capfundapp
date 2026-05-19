@@ -25,7 +25,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'Why Secondary Markets Matter for Community Lenders', 'why-secondary-markets-matter-for-community-lenders',
-$$## Why Secondary Markets Matter for Community Lenders
+$BODY$## Why Secondary Markets Matter for Community Lenders
 
 Secondary markets are the mechanism that allows mortgage lenders to convert long-term, illiquid loans into cash — enabling them to originate more loans with the same capital. Without secondary markets, most lenders would run out of lending capacity after funding their first portfolio of 30-year mortgages.
 
@@ -52,7 +52,7 @@ For most CDFIs and community lenders, becoming a Ginnie Mae issuer or GSE seller
 - [ ] Review volume requirements for Ginnie Mae issuer approval
 - [ ] Understand how selling loans affects your servicing revenue
 - [ ] Develop a liquidity strategy for your loan origination program
-$$, 1, 8, 'approved')
+$BODY$, 1, 8, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
@@ -85,7 +85,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'What is a CDFI and How Do You Get Certified?', 'what-is-a-cdfi-and-how-do-you-get-certified',
-$$## What is a CDFI and How Do You Get Certified?
+$BODY$## What is a CDFI and How Do You Get Certified?
 
 Community Development Financial Institutions (CDFIs) are specialized mission-driven lenders, investors, and financial services providers that deliver responsible, affordable capital to underserved people and communities. The CDFI Fund, an office within the U.S. Treasury Department, certifies CDFIs and administers financial and technical assistance programs.
 
@@ -123,10 +123,10 @@ The CDFI certification application is submitted through the CDFI Fund's Awards M
 - [ ] Identify your target market and document your track record serving it
 - [ ] Create an AMIS account and review the current certification application
 - [ ] Connect with a CDFI that has gone through the certification process for guidance
-$$, 1, 10, 'approved'),
+$BODY$, 1, 10, 'approved'),
 
 (v_mod, 'CDFI Fund Programs: FA, TA, Capital Magnet Fund & NMTC', 'cdfi-fund-programs-fa-ta-capital-magnet-fund-nmtc',
-$$## CDFI Fund Programs: FA, TA, Capital Magnet Fund & NMTC
+$BODY$## CDFI Fund Programs: FA, TA, Capital Magnet Fund & NMTC
 
 Once certified as a CDFI, your organization can apply for multiple Treasury-administered programs that provide capital, grants, and tax credit allocations. Understanding each program's purpose and requirements positions you to build a diversified funding strategy.
 
@@ -156,7 +156,7 @@ A program that allows eligible CDFIs to issue bonds guaranteed by the federal go
 - [ ] Research the Capital Magnet Fund if your mission includes affordable housing
 - [ ] Assess whether NMTC is appropriate for your organization size and capacity
 - [ ] Identify CDEs operating in your region for potential partnership
-$$, 2, 10, 'approved')
+$BODY$, 2, 10, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
@@ -189,7 +189,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'SSBCI Overview: State-Administered Capital Access Programs', 'ssbci-overview-state-administered-capital-access-programs',
-$$## SSBCI Overview: State-Administered Capital Access Programs
+$BODY$## SSBCI Overview: State-Administered Capital Access Programs
 
 The State Small Business Credit Initiative (SSBCI) is a federal program that allocates capital to states, territories, and tribal governments to expand access to small business financing. SSBCI was first enacted in 2010 following the financial crisis and was dramatically expanded in 2021 with $10 billion in new funding from the American Rescue Plan.
 
@@ -221,7 +221,7 @@ A significant portion of the 2021 SSBCI funding is targeted to very small busine
 - [ ] Determine whether your organization can partner with SSBCI-funded programs
 - [ ] Review SSBCI program guidelines at home.treasury.gov/ssbci
 - [ ] Identify lenders participating in your state's SSBCI programs
-$$, 1, 9, 'approved')
+$BODY$, 1, 9, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
@@ -254,7 +254,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'EDA RLF: Purpose, Eligible Recipients, and Program Requirements', 'eda-rlf-purpose-eligible-recipients-and-program-requirements',
-$$## EDA RLF: Purpose, Eligible Recipients, and Program Requirements
+$BODY$## EDA RLF: Purpose, Eligible Recipients, and Program Requirements
 
 The Economic Development Administration (EDA), within the U.S. Department of Commerce, administers Revolving Loan Fund programs as part of its mission to drive economic development in distressed communities. EDA RLFs are used to fill financing gaps, create jobs, and attract private investment in economically challenged areas.
 
@@ -287,10 +287,10 @@ EDA requires RLF operators to apply prudent lending standards — meaning underw
 - [ ] Draft an RLF Plan outline using EDA's template and guidance
 - [ ] Identify EDA-funded RLF operators in your region for partnership
 - [ ] Develop a job creation tracking methodology
-$$, 1, 10, 'approved'),
+$BODY$, 1, 10, 'approved'),
 
 (v_mod, 'Operating an EDA RLF: Portfolio Management, Compliance & Sustainability', 'operating-an-eda-rlf-portfolio-management-compliance-sustainability',
-$$## Operating an EDA RLF: Portfolio Management, Compliance & Sustainability
+$BODY$## Operating an EDA RLF: Portfolio Management, Compliance & Sustainability
 
 Receiving an EDA RLF award is the beginning, not the end. The long-term challenge is building a compliant, sustainable loan fund that continues to serve your community for decades — not just until the next audit.
 
@@ -320,7 +320,7 @@ An EDA RLF should be designed to be self-sustaining over time. Interest income f
 - [ ] Calculate the interest income needed to cover your RLF operating costs
 - [ ] Review EDA's semi-annual reporting requirements
 - [ ] Build a 5-year fund sustainability model
-$$, 2, 9, 'approved')
+$BODY$, 2, 9, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
@@ -353,7 +353,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'Clean Water and Drinking Water State Revolving Funds', 'clean-water-and-drinking-water-state-revolving-funds',
-$$## Clean Water and Drinking Water State Revolving Funds
+$BODY$## Clean Water and Drinking Water State Revolving Funds
 
 The Clean Water State Revolving Fund (CWSRF) and Drinking Water State Revolving Fund (DWSRF) are among the largest and oldest revolving loan fund programs in the United States. Together, they have provided over $200 billion in financing for water and wastewater infrastructure across the country.
 
@@ -382,10 +382,10 @@ Directly: municipalities, public utilities, and state agencies. Community organi
 - [ ] Assess whether rural water systems in your area could use SRF funding
 - [ ] Develop a project readiness guide for small water system borrowers
 - [ ] Explore whether your state offers principal forgiveness for disadvantaged communities
-$$, 1, 9, 'approved'),
+$BODY$, 1, 9, 'approved'),
 
 (v_mod, 'EPA Brownfields RLF & Environmental Underwriting', 'epa-brownfields-rlf-environmental-underwriting',
-$$## EPA Brownfields RLF & Environmental Underwriting
+$BODY$## EPA Brownfields RLF & Environmental Underwriting
 
 Brownfields are contaminated or potentially contaminated properties that have been abandoned or underused due to environmental concerns. EPA's Brownfields program provides grants that can be used to establish revolving loan funds specifically for assessing and cleaning up these sites.
 
@@ -419,7 +419,7 @@ A Phase I environmental assessment is a records review and site inspection to id
 - [ ] Identify environmental consultants in your area who perform Phase I/II assessments
 - [ ] Research brownfield sites in your community that need cleanup financing
 - [ ] Learn your state's brownfield program and cleanup fund resources
-$$, 2, 9, 'approved')
+$BODY$, 2, 9, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)

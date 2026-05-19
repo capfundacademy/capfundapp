@@ -25,7 +25,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'USDA Rural Development: The Full Lending Ecosystem', 'usda-rural-development-the-full-lending-ecosystem',
-$$## USDA Rural Development: The Full Lending Ecosystem
+$BODY$## USDA Rural Development: The Full Lending Ecosystem
 
 USDA Rural Development (RD) is one of the most comprehensive rural financing ecosystems in the United States. It encompasses business lending, housing finance, water and utility infrastructure, telecommunications, energy, and community facilities — all within a single agency. Understanding the full scope of what RD does is the foundation for building capital access strategies for rural communities.
 
@@ -54,10 +54,10 @@ All OneRD programs require that projects be in eligible rural areas — defined 
 - [ ] Identify USDA-approved lenders operating in your region
 - [ ] Attend a USDA Rural Development lender training webinar
 - [ ] Map your target borrowers to specific OneRD programs
-$$, 1, 10, 'approved'),
+$BODY$, 1, 10, 'approved'),
 
 (v_mod, 'B&I Loan Packaging, Eligibility & Lender Requirements', 'bi-loan-packaging-eligibility-lender-requirements',
-$$## B&I Loan Packaging, Eligibility & Lender Requirements
+$BODY$## B&I Loan Packaging, Eligibility & Lender Requirements
 
 The Business & Industry Guaranteed Loan program is USDA's most widely used rural business lending tool. As a community lender or technical assistance provider, understanding how to package a B&I loan — or refer a borrower to an approved lender — is a high-value skill.
 
@@ -83,7 +83,7 @@ For community organizations that cannot be direct B&I lenders, the most effectiv
 - [ ] Review the B&I eligibility checklist in 7 CFR Part 5001
 - [ ] Develop a borrower preparation checklist for B&I applications
 - [ ] Learn USDA's environmental review requirements for guaranteed loans
-$$, 2, 9, 'approved')
+$BODY$, 2, 9, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
@@ -116,7 +116,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'Section 502 Guaranteed and Direct Home Loan Programs', 'section-502-guaranteed-and-direct-home-loan-programs',
-$$## Section 502 Guaranteed and Direct Home Loan Programs
+$BODY$## Section 502 Guaranteed and Direct Home Loan Programs
 
 USDA's Section 502 programs help low- and moderate-income rural residents purchase, build, rehabilitate, or repair homes. There are two distinct pathways: the Section 502 Guaranteed Loan Program (administered through private lenders) and the Section 502 Direct Loan Program (administered directly by USDA).
 
@@ -143,10 +143,10 @@ As a community organization, your role with the direct program is typically as a
 - [ ] Review income limits for your county at rd.usda.gov
 - [ ] Develop a homebuyer readiness checklist for rural clients
 - [ ] Create a referral process for clients who qualify for Section 502 Direct
-$$, 1, 9, 'approved'),
+$BODY$, 1, 9, 'approved'),
 
 (v_mod, 'Rural Multifamily Housing: Section 538, 515 & Farm Labor Housing', 'rural-multifamily-housing-section-538-515-farm-labor-housing',
-$$## Rural Multifamily Housing: Section 538, 515 & Farm Labor Housing
+$BODY$## Rural Multifamily Housing: Section 538, 515 & Farm Labor Housing
 
 USDA's multifamily housing programs finance affordable rental housing development in rural areas. For developers, housing organizations, and community lenders building rural capital stacks, understanding these programs opens significant financing opportunities.
 
@@ -175,7 +175,7 @@ Most rural affordable housing projects require multiple capital layers. A typica
 - [ ] Research your State Housing Finance Agency's rural housing programs
 - [ ] Learn the LIHTC application timeline in your state
 - [ ] Develop a capital stack template for a hypothetical rural housing project
-$$, 1, 9, 'approved')
+$BODY$, 1, 9, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
@@ -208,7 +208,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'USDA FSA Loan Programs: Overview for Lenders and TA Providers', 'usda-fsa-loan-programs-overview-for-lenders-and-ta-providers',
-$$## USDA FSA Loan Programs: Overview for Lenders and TA Providers
+$BODY$## USDA FSA Loan Programs: Overview for Lenders and TA Providers
 
 The USDA Farm Service Agency (FSA) operates the primary federal agricultural lending system. FSA provides both guaranteed and direct loans for farm ownership, operating costs, and equipment — with special programs for beginning, socially disadvantaged, and veteran farmers.
 
@@ -239,7 +239,7 @@ FSA prioritizes access for beginning farmers (defined as those with less than 10
 - [ ] Review the Down Payment Farm Loan program for beginning farmer homesteaders
 - [ ] Develop a referral process for agricultural borrowers who need FSA assistance
 - [ ] Learn the Farm Credit System lenders in your region for partnership opportunities
-$$, 1, 9, 'approved')
+$BODY$, 1, 9, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
@@ -272,7 +272,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'FHA, VA, and USDA Mortgage Programs: How They Work Together', 'fha-va-and-usda-mortgage-programs-how-they-work-together',
-$$## FHA, VA, and USDA Mortgage Programs: How They Work Together
+$BODY$## FHA, VA, and USDA Mortgage Programs: How They Work Together
 
 Government mortgage insurance and guarantee programs — FHA, VA, and USDA — make homeownership accessible to millions of Americans who cannot qualify for conventional mortgages. Together, they represent the backbone of the affordable homeownership ecosystem.
 
@@ -303,10 +303,10 @@ Many rural communities have borrowers eligible for multiple programs. A veteran 
 - [ ] Review HUD's approved mortgagee list for local lenders
 - [ ] Learn VA eligibility requirements for veterans in your network
 - [ ] Develop a homebuyer counseling curriculum covering all three programs
-$$, 1, 9, 'approved'),
+$BODY$, 1, 9, 'approved'),
 
 (v_mod, 'HUD Section 184 & 184A: Native Housing Lending Programs', 'hud-section-184-184a-native-housing-lending-programs',
-$$## HUD Section 184 & 184A: Native Housing Lending Programs
+$BODY$## HUD Section 184 & 184A: Native Housing Lending Programs
 
 The HUD Section 184 Indian Home Loan Guarantee Program is one of the most important and underutilized government mortgage programs in the United States. It was created specifically to address barriers to conventional mortgage lending in tribal communities — and it is growing rapidly.
 
@@ -336,7 +336,7 @@ Organizations serving tribal communities should: (1) build relationships with Se
 - [ ] Develop a homebuyer education curriculum for tribal members
 - [ ] Connect with your state's HUD-approved housing counseling agencies
 - [ ] Research tribal CDFI programs that provide homeownership support
-$$, 2, 9, 'approved')
+$BODY$, 2, 9, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
@@ -369,7 +369,7 @@ IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id =
 
 INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
 (v_mod, 'FHA Multifamily Programs: 221(d)(4), 223(f), and MAP Lender Basics', 'fha-multifamily-programs-221d4-223f-and-map-lender-basics',
-$$## FHA Multifamily Programs: 221(d)(4), 223(f), and MAP Lender Basics
+$BODY$## FHA Multifamily Programs: 221(d)(4), 223(f), and MAP Lender Basics
 
 FHA's multifamily mortgage insurance programs are the dominant financing mechanism for affordable housing development, preservation, and market-rate apartment projects across the United States. These programs provide mortgage insurance for loans made by approved MAP (Multifamily Accelerated Processing) lenders.
 
@@ -401,7 +401,7 @@ Streamlined refinancing for existing FHA-insured multifamily loans. Lower cost a
 - [ ] Understand the role of LIHTC in combination with FHA multifamily
 - [ ] Learn Davis-Bacon compliance requirements for construction projects
 - [ ] Develop a project finance pathway memo for a hypothetical affordable housing project
-$$, 1, 10, 'approved')
+$BODY$, 1, 10, 'approved')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO quizzes (certification_id, title, passing_score, time_limit_minutes, status)
