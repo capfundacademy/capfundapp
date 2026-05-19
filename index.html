@@ -243,10 +243,11 @@ window.ENV = {
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
             <button onClick={() => setView('home')} className={`text-sm font-medium transition-colors ${view === 'home' ? 'text-[#2D1FB1]' : 'text-gray-600 hover:text-[#2D1FB1]'}`}>Home</button>
+            <button onClick={() => setView('blog')} className={`text-sm font-medium transition-colors ${view === 'blog' ? 'text-[#2D1FB1]' : 'text-gray-600 hover:text-[#2D1FB1]'}`}>Resources</button>
             <button onClick={() => setView('quiz')} className="text-sm font-medium text-gray-600 hover:text-[#2D1FB1] transition-colors">Free Quiz</button>
-            <button onClick={() => setView('webinar')} className="text-sm font-medium text-gray-600 hover:text-[#2D1FB1] transition-colors">Free Training</button>
             <button onClick={() => setView('pricing')} className="text-sm font-medium text-gray-600 hover:text-[#2D1FB1] transition-colors">Pricing</button>
-            <button onClick={() => setView('trust')} className={`text-sm font-medium transition-colors ${view === 'trust' ? 'text-[#2D1FB1]' : 'text-gray-600 hover:text-[#2D1FB1]'}`}>Trust Center</button>
+            <button onClick={() => setView('directory')} className={`text-sm font-medium transition-colors ${view === 'directory' ? 'text-[#2D1FB1]' : 'text-gray-600 hover:text-[#2D1FB1]'}`}>Directory</button>
+            <button onClick={() => setView('trust')} className={`text-sm font-medium transition-colors ${view === 'trust' ? 'text-[#2D1FB1]' : 'text-gray-600 hover:text-[#2D1FB1]'}`}>Trust</button>
             <button
               onClick={onLoginClick}
               className="ml-2 px-4 py-2 bg-[#F97316] text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]"
@@ -1337,7 +1338,7 @@ window.ENV = {
           <button onClick={onSignOut} className="px-4 py-2 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50 transition-colors">Sign Out</button>
         </div>
         <div className="flex gap-1 border-b border-gray-200 mb-8">
-          {[['autopilot','🤖 Autopilot'],['certifications','Certifications'],['students','Students'],['review','Content Review'],['commerce','Offers & Orders'],['crm','CRM'],['content','Content Engine']].map(([id,label]) => (
+          {[['autopilot','🤖 Autopilot'],['certifications','Certifications'],['students','Students'],['review','Content Review'],['commerce','Offers & Orders'],['crm','CRM'],['content','Content Engine'],['blog','Blog'],['affiliates','Affiliates']].map(([id,label]) => (
             <button key={id} onClick={() => setTab(id)}
               className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${tab===id ? 'border-[#2D1FB1] text-[#2D1FB1]' : 'border-transparent text-gray-500 hover:text-[#0F1631]'}`}>
               {label}
@@ -1407,10 +1408,12 @@ window.ENV = {
               ))}
             </div>
           )}
-          {tab === 'autopilot' && <AutopilotDashboard />}
-          {tab === 'commerce' && <AdminOffersManager />}
-          {tab === 'crm'      && <CRMDashboard />}
-          {tab === 'content'  && <ContentEngine />}
+          {tab === 'autopilot'  && <AutopilotDashboard />}
+          {tab === 'commerce'   && <AdminOffersManager />}
+          {tab === 'crm'        && <CRMDashboard />}
+          {tab === 'content'    && <ContentEngine />}
+          {tab === 'blog'       && <AdminBlogManager />}
+          {tab === 'affiliates' && <AdminAffiliates />}
         </>)}
       </main>
     );
@@ -3883,6 +3886,508 @@ window.ENV = {
     );
   }
 
+  // ─── Blog / Resource Center ──────────────────────────────────────────────
+  const BLOG_CATEGORIES = [
+    { id: 'all',                       label: 'All Articles' },
+    { id: 'rmap-readiness',            label: 'RMAP Readiness' },
+    { id: 'rbdg-readiness',            label: 'RBDG Readiness' },
+    { id: 'irp-readiness',             label: 'IRP Readiness' },
+    { id: 'revolving-loan-funds',      label: 'Revolving Loan Funds' },
+    { id: 'microlending-basics',       label: 'Microlending Basics' },
+    { id: 'rlf-accounting-compliance', label: 'Accounting & Compliance' },
+    { id: 'rural-economic-development',label: 'Rural Economic Development' },
+    { id: 'grant-application-preparation', label: 'Application Preparation' },
+    { id: 'technical-assistance-entrepreneurs', label: 'Technical Assistance' },
+  ];
+
+  function BlogPage({ setView }) {
+    const [posts, setPosts]       = useState([]);
+    const [cat, setCat]           = useState('all');
+    const [selected, setSelected] = useState(null);
+    const [loading, setLoading]   = useState(true);
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb) { setLoading(false); return; }
+        const { data } = await sb.from('blog_posts').select('*').eq('status','published').order('published_at', { ascending: false });
+        setPosts(data || []);
+        setLoading(false);
+      })();
+    }, []);
+
+    if (selected) return <BlogPostView post={selected} onBack={() => setSelected(null)} />;
+
+    const filtered = cat === 'all' ? posts : posts.filter(p => p.category === cat);
+    const featured = posts.filter(p => p.featured).slice(0, 3);
+
+    return (
+      <div className="min-h-screen bg-[#F8FAFC]">
+        <div className="bg-[#0F1631] text-white py-16 px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="inline-block bg-[#2D1FB1] text-xs font-semibold text-white px-3 py-1 rounded-full mb-4 uppercase tracking-wider">Resource Center</div>
+            <h1 className="text-4xl font-bold mb-3">Rural Capital & Microlending Resources</h1>
+            <p className="text-indigo-200 text-lg max-w-2xl">Practical guides, regulatory breakdowns, and best practices for rural nonprofits, CDFIs, and microenterprise lenders.</p>
+          </div>
+        </div>
+
+        {/* Category filter */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 z-10">
+          <div className="max-w-5xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto">
+            {BLOG_CATEGORIES.map(c => (
+              <button key={c.id} onClick={() => setCat(c.id)}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors flex-shrink-0 ${cat === c.id ? 'bg-[#2D1FB1] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="max-w-5xl mx-auto px-4 py-10">
+          {loading ? (
+            <div className="text-center py-20 text-gray-400">Loading articles…</div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-20 text-gray-400">No articles in this category yet.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.map(post => (
+                <article key={post.id}
+                  className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                  onClick={() => setSelected(post)}>
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-[#2D1FB1]">
+                        {BLOG_CATEGORIES.find(c => c.id === post.category)?.label || post.category}
+                      </span>
+                      {post.featured && <span className="text-xs font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-700">Featured</span>}
+                    </div>
+                    <h2 className="font-bold text-[#0F1631] text-lg leading-snug mb-3 group-hover:text-[#2D1FB1] transition-colors">{post.title}</h2>
+                    <p className="text-sm text-gray-500 leading-relaxed line-clamp-3">{post.excerpt}</p>
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-xs text-gray-400">{new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      <span className="text-xs font-semibold text-[#2D1FB1] group-hover:underline">Read more →</span>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {/* Free resources callout */}
+          <div className="mt-16 bg-[#2D1FB1] rounded-2xl p-8 text-white text-center">
+            <h2 className="text-2xl font-bold mb-3">Ready to go deeper?</h2>
+            <p className="text-indigo-200 mb-6 max-w-xl mx-auto">Take the free RLF Readiness Quiz to identify your organization's biggest gaps before applying for USDA funding.</p>
+            <button onClick={() => setView('quiz')} className="px-8 py-3 bg-[#FFD23F] text-[#0F1631] font-bold rounded-xl hover:bg-yellow-300 transition-colors">Take the Free Quiz →</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function BlogPostView({ post, onBack }) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC]">
+        <div className="max-w-3xl mx-auto px-4 py-10 fade-in">
+          <button onClick={onBack} className="flex items-center gap-1 text-sm text-gray-500 hover:text-[#2D1FB1] mb-8 transition-colors">← Back to Resources</button>
+          <div className="mb-3">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-[#2D1FB1]">
+              {BLOG_CATEGORIES.find(c => c.id === post.category)?.label || post.category}
+            </span>
+          </div>
+          <h1 className="text-4xl font-bold text-[#0F1631] leading-tight mb-4">{post.title}</h1>
+          <div className="flex items-center gap-3 text-sm text-gray-400 mb-8 pb-6 border-b border-gray-200">
+            <span>{post.author_name}</span>
+            <span>·</span>
+            <span>{new Date(post.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+          </div>
+          <article className="prose max-w-none" dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }} />
+          <div className="mt-12 pt-8 border-t border-gray-200 bg-blue-50 rounded-2xl p-6 text-center">
+            <p className="font-semibold text-[#0F1631] mb-1">Want to go deeper on this topic?</p>
+            <p className="text-sm text-gray-500 mb-4">Cap Fund Academy offers 17 stackable certifications covering every aspect of rural microlending and RLF operations.</p>
+            <button onClick={onBack} className="px-6 py-2.5 bg-[#2D1FB1] text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors text-sm">Browse All Certifications →</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Admin Blog Manager ───────────────────────────────────────────────────
+  function AdminBlogManager() {
+    const [posts, setPosts]     = useState([]);
+    const [editing, setEditing] = useState(null);
+    const [form, setForm]       = useState({ title:'', slug:'', category:'rmap-readiness', excerpt:'', content:'', meta_title:'', meta_description:'', featured: false, status:'draft' });
+    const [saving, setSaving]   = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    const load = async () => {
+      const sb = await getSupabase();
+      if (!sb) return;
+      const { data } = await sb.from('blog_posts').select('id,title,slug,category,status,featured,published_at').order('created_at', { ascending: false });
+      setPosts(data || []);
+      setLoading(false);
+    };
+
+    useEffect(() => { load(); }, []);
+
+    const openNew = () => {
+      setForm({ title:'', slug:'', category:'rmap-readiness', excerpt:'', content:'', meta_title:'', meta_description:'', featured: false, status:'draft' });
+      setEditing('new');
+    };
+
+    const openEdit = async (post) => {
+      const sb = await getSupabase();
+      const { data } = await sb.from('blog_posts').select('*').eq('id', post.id).single();
+      setForm(data || {});
+      setEditing(post.id);
+    };
+
+    const save = async () => {
+      setSaving(true);
+      const sb = await getSupabase();
+      if (!sb) { setSaving(false); return; }
+      const payload = { ...form, published_at: form.status === 'published' ? (form.published_at || new Date().toISOString()) : null };
+      if (editing === 'new') {
+        await sb.from('blog_posts').insert(payload);
+      } else {
+        await sb.from('blog_posts').update(payload).eq('id', editing);
+      }
+      setSaving(false);
+      setEditing(null);
+      load();
+    };
+
+    const deletePost = async (id) => {
+      if (!confirm('Delete this post?')) return;
+      const sb = await getSupabase();
+      await sb.from('blog_posts').delete().eq('id', id);
+      load();
+    };
+
+    const slugify = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+
+    if (editing) return (
+      <div className="space-y-4 max-w-3xl">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-[#0F1631]">{editing === 'new' ? 'New Post' : 'Edit Post'}</h3>
+          <button onClick={() => setEditing(null)} className="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+        </div>
+        {[
+          ['Title', 'title', 'text'],
+          ['Slug', 'slug', 'text'],
+          ['Excerpt', 'excerpt', 'textarea'],
+          ['Content (Markdown)', 'content', 'textarea-lg'],
+          ['Meta Title', 'meta_title', 'text'],
+          ['Meta Description', 'meta_description', 'textarea'],
+        ].map(([label, key, type]) => (
+          <div key={key}>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
+            {type === 'text' ? (
+              <input value={form[key] || ''} onChange={e => setForm(f => ({ ...f, [key]: e.target.value, ...(key === 'title' && editing === 'new' ? { slug: slugify(e.target.value) } : {}) }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1]" />
+            ) : (
+              <textarea value={form[key] || ''} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} rows={type === 'textarea-lg' ? 16 : 3}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1] font-mono" />
+            )}
+          </div>
+        ))}
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Category</label>
+            <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1]">
+              {BLOG_CATEGORIES.filter(c => c.id !== 'all').map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-gray-500 mb-1">Status</label>
+            <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1]">
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <input type="checkbox" id="featured" checked={form.featured || false} onChange={e => setForm(f => ({ ...f, featured: e.target.checked }))} />
+          <label htmlFor="featured" className="text-sm text-gray-600">Featured post</label>
+        </div>
+        <button onClick={save} disabled={saving || !form.title || !form.slug}
+          className="px-6 py-2.5 bg-[#2D1FB1] text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm">
+          {saving ? 'Saving…' : 'Save Post'}
+        </button>
+      </div>
+    );
+
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-bold text-[#0F1631]">Blog Posts ({posts.length})</h3>
+          <button onClick={openNew} className="px-4 py-2 bg-[#2D1FB1] text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition-colors">+ New Post</button>
+        </div>
+        {loading ? <div className="text-center py-12 text-gray-400">Loading…</div> : (
+          <div className="space-y-2">
+            {posts.map(post => (
+              <div key={post.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4">
+                <div className="flex-1">
+                  <div className="font-semibold text-[#0F1631] text-sm">{post.title}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{BLOG_CATEGORIES.find(c => c.id === post.category)?.label} · {post.status}</div>
+                </div>
+                {post.featured && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-semibold">Featured</span>}
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${post.status === 'published' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{post.status}</span>
+                <button onClick={() => openEdit(post)} className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Edit</button>
+                <button onClick={() => deletePost(post.id)} className="text-xs px-3 py-1.5 border border-red-100 text-red-500 rounded-lg hover:bg-red-50 transition-colors">Delete</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── Affiliate Dashboard (Admin) ──────────────────────────────────────────
+  function AdminAffiliates() {
+    const [affiliates, setAffiliates] = useState([]);
+    const [referrals, setReferrals]   = useState([]);
+    const [tab, setTab]               = useState('affiliates');
+    const [loading, setLoading]       = useState(true);
+    const [form, setForm]             = useState({ code:'', commission_rate: 10, notes:'' });
+    const [saving, setSaving]         = useState(false);
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb) { setLoading(false); return; }
+        const [{ data: af }, { data: ref }] = await Promise.all([
+          sb.from('affiliates').select('*, profiles(full_name,email)').order('created_at', { ascending: false }),
+          sb.from('referrals').select('*, affiliates(code, profiles(full_name))').order('created_at', { ascending: false }).limit(50)
+        ]);
+        setAffiliates(af || []);
+        setReferrals(ref || []);
+        setLoading(false);
+      })();
+    }, []);
+
+    const createAffiliate = async () => {
+      if (!form.code.trim()) return;
+      setSaving(true);
+      const sb = await getSupabase();
+      const { data, error } = await sb.from('affiliates').insert({ code: form.code.trim().toLowerCase(), commission_rate: Number(form.commission_rate), notes: form.notes, status: 'active' }).select().single();
+      if (!error && data) setAffiliates(prev => [data, ...prev]);
+      setForm({ code:'', commission_rate:10, notes:'' });
+      setSaving(false);
+    };
+
+    const toggleStatus = async (af) => {
+      const newStatus = af.status === 'active' ? 'paused' : 'active';
+      const sb = await getSupabase();
+      await sb.from('affiliates').update({ status: newStatus }).eq('id', af.id);
+      setAffiliates(prev => prev.map(a => a.id === af.id ? { ...a, status: newStatus } : a));
+    };
+
+    const totalEarned = affiliates.reduce((s, a) => s + Number(a.total_earned || 0), 0);
+    const totalPaid   = affiliates.reduce((s, a) => s + Number(a.total_paid || 0), 0);
+
+    return (
+      <div>
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+            <div className="text-3xl font-black text-[#2D1FB1]">{affiliates.length}</div>
+            <div className="text-xs text-gray-500 mt-1">Total Affiliates</div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+            <div className="text-3xl font-black text-green-600">${totalEarned.toFixed(2)}</div>
+            <div className="text-xs text-gray-500 mt-1">Total Commissions Earned</div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-xl p-5 text-center">
+            <div className="text-3xl font-black text-[#F97316]">${(totalEarned - totalPaid).toFixed(2)}</div>
+            <div className="text-xs text-gray-500 mt-1">Unpaid Balance</div>
+          </div>
+        </div>
+
+        <div className="flex gap-1 border-b border-gray-200 mb-6">
+          {[['affiliates','Affiliates'],['referrals','Referrals'],['new','+ Add Affiliate']].map(([id,label]) => (
+            <button key={id} onClick={() => setTab(id)}
+              className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab===id ? 'border-[#2D1FB1] text-[#2D1FB1]' : 'border-transparent text-gray-500 hover:text-[#0F1631]'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {loading && <div className="text-center py-12 text-gray-400">Loading…</div>}
+
+        {!loading && tab === 'affiliates' && (
+          <div className="space-y-2">
+            {affiliates.length === 0 && <div className="text-center py-12 text-gray-400">No affiliates yet. Add one above.</div>}
+            {affiliates.map(af => (
+              <div key={af.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4">
+                <div className="flex-1">
+                  <div className="font-semibold text-[#0F1631] text-sm font-mono">{af.code}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{af.profiles?.full_name || af.profiles?.email || 'No user linked'} · {af.commission_rate}% commission</div>
+                </div>
+                <div className="text-sm font-semibold text-green-600">${Number(af.total_earned).toFixed(2)} earned</div>
+                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${af.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{af.status}</span>
+                <button onClick={() => toggleStatus(af)} className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  {af.status === 'active' ? 'Pause' : 'Activate'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!loading && tab === 'referrals' && (
+          <div className="space-y-2">
+            {referrals.length === 0 && <div className="text-center py-12 text-gray-400">No referrals recorded yet.</div>}
+            {referrals.map(ref => (
+              <div key={ref.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4">
+                <div className="flex-1">
+                  <div className="font-semibold text-[#0F1631] text-sm">{ref.referred_email || 'Unknown'}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">Code: {ref.affiliates?.code} · {new Date(ref.created_at).toLocaleDateString()}</div>
+                </div>
+                <div className="text-sm font-semibold">${Number(ref.order_amount || 0).toFixed(2)}</div>
+                <div className="text-sm font-semibold text-green-600">+${Number(ref.commission || 0).toFixed(2)}</div>
+                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${ref.status === 'paid' ? 'bg-green-50 text-green-700' : ref.status === 'approved' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700'}`}>{ref.status}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === 'new' && (
+          <div className="bg-white border border-gray-200 rounded-xl p-6 max-w-md space-y-4">
+            <h3 className="font-bold text-[#0F1631]">Add New Affiliate</h3>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Affiliate Code (unique, lowercase)</label>
+              <input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toLowerCase().replace(/\s/g,'') }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1] font-mono"
+                placeholder="e.g. partner-sbdc" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Commission Rate (%)</label>
+              <input type="number" min="1" max="50" value={form.commission_rate} onChange={e => setForm(f => ({ ...f, commission_rate: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1]" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Notes</label>
+              <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#2D1FB1]"
+                placeholder="Partner name, agreement date, etc." />
+            </div>
+            <button onClick={createAffiliate} disabled={saving || !form.code}
+              className="px-6 py-2.5 bg-[#2D1FB1] text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm">
+              {saving ? 'Creating…' : 'Create Affiliate'}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── Public Directory ─────────────────────────────────────────────────────
+  function DirectoryPage() {
+    const [professionals, setProfessionals] = useState([]);
+    const [loading, setLoading]             = useState(true);
+    const [search, setSearch]               = useState('');
+    const [stateFilter, setStateFilter]     = useState('');
+
+    useEffect(() => {
+      (async () => {
+        const sb = await getSupabase();
+        if (!sb) { setLoading(false); return; }
+        const { data } = await sb
+          .from('profiles')
+          .select('id, full_name, public_bio, public_org, public_state, certificates:certificates(cert_title, cert_number, issued_at)')
+          .eq('public_listing', true)
+          .order('full_name');
+        setProfessionals(data || []);
+        setLoading(false);
+      })();
+    }, []);
+
+    const filtered = professionals.filter(p => {
+      const q = search.toLowerCase();
+      const matchSearch = !q || (p.full_name || '').toLowerCase().includes(q) || (p.public_org || '').toLowerCase().includes(q) || (p.public_bio || '').toLowerCase().includes(q);
+      const matchState = !stateFilter || p.public_state === stateFilter;
+      return matchSearch && matchState;
+    });
+
+    const states = [...new Set(professionals.map(p => p.public_state).filter(Boolean))].sort();
+
+    return (
+      <div className="min-h-screen bg-[#F8FAFC]">
+        <div className="bg-[#0F1631] text-white py-16 px-4">
+          <div className="max-w-5xl mx-auto text-center">
+            <div className="inline-block bg-[#2D1FB1] text-xs font-semibold text-white px-3 py-1 rounded-full mb-4 uppercase tracking-wider">Certified Professionals</div>
+            <h1 className="text-4xl font-bold mb-3">Find a Certified Rural Finance Practitioner</h1>
+            <p className="text-indigo-200 text-lg max-w-2xl mx-auto">Cap Fund Academy graduates have completed rigorous training in rural microlending, RLF operations, and USDA program compliance.</p>
+          </div>
+        </div>
+
+        <div className="max-w-5xl mx-auto px-4 py-10">
+          {/* Search and filter */}
+          <div className="flex gap-3 mb-8">
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2D1FB1]"
+              placeholder="Search by name, organization, or specialty…" />
+            {states.length > 0 && (
+              <select value={stateFilter} onChange={e => setStateFilter(e.target.value)}
+                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#2D1FB1]">
+                <option value="">All States</option>
+                {states.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            )}
+          </div>
+
+          {loading ? (
+            <div className="text-center py-20 text-gray-400">Loading directory…</div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-20 text-gray-400">
+              <p className="font-semibold mb-2">No certified professionals listed yet.</p>
+              <p className="text-sm">Certified graduates can opt into the directory from their profile settings.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filtered.map(pro => (
+                <div key={pro.id} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-full bg-[#2D1FB1] text-white flex items-center justify-center font-black text-lg flex-shrink-0">
+                      {(pro.full_name || '?')[0].toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-[#0F1631]">{pro.full_name}</div>
+                      {pro.public_org && <div className="text-sm text-gray-500">{pro.public_org}</div>}
+                      {pro.public_state && <div className="text-xs text-gray-400">{pro.public_state}</div>}
+                    </div>
+                  </div>
+                  {pro.public_bio && <p className="text-sm text-gray-600 mt-4 leading-relaxed">{pro.public_bio}</p>}
+                  {pro.certificates?.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="text-xs font-semibold text-gray-400 mb-2">CERTIFICATIONS EARNED</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {pro.certificates.slice(0,5).map((c, i) => (
+                          <span key={i} className="text-xs px-2 py-1 bg-blue-50 text-[#2D1FB1] rounded-full font-medium">
+                            Cert {c.cert_number}
+                          </span>
+                        ))}
+                        {pro.certificates.length > 5 && (
+                          <span className="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded-full">+{pro.certificates.length - 5} more</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-16 text-center">
+            <p className="text-sm text-gray-500 mb-1">Are you a Cap Fund Academy graduate?</p>
+            <p className="text-sm text-gray-400">Opt into the directory from your profile settings after logging in.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ─── Root App ─────────────────────────────────────────────────────────────
   function App() {
     const [loading, setLoading]         = useState(true);
@@ -4028,6 +4533,8 @@ window.ENV = {
         {pubView === 'checklist' && <RMAPChecklist onCapture={() => setPubView('home')} />}
         {pubView === 'webinar'   && <VSLPage onCTA={() => setPubView('home')} />}
         {pubView === 'pricing'   && <PricingPage user={null} />}
+        {pubView === 'blog'      && <BlogPage setView={setPubView} />}
+        {pubView === 'directory' && <DirectoryPage />}
         <Footer setView={setPubView} />
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)}
           onLoginSuccess={loadUser} />
