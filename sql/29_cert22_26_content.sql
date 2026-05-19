@@ -38,7 +38,7 @@ OneRD is USDA's consolidated platform for four major guaranteed lending programs
 This means that an organization that learns the OneRD guarantee platform can access four separate federal lending programs — a major efficiency for lenders who serve rural communities.
 
 **B&I Guaranteed Loan Program**
-The Business & Industry program guarantees loans made by eligible lenders to rural businesses, cooperatives, and rural communities for a broad range of purposes including working capital, equipment, real estate, debt refinancing, and business acquisition. Maximum loan amount: $25 million. Guarantee rates: 80% for loans up to $5M, 70% up to $10M, 60% above $10M.
+The Business & Industry program guarantees loans made by eligible lenders to rural businesses, cooperatives, and rural communities for a broad range of purposes including working capital, equipment, real estate, debt refinancing, and business acquisition. Maximum loan amount: $25 million. Guarantee rates: 80% for loans up to $5M, 70% up to $10-M, 60% above $10-M.
 
 **Rural Eligibility**
 All OneRD programs require that projects be in eligible rural areas — defined as communities with populations under specific thresholds (varies by program, generally under 50,000). Eligibility can be verified using USDA's online eligibility mapping tool.
@@ -306,12 +306,12 @@ Many rural communities have borrowers eligible for multiple programs. A veteran 
 $BODY$, 1, 9, 'approved'),
 
 (v_mod, 'Native Housing Lending: HUD Indian Home Loan Guarantee Programs', 'native-housing-hud-indian-home-loan-guarantee',
-$BODY$## HUD Section 184 & 184A: Native Housing Lending Programs
+$BODY$## HUD Section 184 & 184-A: Native Housing Lending Programs
 
 The HUD Section 184 Indian Home Loan Guarantee Program is one of the most important and underutilized government mortgage programs in the United States. It was created specifically to address barriers to conventional mortgage lending in tribal communities — and it is growing rapidly.
 
 **What is Section 184?**
-Section 184 provides a federal guarantee for mortgage loans made to Native American, Alaska Native, and Native Hawaiian (through Section 184A) households. The guarantee enables approved lenders to offer mortgages on tribal trust land, restricted allotments, and other Native-owned land — areas where conventional title insurance and mortgage underwriting have historically been unavailable.
+Section 184 provides a federal guarantee for mortgage loans made to Native American, Alaska Native, and Native Hawaiian (through Section 184-A) households. The guarantee enables approved lenders to offer mortgages on tribal trust land, restricted allotments, and other Native-owned land — areas where conventional title insurance and mortgage underwriting have historically been unavailable.
 
 **How Section 184 Works**
 Approved lenders originate Section 184 loans, and HUD guarantees a portion in case of default. Key features: 2.25% down payment for loans over $50,000. Competitive interest rates. Loans available for purchase, construction, rehabilitation, and refinance. Available to federally recognized tribal members and their families, Alaska Natives, and members of certain state-recognized tribes.
@@ -319,8 +319,8 @@ Approved lenders originate Section 184 loans, and HUD guarantees a portion in ca
 **Becoming a Section 184 Lender**
 Lenders must be approved by HUD's Section 184 program. Most are conventional mortgage lenders. CDFIs and Native CDFIs can apply for Section 184 approval, making this an important program for organizations serving Native communities.
 
-**Section 184A: Native Hawaiian Housing**
-Section 184A provides similar guarantees for loans on Hawaiian home lands and to eligible Native Hawaiian families. Administered through the Office of Native Hawaiian Relations within HUD.
+**Section 184-A: Native Hawaiian Housing**
+Section 184-A provides similar guarantees for loans on Hawaiian home lands and to eligible Native Hawaiian families. Administered through the Office of Native Hawaiian Relations within HUD.
 
 **Building Native Housing Finance Capacity**
 Organizations serving tribal communities should: (1) build relationships with Section 184-approved lenders, (2) develop homebuyer education programs that explain Section 184 benefits, (3) connect tribal members with housing counseling agencies, and (4) advocate for tribal land title solutions that enable more mortgage activity.
@@ -328,7 +328,7 @@ Organizations serving tribal communities should: (1) build relationships with Se
 **Key Terms**
 - **Trust land**: Land held in trust by the federal government for Native tribes or individuals.
 - **Section 184**: HUD's Indian Home Loan Guarantee program for Native communities.
-- **Section 184A**: HUD's Native Hawaiian Housing Loan Guarantee program.
+- **Section 184-A**: HUD's Native Hawaiian Housing Loan Guarantee program.
 
 **Practical Checklist**
 - [ ] Identify Section 184-approved lenders serving your region
