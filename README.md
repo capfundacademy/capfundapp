@@ -48,11 +48,40 @@ Connect this repo to Netlify. Build settings:
 
 | Phase | Status | Description |
 |---|---|---|
-| 1 | Complete | Foundation: landing page, trust center, auth, base schema, lead capture |
-| 2 | Planned | Course player, content management, email automation, admin dashboard |
-| 3 | Planned | Stripe payments, certificate generation, affiliate tracking |
-| 4 | Planned | AI RMAP Scoring Engine, organization dashboard, reporting |
-| 5 | Planned | API, white-label, public directory of certified professionals |
+| 1 | ✅ Complete | Foundation: landing page, trust center, auth, base schema, lead capture |
+| 2 | ✅ Complete | LMS: 17 certifications, lesson player, quiz engine, progress tracking, certificates, admin dashboard, content review workflow |
+| 3 | ✅ Complete | Stripe checkout, certificate generation (print/PDF), organization seat management, org dashboard |
+| 4 | ✅ Complete | AI RMAP/RBDG/IRP scoring engine, AI study coach (DWY), application workspace, autopilot dashboard |
+| 5 | ✅ Complete | CRM, email nurture, content engine, social media automation, sales funnel (quiz, checklist, VSL, pricing), master credential tracker |
+| 6 | ✅ Complete | 87 downloadable template files (checklists, SOPs, worksheets) for all 17 certifications; lesson_resources integration; required artifact tracking |
+| 7 | Planned | Public blog/resource center, affiliate tracking UI, public directory of certified professionals |
+
+### SQL Run Order (Supabase)
+```
+01_base_schema.sql
+02_settings_schema.sql
+03_lms_schema.sql
+04_cert_seeds.sql
+05_cert01_content.sql
+06_application_schema.sql
+07_rmap_rubric_seed.sql
+08_rbdg_irp_rubric_seed.sql
+09_commerce_schema.sql
+10_funnel_schema.sql
+11_crm_schema.sql
+12_content_schema.sql
+13_autopilot_schema.sql
+14_security_hardening.sql
+15_cert02_05_content.sql
+16_cert06_09_content.sql
+17_cert10_13_content.sql   ← includes only Cert 10; Certs 11-13 in file 19
+18_cert14_17_content.sql
+19_cert11_13_content.sql
+19_coach_access.sql
+20_artifact_schema.sql
+21_lesson_resources.sql
+fix_user_creation.sql
+```
 
 ---
 
