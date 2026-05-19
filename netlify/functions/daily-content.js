@@ -136,42 +136,71 @@ Brand voice: authoritative but accessible, practitioner-focused, regulatory-spec
   return d.choices?.[0]?.message?.content?.trim() || '';
 }
 
-// ── Buffer publish ───────────────────────────────────────────────────────────
-// Buffer v1 API requires a classic OAuth access token (NOT an OIDC session token).
-// To get a classic token: buffer.com/developers/apps → create app → OAuth flow
-// OR: buffer.com/account → Settings → Apps → Access Token (legacy page)
-async function pushToBuffer(profileId, text, platform, scheduledAt) {
-  if (!BUFFER_ACCESS_TOKEN || !profileId) {
-    return { skipped: true, reason: !BUFFER_ACCESS_TOKEN ? 'BUFFER_ACCESS_TOKEN not set' : `no profile id for ${platform}` };
-  }
+// ── Buffer GraphQL API ────────────────────────────────────────────────────────
+// Buffer uses GraphQL at https://api.buffer.com/graphql with Bearer token auth.
+// LinkedIn: posted directly to queue (text-only supported)
+// Instagram: posted as draft (requires image before publishing — add in Buffer)
+// TikTok: posted as draft (requires video before publishing — record and upload in Buffer)
+const BUFFER_GRAPHQL = 'https://api.buffer.com/graphql';
 
-  const scheduleTime = scheduledAt || new Date(Date.now() + 30 * 60 * 1000).toISOString();
-  const maxLen = platform === 'linkedin' ? 3000 : 2200;
-
-  const params = new URLSearchParams();
-  params.set('access_token', BUFFER_ACCESS_TOKEN);
-  params.append('profile_ids[]', profileId);
-  params.set('text', text.slice(0, maxLen));
-  params.set('scheduled_at', scheduleTime);
-  params.set('now', 'false');
-
-  const res = await fetch('https://api.bufferapp.com/1/updates/create.json', {
+async function bufferGQL(query, variables) {
+  const res = await fetch(BUFFER_GRAPHQL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${BUFFER_ACCESS_TOKEN}`,
+    },
+    body: JSON.stringify({ query, variables }),
   });
+  const json = await res.json().catch(() => ({}));
+  return { ok: res.ok, json };
+}
 
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok || body.error) {
-    // If OIDC token error, return helpful message instead of failing silently
-    const isOIDC = body.error?.includes('OIDC');
-    return {
-      success: false,
-      error: isOIDC ? 'Buffer requires a classic OAuth token — see docs/ENVIRONMENT-VARIABLES.md' : (body.error || body.message),
-      status: res.status,
-    };
+async function pushToBuffer(channelId, text, platform) {
+  if (!BUFFER_ACCESS_TOKEN || !channelId) {
+    return { skipped: true, reason: !BUFFER_ACCESS_TOKEN ? 'BUFFER_ACCESS_TOKEN not set' : `no channel id for ${platform}` };
   }
-  return { success: true, buffer_id: body.updates?.[0]?.id, scheduled_at: scheduleTime };
+
+  // LinkedIn supports text-only → add directly to queue
+  // Instagram and TikTok require media → save as draft so user adds image/video in Buffer UI
+  const isDraft    = platform === 'instagram' || platform === 'tiktok';
+  const mode       = isDraft ? 'draft' : 'addToQueue';
+  const maxLen     = platform === 'linkedin' ? 3000 : 2200;
+  const postText   = text.slice(0, maxLen);
+
+  const mutation = `
+    mutation CreatePost($input: CreatePostInput!) {
+      createPost(input: $input) {
+        ... on PostActionSuccess { post { id text dueAt } }
+        ... on MutationError    { message }
+      }
+    }`;
+
+  const variables = {
+    input: {
+      text:           postText,
+      channelId,
+      schedulingType: 'automatic',
+      mode,
+    },
+  };
+
+  const { ok, json } = await bufferGQL(mutation, variables);
+  const result = json?.data?.createPost;
+
+  if (!ok || result?.message) {
+    return { success: false, error: result?.message || 'GraphQL error', platform, mode };
+  }
+
+  return {
+    success:    true,
+    buffer_id:  result?.post?.id,
+    due_at:     result?.post?.dueAt,
+    mode,
+    is_draft:   isDraft,
+    note:       isDraft ? `Saved as draft — add ${platform === 'instagram' ? 'image' : 'video'} in Buffer before publishing` : undefined,
+    platform,
+  };
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
