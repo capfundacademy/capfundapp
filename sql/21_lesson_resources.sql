@@ -70,7 +70,7 @@ ON CONFLICT DO NOTHING;
 -- CERT 3: USDA RMAP Eligibility, Application & Scoring
 -- ============================================================
 INSERT INTO lesson_resources (lesson_id, title, url, resource_type, sort_order)
-SELECT id, 'RMAP Eligibility Checklist', '/templates/cert03-rmap-eligibility-checklist.pdf', 'checklist', 1
+SELECT id, 'RMAP Eligibility Checklist', '/templates/cert03-rmap-eligibility-checklist.html', 'checklist', 1
 FROM lessons WHERE slug = 'cert03-rmap-eligibility-application'
 ON CONFLICT DO NOTHING;
 
@@ -118,7 +118,7 @@ FROM lessons WHERE slug = 'cert04-rmap-microlender-operations'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO lesson_resources (lesson_id, title, url, resource_type, sort_order)
-SELECT id, 'Microloan File Checklist', '/templates/cert04-microloan-file-checklist.pdf', 'checklist', 3
+SELECT id, 'Microloan File Checklist', '/templates/cert04-microloan-file-checklist.html', 'checklist', 3
 FROM lessons WHERE slug = 'cert04-rmap-microlender-operations'
 ON CONFLICT DO NOTHING;
 
@@ -141,7 +141,7 @@ FROM lessons WHERE slug = 'cert05-ta-program-design'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO lesson_resources (lesson_id, title, url, resource_type, sort_order)
-SELECT id, 'TA Session Log Template', '/templates/cert05-ta-session-log.xlsx', 'template', 2
+SELECT id, 'TA Session Log Template', '/templates/cert05-ta-session-log.html', 'template', 2
 FROM lessons WHERE slug = 'cert05-ta-program-design'
 ON CONFLICT DO NOTHING;
 
@@ -271,12 +271,12 @@ ON CONFLICT DO NOTHING;
 -- CERT 10: Federal Compliance
 -- ============================================================
 INSERT INTO lesson_resources (lesson_id, title, url, resource_type, sort_order)
-SELECT id, 'Civil Rights Compliance Checklist', '/templates/cert10-civil-rights-checklist.pdf', 'checklist', 1
+SELECT id, 'Civil Rights Compliance Checklist', '/templates/cert10-civil-rights-checklist.html', 'checklist', 1
 FROM lessons WHERE slug = 'cert10-civil-rights-obligations'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO lesson_resources (lesson_id, title, url, resource_type, sort_order)
-SELECT id, 'Environmental Screening Worksheet', '/templates/cert10-environmental-screening-worksheet.pdf', 'template', 2
+SELECT id, 'Environmental Screening Worksheet', '/templates/cert10-environmental-screening-worksheet.html', 'template', 2
 FROM lessons WHERE slug = 'cert10-environmental-review'
 ON CONFLICT DO NOTHING;
 
@@ -309,7 +309,7 @@ FROM lessons WHERE slug = 'cert11-rmrf-llrf-controls'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO lesson_resources (lesson_id, title, url, resource_type, sort_order)
-SELECT id, 'LLRF Reserve Calculation Tool', '/templates/cert11-llrf-reserve-calculator.xlsx', 'template', 3
+SELECT id, 'LLRF Reserve Calculation Tool', '/templates/cert11-llrf-reserve-calculator.html', 'template', 3
 FROM lessons WHERE slug = 'cert11-rmrf-llrf-controls'
 ON CONFLICT DO NOTHING;
 
@@ -337,7 +337,7 @@ FROM lessons WHERE slug = 'cert12-reviewer-centered-assembly'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO lesson_resources (lesson_id, title, url, resource_type, sort_order)
-SELECT id, 'Evidence Crosswalk Workbook', '/templates/cert12-evidence-crosswalk-workbook.xlsx', 'template', 2
+SELECT id, 'Evidence Crosswalk Workbook', '/templates/cert12-evidence-crosswalk-workbook.html', 'template', 2
 FROM lessons WHERE slug = 'cert12-evidence-crosswalk'
 ON CONFLICT DO NOTHING;
 
@@ -355,7 +355,7 @@ ON CONFLICT DO NOTHING;
 -- CERT 13: Community Outreach, Partnerships & Impact
 -- ============================================================
 INSERT INTO lesson_resources (lesson_id, title, url, resource_type, sort_order)
-SELECT id, 'Partner Ecosystem Map Template', '/templates/cert13-partner-ecosystem-map.xlsx', 'template', 1
+SELECT id, 'Partner Ecosystem Map Template', '/templates/cert13-partner-ecosystem-map.html', 'template', 1
 FROM lessons WHERE slug = 'cert13-partner-ecosystem'
 ON CONFLICT DO NOTHING;
 
@@ -375,7 +375,7 @@ FROM lessons WHERE slug = 'cert13-letters-strategy'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO lesson_resources (lesson_id, title, url, resource_type, sort_order)
-SELECT id, 'Impact Metrics Dashboard Template', '/templates/cert13-impact-dashboard.xlsx', 'template', 5
+SELECT id, 'Impact Metrics Dashboard Template', '/templates/cert13-impact-dashboard.html', 'template', 5
 FROM lessons WHERE slug = 'cert13-impact-metrics'
 ON CONFLICT DO NOTHING;
 
