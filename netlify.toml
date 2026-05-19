@@ -25,6 +25,10 @@
   name = "exception-detect"
   cron = "0 * * * *"
 
+[[scheduled-functions]]
+  name = "daily-content"
+  cron = "0 8 * * *"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
