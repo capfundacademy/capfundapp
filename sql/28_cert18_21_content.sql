@@ -24,8 +24,8 @@ VALUES (v_cert18, 'What It Means to Become a Lender', 1, 'approved')
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert18 AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'The Decision to Lend: Responsibilities and Realities',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'The Decision to Lend: Responsibilities and Realities', 'the-decision-to-lend-responsibilities-and-realities',
 $$## The Decision to Lend: Responsibilities and Realities
 
 Becoming a lender is not a transaction — it is a transformation. When your organization decides to lend capital to borrowers, you take on legal, regulatory, ethical, and fiduciary responsibilities that define how you operate for years to come.
@@ -56,7 +56,7 @@ Understanding which model your organization is pursuing is the first step. Each 
 - [ ] Identify a legal advisor with nonprofit lending experience
 $$, 1, 8, 'approved'),
 
-(v_mod, 'The Five Major Government Lending Models',
+(v_mod, 'The Five Major Government Lending Models', 'the-five-major-government-lending-models',
 $$## The Five Major Government Lending Models
 
 The United States government supports community and commercial lending through five distinct structural models. Understanding each model helps you determine where your organization fits and which programs are accessible to you without becoming a federally regulated bank.
@@ -96,8 +96,8 @@ VALUES (v_cert18, 'Choosing the Right Lender Model for Your Organization', 2, 'a
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert18 AND sort_order = 2; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'Matching Your Mission to a Lending Program',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'Matching Your Mission to a Lending Program', 'matching-your-mission-to-a-lending-program',
 $$## Matching Your Mission to a Lending Program
 
 Not every lending program is the right fit for every organization. Before pursuing lender approval, applying for intermediary status, or establishing a revolving loan fund, you must honestly assess your organization's mission, capacity, financial health, and community relationships.
@@ -159,8 +159,8 @@ VALUES (v_cert19, 'Choosing the Right Lending Entity Structure', 1, 'approved')
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert19 AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'Nonprofit Loan Fund vs. CDFI vs. For-Profit Lender',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'Nonprofit Loan Fund vs. CDFI vs. For-Profit Lender', 'nonprofit-loan-fund-vs-cdfi-vs-for-profit-lender',
 $$## Nonprofit Loan Fund vs. CDFI vs. For-Profit Lender
 
 The entity structure you choose will determine which programs you can access, what regulations apply, and how investors and grantors perceive your organization. Most community lenders start as nonprofit loan funds, but the choice has long-term consequences worth understanding before you begin.
@@ -190,7 +190,7 @@ Certified Development Companies (CDCs) administer SBA 504 loans. Small Business 
 - [ ] Identify which programs you are targeting and their entity requirements
 $$, 1, 8, 'approved'),
 
-(v_mod, 'State Lending Licenses, NMLS, and SAM.gov Registration',
+(v_mod, 'State Lending Licenses, NMLS, and SAM.gov Registration', 'state-lending-licenses-nmls-and-samgov-registration',
 $$## State Lending Licenses, NMLS, and SAM.gov Registration
 
 Before you make a single loan, you must understand whether your organization needs a state lending license, how to register with the Nationwide Multistate Licensing System (NMLS), and whether you need to be registered in SAM.gov to receive federal funds.
@@ -225,8 +225,8 @@ VALUES (v_cert19, 'BSA, AML, OFAC, Fair Lending & Loan Committee Governance', 2,
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert19 AND sort_order = 2; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'Bank Secrecy Act, Anti-Money Laundering & OFAC Screening',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'Bank Secrecy Act, Anti-Money Laundering & OFAC Screening', 'bank-secrecy-act-anti-money-laundering-ofac-screening',
 $$## Bank Secrecy Act, Anti-Money Laundering & OFAC Screening
 
 Every organization that handles loan proceeds must comply with federal anti-money laundering laws. Even nonprofit microlenders are subject to the Bank Secrecy Act (BSA), and failure to comply can result in civil penalties, criminal prosecution, and loss of program eligibility.
@@ -285,8 +285,8 @@ VALUES (v_cert20, 'The SBA 7(a) Lending Ecosystem', 1, 'approved')
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert20 AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'SBA 7(a) Overview: Programs, Eligibility, and Lender Types',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'SBA 7(a) Overview: Programs, Eligibility, and Lender Types', 'sba-7a-overview-programs-eligibility-and-lender-types',
 $$## SBA 7(a) Overview: Programs, Eligibility, and Lender Types
 
 The SBA 7(a) program is the U.S. Small Business Administration's primary loan guarantee program. It is the most flexible and widely used government small business lending tool in the country, with over $27 billion in annual loan volume. Understanding the full 7(a) ecosystem is essential for any lender working in small business capital access.
@@ -330,8 +330,8 @@ VALUES (v_cert20, 'SBA Express, Export Programs & CAPLines', 2, 'approved')
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert20 AND sort_order = 2; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'Partnering with SBA Lenders: Strategy for Community Organizations',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'Partnering with SBA Lenders: Strategy for Community Organizations', 'partnering-with-sba-lenders-strategy-for-community-organizations',
 $$## Partnering with SBA Lenders: Strategy for Community Organizations
 
 Most community development organizations will not become SBA 7(a) lenders directly — the capital requirements, compliance burden, and operational demands are significant. However, building strong referral and co-lending relationships with existing SBA lenders is a high-value strategy that helps your borrowers access capital you cannot provide alone.
@@ -392,8 +392,8 @@ VALUES (v_cert21, 'The SBA Microloan Program: Intermediary Model', 1, 'approved'
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert21 AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'SBA Microloan Program: How Intermediaries Work',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'SBA Microloan Program: How Intermediaries Work', 'sba-microloan-program-how-intermediaries-work',
 $$## SBA Microloan Program: How Intermediaries Work
 
 The SBA Microloan program provides small loans — up to $50,000 — through nonprofit intermediary lenders. Unlike most SBA programs that guarantee loans made by banks, the Microloan program provides direct federal funds to intermediaries, who then relend those funds to eligible small businesses and nonprofit childcare centers.
@@ -423,7 +423,7 @@ To become an SBA Microloan intermediary, you must: (1) be a nonprofit with a tax
 - [ ] Contact your local SBA district office for application information
 $$, 1, 9, 'approved'),
 
-(v_mod, 'CDC/504 Program: Fixed-Rate Project Finance for Small Business',
+(v_mod, 'CDC/504 Program: Fixed-Rate Project Finance for Small Business', 'cdc504-program-fixed-rate-project-finance-for-small-business',
 $$## CDC/504 Program: Fixed-Rate Project Finance for Small Business
 
 The SBA 504 program is one of the most powerful and underutilized tools in small business lending. It provides long-term, fixed-rate financing for major assets — commercial real estate, heavy equipment, and facility improvements — at below-market rates. But it requires a Certified Development Company (CDC) to administer, and the structure involves three parties.

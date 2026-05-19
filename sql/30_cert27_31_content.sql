@@ -23,8 +23,8 @@ VALUES (v_cert, 'Secondary Market Fundamentals for Lenders', 1, 'approved')
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'Why Secondary Markets Matter for Community Lenders',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'Why Secondary Markets Matter for Community Lenders', 'why-secondary-markets-matter-for-community-lenders',
 $$## Why Secondary Markets Matter for Community Lenders
 
 Secondary markets are the mechanism that allows mortgage lenders to convert long-term, illiquid loans into cash — enabling them to originate more loans with the same capital. Without secondary markets, most lenders would run out of lending capacity after funding their first portfolio of 30-year mortgages.
@@ -83,8 +83,8 @@ VALUES (v_cert, 'CDFI Certification & Treasury Programs', 1, 'approved')
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'What is a CDFI and How Do You Get Certified?',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'What is a CDFI and How Do You Get Certified?', 'what-is-a-cdfi-and-how-do-you-get-certified',
 $$## What is a CDFI and How Do You Get Certified?
 
 Community Development Financial Institutions (CDFIs) are specialized mission-driven lenders, investors, and financial services providers that deliver responsible, affordable capital to underserved people and communities. The CDFI Fund, an office within the U.S. Treasury Department, certifies CDFIs and administers financial and technical assistance programs.
@@ -125,7 +125,7 @@ The CDFI certification application is submitted through the CDFI Fund's Awards M
 - [ ] Connect with a CDFI that has gone through the certification process for guidance
 $$, 1, 10, 'approved'),
 
-(v_mod, 'CDFI Fund Programs: FA, TA, Capital Magnet Fund & NMTC',
+(v_mod, 'CDFI Fund Programs: FA, TA, Capital Magnet Fund & NMTC', 'cdfi-fund-programs-fa-ta-capital-magnet-fund-nmtc',
 $$## CDFI Fund Programs: FA, TA, Capital Magnet Fund & NMTC
 
 Once certified as a CDFI, your organization can apply for multiple Treasury-administered programs that provide capital, grants, and tax credit allocations. Understanding each program's purpose and requirements positions you to build a diversified funding strategy.
@@ -187,8 +187,8 @@ VALUES (v_cert, 'State Small Business Credit Initiative (SSBCI)', 1, 'approved')
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'SSBCI Overview: State-Administered Capital Access Programs',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'SSBCI Overview: State-Administered Capital Access Programs', 'ssbci-overview-state-administered-capital-access-programs',
 $$## SSBCI Overview: State-Administered Capital Access Programs
 
 The State Small Business Credit Initiative (SSBCI) is a federal program that allocates capital to states, territories, and tribal governments to expand access to small business financing. SSBCI was first enacted in 2010 following the financial crisis and was dramatically expanded in 2021 with $10 billion in new funding from the American Rescue Plan.
@@ -252,8 +252,8 @@ VALUES (v_cert, 'EDA Economic Development Finance & RLF Structure', 1, 'approved
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'EDA RLF: Purpose, Eligible Recipients, and Program Requirements',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'EDA RLF: Purpose, Eligible Recipients, and Program Requirements', 'eda-rlf-purpose-eligible-recipients-and-program-requirements',
 $$## EDA RLF: Purpose, Eligible Recipients, and Program Requirements
 
 The Economic Development Administration (EDA), within the U.S. Department of Commerce, administers Revolving Loan Fund programs as part of its mission to drive economic development in distressed communities. EDA RLFs are used to fill financing gaps, create jobs, and attract private investment in economically challenged areas.
@@ -289,7 +289,7 @@ EDA requires RLF operators to apply prudent lending standards — meaning underw
 - [ ] Develop a job creation tracking methodology
 $$, 1, 10, 'approved'),
 
-(v_mod, 'Operating an EDA RLF: Portfolio Management, Compliance & Sustainability',
+(v_mod, 'Operating an EDA RLF: Portfolio Management, Compliance & Sustainability', 'operating-an-eda-rlf-portfolio-management-compliance-sustainability',
 $$## Operating an EDA RLF: Portfolio Management, Compliance & Sustainability
 
 Receiving an EDA RLF award is the beginning, not the end. The long-term challenge is building a compliant, sustainable loan fund that continues to serve your community for decades — not just until the next audit.
@@ -351,8 +351,8 @@ VALUES (v_cert, 'Environmental Finance: SRFs, Brownfields & WIFIA', 1, 'approved
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'Clean Water and Drinking Water State Revolving Funds',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'Clean Water and Drinking Water State Revolving Funds', 'clean-water-and-drinking-water-state-revolving-funds',
 $$## Clean Water and Drinking Water State Revolving Funds
 
 The Clean Water State Revolving Fund (CWSRF) and Drinking Water State Revolving Fund (DWSRF) are among the largest and oldest revolving loan fund programs in the United States. Together, they have provided over $200 billion in financing for water and wastewater infrastructure across the country.
@@ -384,7 +384,7 @@ Directly: municipalities, public utilities, and state agencies. Community organi
 - [ ] Explore whether your state offers principal forgiveness for disadvantaged communities
 $$, 1, 9, 'approved'),
 
-(v_mod, 'EPA Brownfields RLF & Environmental Underwriting',
+(v_mod, 'EPA Brownfields RLF & Environmental Underwriting', 'epa-brownfields-rlf-environmental-underwriting',
 $$## EPA Brownfields RLF & Environmental Underwriting
 
 Brownfields are contaminated or potentially contaminated properties that have been abandoned or underused due to environmental concerns. EPA's Brownfields program provides grants that can be used to establish revolving loan funds specifically for assessing and cleaning up these sites.

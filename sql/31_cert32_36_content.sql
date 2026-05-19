@@ -23,8 +23,8 @@ VALUES (v_cert, 'Rural Infrastructure Finance: USDA, DOE & Broadband', 1, 'appro
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'USDA Community Facilities, Rural Electric & Broadband Programs',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'USDA Community Facilities, Rural Electric & Broadband Programs', 'usda-community-facilities-rural-electric-broadband-programs',
 $$## USDA Community Facilities, Rural Electric & Broadband Programs
 
 Rural infrastructure — hospitals, schools, fire stations, broadband networks, electric systems — requires long-term, patient capital that commercial markets often cannot provide. USDA's infrastructure finance programs fill this gap, financing billions in rural community facilities each year.
@@ -56,7 +56,7 @@ RUS also administers telecommunications loans for voice and data infrastructure,
 - [ ] Develop a community facilities capital stack template
 $$, 1, 9, 'approved'),
 
-(v_mod, 'DOE Energy Programs, DOT TIFIA/RRIF & Infrastructure Capital Stacks',
+(v_mod, 'DOE Energy Programs, DOT TIFIA/RRIF & Infrastructure Capital Stacks', 'doe-energy-programs-dot-tifiarrif-infrastructure-capital-stacks',
 $$## DOE Energy Programs, DOT TIFIA/RRIF & Infrastructure Capital Stacks
 
 Beyond USDA, several other federal agencies operate infrastructure lending programs for energy, transportation, and rural development. Understanding the full landscape enables community organizations to build comprehensive capital access strategies.
@@ -121,8 +121,8 @@ VALUES (v_cert, 'Export Finance Programs: EXIM & SBA', 1, 'approved')
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'EXIM Bank & SBA Export Programs: Tools for Small Business Exporters',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'EXIM Bank & SBA Export Programs: Tools for Small Business Exporters', 'exim-bank-sba-export-programs-tools-for-small-business-exporters',
 $$## EXIM Bank & SBA Export Programs: Tools for Small Business Exporters
 
 Export finance helps American businesses sell goods and services internationally by providing working capital for production, protecting against non-payment risk, and financing foreign buyer purchases. Two federal agencies lead export finance for small businesses: the Export-Import Bank of the United States (EXIM) and the Small Business Administration (SBA).
@@ -191,8 +191,8 @@ VALUES (v_cert, 'Tribal Capital Access: BIA, Native CDFIs & Sovereignty', 1, 'ap
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'BIA Indian Loan Guarantee and Native CDFI Programs',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'BIA Indian Loan Guarantee and Native CDFI Programs', 'bia-indian-loan-guarantee-and-native-cdfi-programs',
 $$## BIA Indian Loan Guarantee and Native CDFI Programs
 
 Access to capital in tribal communities faces unique legal, historical, and structural barriers. Tribal trust land, sovereign immunity, limited credit infrastructure, and geographic isolation have historically limited the flow of private capital to Native communities. A growing ecosystem of federal programs and Native CDFIs is working to change this.
@@ -258,8 +258,8 @@ VALUES (v_cert, 'Federal Student Loan Programs: History and Awareness', 1, 'appr
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'Why Federal Student Lending Is Not a New Private Lender Pathway',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'Why Federal Student Lending Is Not a New Private Lender Pathway', 'why-federal-student-lending-is-not-a-new-private-lender-pathway',
 $$## Why Federal Student Lending Is Not a New Private Lender Pathway
 
 Many organizations exploring capital access opportunities ask about student loan lending. This lesson provides essential awareness: federal student lending is a closed, government-direct system — not a pathway for new private or community lenders to originate federally backed student loans.
@@ -326,8 +326,8 @@ VALUES (v_cert, 'Capital Stack Fundamentals', 1, 'approved')
 ON CONFLICT DO NOTHING RETURNING id INTO v_mod;
 IF v_mod IS NULL THEN SELECT id INTO v_mod FROM modules WHERE certification_id = v_cert AND sort_order = 1; END IF;
 
-INSERT INTO lessons (module_id, title, content, sort_order, read_time_minutes, status) VALUES
-(v_mod, 'Understanding the Capital Stack: Grant, Debt, Equity & Guarantees',
+INSERT INTO lessons (module_id, title, slug, content, sort_order, read_time_minutes, status) VALUES
+(v_mod, 'Understanding the Capital Stack: Grant, Debt, Equity & Guarantees', 'understanding-the-capital-stack-grant-debt-equity-guarantees',
 $$## Understanding the Capital Stack: Grant, Debt, Equity & Guarantees
 
 A capital stack is the combination of all financing sources that fund a single project or enterprise. Understanding how to design and build effective capital stacks is one of the most critical skills for community lending professionals — it determines whether projects get built, what they cost, and whether they serve the community long-term.
@@ -367,7 +367,7 @@ Every source of capital has a cost, a risk expectation, and a use requirement. G
 - [ ] Develop a template for presenting capital stacks to prospective investors
 $$, 1, 10, 'approved'),
 
-(v_mod, 'Partner Pitch Strategy & Building a Funding Source Matrix',
+(v_mod, 'Partner Pitch Strategy & Building a Funding Source Matrix', 'partner-pitch-strategy-building-a-funding-source-matrix',
 $$## Partner Pitch Strategy & Building a Funding Source Matrix
 
 Knowing what capital sources exist is only half the battle. The other half is building relationships with capital providers, presenting compelling investment opportunities, and creating systems to track funding opportunities across multiple programs and sources.
