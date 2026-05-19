@@ -5,10 +5,16 @@
 -- Run after: 04_cert_seeds.sql
 -- ============================================================
 
--- Add required_artifact columns to certifications
-ALTER TABLE certifications
-  ADD COLUMN IF NOT EXISTS required_artifact_title       text,
-  ADD COLUMN IF NOT EXISTS required_artifact_description text;
+-- Add required_artifact columns to certifications (one per statement for Supabase compatibility)
+DO $$ BEGIN
+  ALTER TABLE certifications ADD COLUMN required_artifact_title text;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE certifications ADD COLUMN required_artifact_description text;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
 
 -- Seed required artifact titles and descriptions for all 17 certs
 UPDATE certifications SET
