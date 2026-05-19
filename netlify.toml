@@ -30,6 +30,10 @@
   name = "daily-content"
   cron = "0 8 * * *"
 
+[[scheduled-functions]]
+  name = "inactivity-nudge"
+  cron = "0 11 * * *"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
