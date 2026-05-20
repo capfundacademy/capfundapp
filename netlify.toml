@@ -45,6 +45,11 @@
   status = 200
 
 [[redirects]]
+  from = "/credentials-manifest.json"
+  to = "/credentials-manifest.json"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

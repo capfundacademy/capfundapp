@@ -156,6 +156,16 @@ copyDir(path.join(ROOT, 'assets'),    path.join(DIST, 'assets'));
 copyDir(path.join(ROOT, 'templates'), path.join(DIST, 'templates'));
 ok(`assets/ and templates/ copied`);
 
+// ── 8. Copy root static files ─────────────────────────────────────────────────
+const staticFiles = ['robots.txt', 'llms.txt', 'sitemap.xml', 'credentials-manifest.json'];
+for (const f of staticFiles) {
+  const src = path.join(ROOT, f);
+  if (fs.existsSync(src)) {
+    fs.copyFileSync(src, path.join(DIST, f));
+    ok(`${f} copied`);
+  }
+}
+
 // ── Done ─────────────────────────────────────────────────────────────────────
 const distFiles = fs.readdirSync(DIST);
 ok(`\nBuild complete → dist/  (${distFiles.length} top-level entries)`);
