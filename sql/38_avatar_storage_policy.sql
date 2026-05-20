@@ -11,7 +11,8 @@ VALUES ('social-images', 'social-images', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
 -- Storage policies for social-images bucket
-CREATE POLICY IF NOT EXISTS "avatars: user upload own"
+DROP POLICY IF EXISTS "avatars: user upload own" ON storage.objects;
+CREATE POLICY "avatars: user upload own"
   ON storage.objects FOR INSERT
   TO authenticated
   WITH CHECK (
@@ -19,7 +20,8 @@ CREATE POLICY IF NOT EXISTS "avatars: user upload own"
     AND (storage.foldername(name))[1] = 'avatars'
   );
 
-CREATE POLICY IF NOT EXISTS "avatars: user update own"
+DROP POLICY IF EXISTS "avatars: user update own" ON storage.objects;
+CREATE POLICY "avatars: user update own"
   ON storage.objects FOR UPDATE
   TO authenticated
   USING (
@@ -28,7 +30,8 @@ CREATE POLICY IF NOT EXISTS "avatars: user update own"
     AND owner = auth.uid()
   );
 
-CREATE POLICY IF NOT EXISTS "social-images: public read"
+DROP POLICY IF EXISTS "social-images: public read" ON storage.objects;
+CREATE POLICY "social-images: public read"
   ON storage.objects FOR SELECT
   TO public
   USING (bucket_id = 'social-images');
