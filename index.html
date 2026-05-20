@@ -5313,7 +5313,7 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
           };
 
           const fns = [
-            { name: 'daily-content-background', label: '📱 Social Media & Blog', schedule: 'Daily 8am UTC', canTrigger: true },
+            { name: 'daily-content-background', label: '📱 Social Media & Blog', schedule: 'Daily 8am UTC', canTrigger: true, canCheck: true },
             { name: 'daily-nurture',     label: 'Daily Lead Nurture',         schedule: 'Daily 9am UTC' },
             { name: 'weekly-digest',     label: 'Weekly Digest Email',        schedule: 'Mondays 8am UTC' },
             { name: 'abandoned-checkout',label: 'Abandoned Checkout',         schedule: 'Every 2 hours' },
@@ -5347,6 +5347,17 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
                       <div className="flex-1 min-w-0 text-sm">
                         <p className={`font-bold mb-1 ${textCls}`}>{icon} {label} — {triggerResult.fn}</p>
                         {isRunning && <p className="text-xs text-blue-600">Checking for result every 10 seconds (up to 3 min)…</p>}
+                        {/* Config check results */}
+                        {triggerResult.data?._isConfigCheck && (
+                          <div className="mt-1 space-y-0.5 text-xs">
+                            {triggerResult.data.present?.map(k => (
+                              <div key={k} className="text-green-700">✅ {k}</div>
+                            ))}
+                            {triggerResult.data.hints && Object.entries(triggerResult.data.hints).map(([k, v]) => (
+                              <div key={k} className="text-gray-500 pl-4">↳ {k}: {v}</div>
+                            ))}
+                          </div>
+                        )}
                         {/* Summary from run log */}
                         {summary?.topic && <p className="text-xs text-gray-600 mt-1">📌 Topic: {summary.topic.slice(0, 80)}</p>}
                         {summary?.buffer_synced !== undefined && (
@@ -5388,6 +5399,28 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
                         )}
                       </div>
                       <div className="flex items-center gap-2">
+                        {fn.canCheck && (
+                          <button
+                            onClick={async () => {
+                              setTriggerResult({ fn: fn.name, status: 'starting' });
+                              try {
+                                const res = await fetch('/.netlify/functions/check-social-config');
+                                const data = await res.json();
+                                setTriggerResult({ fn: fn.name, status: data.allGood ? 'success' : 'failed', data: {
+                                  errors: data.missing.map(k => `Missing env var: ${k}`),
+                                  hints: data.hints,
+                                  present: data.present,
+                                  _isConfigCheck: true,
+                                }});
+                              } catch(e) {
+                                setTriggerResult({ fn: fn.name, status: 'failed', error: e.message });
+                              }
+                            }}
+                            disabled={!!triggering}
+                            className="text-xs px-2.5 py-1 border border-gray-300 text-gray-600 font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                            🔍 Check Config
+                          </button>
+                        )}
                         {fn.canTrigger && (
                           <button
                             onClick={() => triggerFn(fn.name)}
