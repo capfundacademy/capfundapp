@@ -2205,7 +2205,7 @@ window.ENV = {
       const toPrint = certificates.filter(c => ids.has(c.id));
       if (!toPrint.length) return;
       setBulkPrinting(true);
-      const certsHtml = toPrint.map(buildCertHtml).join('');
+      const certsHtml = toPrint.map(cert => buildCertHtml(cert)).join('');
       const win = window.open('', '_blank', 'width=1000,height=800');
       win.document.write(`<!DOCTYPE html><html><head>
         <title>Cap Fund Academy Certificates</title>
