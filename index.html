@@ -2148,6 +2148,9 @@ window.ENV = {
 
     const buildCertHtml = (cert, dir = director) => {
       const issueDate = new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      const dirName  = (dir && dir.name)  || 'Program Director';
+      const dirTitle = (dir && dir.title) || 'Program Director';
+      const dirSig   = (dir && dir.signature_data_url) || null;
       return `
         <div class="cert-page" style="width:900px;height:636px;position:relative;background:#fff;font-family:'Inter',sans-serif;overflow:hidden;page-break-after:always;">
           <div style="position:absolute;left:0;top:0;width:12px;height:100%;background:#0F1631;"></div>
@@ -2180,7 +2183,7 @@ window.ENV = {
               </div>
             </div>
             <div style="display:flex;gap:64px;align-items:flex-end;">
-              <div style="text-align:center;">${dir.signature_data_url ? `<div style="margin-bottom:2px;height:44px;display:flex;align-items:flex-end;justify-content:center;"><img src="${dir.signature_data_url}" alt="Signature" style="height:40px;width:auto;"/></div>` : `<div style="margin-bottom:2px;"><span style="font-family:'Dancing Script',cursive;font-size:22px;color:#0F1631;font-weight:700;">${dir.name}</span></div>`}<div style="border-top:2px solid #0F1631;width:160px;padding-top:6px;"><div style="font-size:12px;font-weight:800;color:#0F1631;">${dir.name}</div><div style="font-size:10px;color:#6b7280;margin-top:2px;">${dir.title}</div></div></div>
+              <div style="text-align:center;">${dirSig ? `<div style="margin-bottom:2px;height:44px;display:flex;align-items:flex-end;justify-content:center;"><img src="${dirSig}" alt="Signature" style="height:40px;width:auto;"/></div>` : `<div style="margin-bottom:2px;"><span style="font-family:'Dancing Script',cursive;font-size:22px;color:#0F1631;font-weight:700;">${dirName}</span></div>`}<div style="border-top:2px solid #0F1631;width:160px;padding-top:6px;"><div style="font-size:12px;font-weight:800;color:#0F1631;">${dirName}</div><div style="font-size:10px;color:#6b7280;margin-top:2px;">${dirTitle}</div></div></div>
               <svg viewBox="0 0 80 80" style="width:80px;height:80px;flex-shrink:0;">
                 <circle cx="40" cy="40" r="38" fill="#0F1631"/>
                 <circle cx="40" cy="40" r="33" fill="none" stroke="#FFD23F" stroke-width="1.5"/>
@@ -2564,6 +2567,7 @@ window.ENV = {
     const [saving, setSaving]                 = useState(false);
     const [msg, setMsg]                       = useState(null);
     const [drawing, setDrawing]               = useState(false);
+    const [hasDrawn, setHasDrawn]             = useState(false);
     const sigCanvasRef = useRef(null);
     const lastPosRef   = useRef(null);
 
@@ -2611,6 +2615,7 @@ window.ENV = {
       ctx.lineJoin = 'round';
       ctx.stroke();
       lastPosRef.current = pos;
+      setHasDrawn(true); // track that user actually drew
     };
 
     const endDraw = (e) => {
@@ -2624,9 +2629,12 @@ window.ENV = {
       if (!canvas) return;
       canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
       setSignatureDataUrl(null);
+      setHasDrawn(false);
     };
 
+    // Only capture if user actually drew — otherwise keep existing saved signature
     const captureSignature = () => {
+      if (!hasDrawn) return null;
       const canvas = sigCanvasRef.current;
       if (!canvas) return null;
       return canvas.toDataURL('image/png');
@@ -2638,14 +2646,15 @@ window.ENV = {
       try {
         const sb = await getSupabase();
         const { data: { user } } = await sb.auth.getUser();
-        const captured = captureSignature();
-        const finalSig = captured || signatureDataUrl;
+        // Only use newly drawn sig; otherwise preserve the existing saved one
+        const newlyDrawn = captureSignature(); // null if nothing drawn
+        const finalSig = newlyDrawn || signatureDataUrl;
         await sb.from('admin_settings').upsert({
           key: 'program_director',
           value: {
             name: directorName.trim(),
             title: directorTitle.trim(),
-            signature_data_url: finalSig,
+            signature_data_url: finalSig || null,
           },
           description: 'Program director name, title, and drawn signature for certificates',
           updated_by: user.id,
