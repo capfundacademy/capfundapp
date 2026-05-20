@@ -68,7 +68,7 @@ BEGIN
     ON CONFLICT (user_id, lesson_id) DO UPDATE
       SET status = 'completed', completed_at = EXCLUDED.completed_at;
 
-    RAISE NOTICE '  ✓ Cert %: % (score: %%)', v_cert.cert_number, v_cert.title, v_score;
+    RAISE NOTICE '  ✓ Cert %: % (score: % pct)', v_cert.cert_number, v_cert.title, v_score;
   END LOOP;
 
   RAISE NOTICE 'Done — Julius now has all 36 certifications.';
