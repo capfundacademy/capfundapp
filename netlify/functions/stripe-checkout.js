@@ -126,8 +126,8 @@ exports.handler = async (event) => {
     mode: offer.offer_type === 'subscription' ? 'subscription' : 'payment',
     customer: stripeCustomerId,
     line_items: lineItems,
-    success_url: `${SITE_URL}/?checkout=success&order=${order.id}`,
-    cancel_url:  `${SITE_URL}/?checkout=cancelled`,
+    success_url: `${SITE_URL}/thank-you?order=${order.id}`,
+    cancel_url:  `${SITE_URL}/pricing`,
     client_reference_id: order.id,
     metadata: {
       order_id:    order.id,
