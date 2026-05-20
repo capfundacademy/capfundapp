@@ -5142,8 +5142,9 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
     const [runs, setRuns]               = useState([]);
     const [loading, setLoading]         = useState(true);
     const [resolving, setResolving]     = useState({});
-    const [triggering, setTriggering]   = useState(null); // fn name currently running
-    const [triggerResult, setTriggerResult] = useState(null); // { fn, ok, data, error }
+    const [triggering, setTriggering]     = useState(null);   // fn name currently running
+    const [triggerResult, setTriggerResult] = useState(null); // { fn, status, data, error }
+    const pollRef = useRef(null);
 
     useEffect(() => { loadDashboard(); }, []);
 
@@ -5254,8 +5255,13 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
         {/* Scheduled functions */}
         {(() => {
           const triggerFn = async (fnName) => {
+            if (pollRef.current) clearInterval(pollRef.current);
             setTriggering(fnName);
-            setTriggerResult(null);
+            setTriggerResult({ fn: fnName, status: 'starting' });
+
+            // Record time just before trigger so we find the new run in DB
+            const startedAfter = new Date().toISOString();
+
             try {
               const sb = await getSupabase();
               const { data: { session } } = await sb.auth.getSession();
@@ -5264,13 +5270,46 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
                 body: JSON.stringify({ _manual_trigger: true }),
               });
-              const data = await res.json().catch(() => ({}));
-              setTriggerResult({ fn: fnName, ok: res.ok, data });
+
+              // Background functions return 202 immediately — poll autopilot_runs for result
+              if (res.status === 202 || res.status === 200) {
+                setTriggerResult({ fn: fnName, status: 'running', startedAfter });
+                setTriggering(null);
+
+                let attempts = 0;
+                pollRef.current = setInterval(async () => {
+                  attempts++;
+                  try {
+                    const sb2 = await getSupabase();
+                    const { data: run } = await sb2
+                      .from('autopilot_runs')
+                      .select('*')
+                      .eq('function_name', fnName)
+                      .gte('started_at', startedAfter)
+                      .order('started_at', { ascending: false })
+                      .limit(1)
+                      .maybeSingle();
+
+                    if (run && run.status !== 'running') {
+                      clearInterval(pollRef.current);
+                      setTriggerResult({ fn: fnName, status: run.status, run });
+                      loadDashboard();
+                    } else if (attempts >= 18) { // 3 min max (18 × 10s)
+                      clearInterval(pollRef.current);
+                      setTriggerResult({ fn: fnName, status: 'timeout', run });
+                    }
+                  } catch {}
+                }, 10000);
+              } else {
+                // Sync function returned an error body
+                const data = await res.json().catch(() => ({}));
+                setTriggerResult({ fn: fnName, status: 'failed', data });
+                setTriggering(null);
+              }
             } catch (e) {
-              setTriggerResult({ fn: fnName, ok: false, error: e.message });
+              setTriggerResult({ fn: fnName, status: 'failed', error: e.message });
+              setTriggering(null);
             }
-            setTriggering(null);
-            loadDashboard();
           };
 
           const fns = [
@@ -5290,50 +5329,50 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
               </div>
 
               {/* Trigger result banner */}
-              {triggerResult && (
-                <div className={`px-5 py-4 border-b text-sm ${triggerResult.ok ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-bold mb-1 ${triggerResult.ok ? 'text-green-700' : 'text-red-700'}`}>
-                        {triggerResult.ok ? '✅ Run completed' : '❌ Run failed'} — {triggerResult.fn}
-                      </p>
-                      {/* Fatal error (500 response body) */}
-                      {triggerResult.data?.error && (
-                        <p className="text-xs font-mono bg-red-100 text-red-800 px-2 py-1 rounded mb-1 break-all">
-                          Fatal: {triggerResult.data.error}
-                        </p>
-                      )}
-                      {/* Partial errors array */}
-                      {triggerResult.data?.errors?.length > 0 && (
-                        <div className="text-xs text-red-600 space-y-0.5 mb-1">
-                          {triggerResult.data.errors.map((e, i) => <div key={i}>• {e}</div>)}
-                        </div>
-                      )}
-                      {/* Buffer per-platform results */}
-                      {triggerResult.data?.buffer && (
-                        <div className="text-xs text-gray-700 space-y-0.5 mb-1">
-                          {Object.entries(triggerResult.data.buffer).map(([p, r]) => (
-                            <div key={p}>• <span className="font-semibold">{p}:</span> {
-                              r?.success   ? `✅ queued — id: ${r.buffer_id || '?'} · due: ${r.due_at ? new Date(r.due_at).toLocaleString() : '?'}` :
-                              r?.skipped   ? `⚠️ skipped — ${r.reason}` :
-                                             `❌ ${r?.error || 'failed'}`
-                            }</div>
-                          ))}
-                        </div>
-                      )}
-                      {/* Blog post created */}
-                      {triggerResult.data?.blog && (
-                        <p className="text-xs text-green-700">📝 Blog: "{triggerResult.data.blog.title?.slice(0,60)}" [{triggerResult.data.blog.status}]</p>
-                      )}
-                      {/* Network-level error */}
-                      {triggerResult.error && (
-                        <p className="text-xs font-mono bg-red-100 text-red-800 px-2 py-1 rounded break-all">Network: {triggerResult.error}</p>
-                      )}
+              {triggerResult && (() => {
+                const s = triggerResult.status;
+                const run = triggerResult.run;
+                const isRunning = s === 'running' || s === 'starting';
+                const isSuccess = s === 'success';
+                const isPartial = s === 'partial';
+                const isFailed  = s === 'failed' || s === 'timeout';
+                const bgCls = isRunning ? 'bg-blue-50 border-blue-100' : isSuccess ? 'bg-green-50 border-green-100' : isPartial ? 'bg-amber-50 border-amber-100' : 'bg-red-50 border-red-100';
+                const icon  = isRunning ? '⏳' : isSuccess ? '✅' : isPartial ? '⚠️' : '❌';
+                const label = isRunning ? 'Running in background…' : isSuccess ? 'Completed successfully' : isPartial ? 'Completed with errors' : s === 'timeout' ? 'Still running (check log)' : 'Run failed';
+                const textCls = isRunning ? 'text-blue-700' : isSuccess ? 'text-green-700' : isPartial ? 'text-amber-700' : 'text-red-700';
+                const summary = run?.summary;
+                return (
+                  <div className={`px-5 py-4 border-b ${bgCls}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0 text-sm">
+                        <p className={`font-bold mb-1 ${textCls}`}>{icon} {label} — {triggerResult.fn}</p>
+                        {isRunning && <p className="text-xs text-blue-600">Checking for result every 10 seconds (up to 3 min)…</p>}
+                        {/* Summary from run log */}
+                        {summary?.topic && <p className="text-xs text-gray-600 mt-1">📌 Topic: {summary.topic.slice(0, 80)}</p>}
+                        {summary?.buffer_synced !== undefined && (
+                          <p className="text-xs text-gray-600">📤 Buffer: {summary.buffer_synced} queued, {summary.buffer_skipped || 0} skipped</p>
+                        )}
+                        {/* Errors from run log or fetch body */}
+                        {(summary?.errors?.length > 0 || triggerResult.data?.errors?.length > 0) && (
+                          <div className="mt-1 text-xs text-red-600 space-y-0.5">
+                            {(summary?.errors || triggerResult.data?.errors || []).map((e, i) => <div key={i}>• {e}</div>)}
+                          </div>
+                        )}
+                        {/* Fatal error from sync response */}
+                        {triggerResult.data?.error && (
+                          <p className="text-xs font-mono bg-red-100 text-red-800 px-2 py-1 rounded mt-1 break-all">
+                            {triggerResult.data.error}
+                          </p>
+                        )}
+                        {triggerResult.error && (
+                          <p className="text-xs font-mono bg-red-100 text-red-800 px-2 py-1 rounded mt-1 break-all">{triggerResult.error}</p>
+                        )}
+                      </div>
+                      <button onClick={() => { setTriggerResult(null); if (pollRef.current) clearInterval(pollRef.current); }} className="text-gray-400 hover:text-gray-600 flex-shrink-0 text-lg leading-none">✕</button>
                     </div>
-                    <button onClick={() => setTriggerResult(null)} className="text-gray-400 hover:text-gray-600 flex-shrink-0 text-lg leading-none">✕</button>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               <div className="divide-y divide-gray-100">
                 {fns.map(fn => {
@@ -5352,9 +5391,11 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
                         {fn.canTrigger && (
                           <button
                             onClick={() => triggerFn(fn.name)}
-                            disabled={!!triggering}
+                            disabled={!!(triggering || (triggerResult?.status === 'running' && triggerResult?.fn === fn.name))}
                             className="text-xs px-2.5 py-1 bg-[#2D1FB1] text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-40">
-                            {isRunning ? '⏳ Running…' : '▶ Run Now'}
+                            {(triggerResult?.status === 'running' || triggerResult?.status === 'starting') && triggerResult?.fn === fn.name
+                              ? '⏳ Polling…'
+                              : '▶ Run Now'}
                           </button>
                         )}
                         {lastRun ? (
