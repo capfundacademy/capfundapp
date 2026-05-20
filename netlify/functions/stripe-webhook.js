@@ -12,6 +12,67 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const WEBHOOK_SECRET       = process.env.STRIPE_WEBHOOK_SECRET;
 const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SITE_URL             = process.env.URL || 'https://capfundacademy.com';
+
+async function sendPurchaseEmail({ toEmail, toName, offerTitle, amountCents }) {
+  const amount   = amountCents ? `$${(amountCents / 100).toFixed(2)}` : '';
+  const html = `
+    <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#1f2937">
+      <div style="background:#0F1631;padding:24px;text-align:center;border-radius:12px 12px 0 0">
+        <img src="${SITE_URL}/assets/logo-header.png" alt="Cap Fund Academy" style="height:48px"/>
+      </div>
+      <div style="background:#ffffff;padding:40px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb">
+        <h1 style="color:#111827;font-size:22px;margin:0 0 8px">Payment Confirmed ✅</h1>
+        <p style="color:#6b7280;margin:0 0 24px">Hi ${toName || 'there'}, your enrollment is confirmed.</p>
+
+        <div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:10px;padding:20px;margin-bottom:24px">
+          <p style="margin:0 0 4px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#6366f1">Enrolled In</p>
+          <p style="margin:0;font-size:16px;font-weight:700;color:#2D1FB1">${offerTitle}</p>
+          ${amount ? `<p style="margin:4px 0 0;font-size:13px;color:#6b7280">Amount paid: <strong>${amount}</strong></p>` : ''}
+        </div>
+
+        <p style="font-weight:600;color:#111827;margin:0 0 12px">What to do next:</p>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:28px">
+          ${[
+            ['🎓','Log in to your dashboard','Your course is ready to start right now.'],
+            ['📜','Complete all lessons','Pass the quiz to earn your official certificate.'],
+            ['📞','Need help?','Email support@capfundacademy.com anytime.'],
+          ].map(([icon, title, body]) => `
+            <tr>
+              <td style="width:36px;vertical-align:top;padding:8px 0;font-size:20px">${icon}</td>
+              <td style="padding:8px 0">
+                <p style="margin:0;font-weight:600;color:#111827;font-size:14px">${title}</p>
+                <p style="margin:0;color:#6b7280;font-size:13px">${body}</p>
+              </td>
+            </tr>
+          `).join('')}
+        </table>
+
+        <a href="${SITE_URL}" style="display:block;background:#2D1FB1;color:#ffffff;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;margin-bottom:24px">
+          Access My Course →
+        </a>
+
+        <p style="font-size:12px;color:#9ca3af;text-align:center;margin:0">
+          Cap Fund Academy · Not affiliated with USDA or any government agency<br>
+          Questions? <a href="mailto:support@capfundacademy.com" style="color:#6366f1">support@capfundacademy.com</a>
+        </p>
+      </div>
+    </div>`;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    await fetch(`${SITE_URL}/.netlify/functions/email-send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: toEmail, subject: `You're enrolled — ${offerTitle}`, html, _internal: true }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+  } catch (e) {
+    console.error('Purchase confirmation email failed:', e.message);
+  }
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method not allowed' };
@@ -111,6 +172,22 @@ exports.handler = async (event) => {
               await admin.from('coupons').update({ uses_count: (coupon.uses_count || 0) + 1 }).eq('id', order.coupon_id);
             }
           }
+        }
+
+        // Send purchase confirmation email
+        const { data: buyerProfile } = await admin.from('profiles')
+          .select('full_name')
+          .eq('id', order.user_id)
+          .maybeSingle();
+        const { data: buyerAuth } = await admin.auth.admin.getUserById(order.user_id);
+        const buyerEmail = buyerAuth?.user?.email;
+        if (buyerEmail) {
+          await sendPurchaseEmail({
+            toEmail:    buyerEmail,
+            toName:     buyerProfile?.full_name || '',
+            offerTitle: order.offers?.name || 'Cap Fund Academy Certification',
+            amountCents: order.amount_cents,
+          });
         }
 
         console.log('Order fulfilled:', orderId);

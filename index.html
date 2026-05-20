@@ -4978,7 +4978,7 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
   }
 
   // ─── Pricing Page ────────────────────────────────────────────────────────
-  function PricingPage({ onCheckout, user }) {
+  function PricingPage({ onCheckout, user, onLoginRequest }) {
     const [offers, setOffers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [coupon, setCoupon] = useState('');
@@ -4996,7 +4996,11 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
     }, []);
 
     const startCheckout = async (offer) => {
-      if (!user) { setCheckoutError('Please log in to purchase.'); return; }
+      if (!user) {
+        if (onLoginRequest) onLoginRequest();
+        else setCheckoutError('Please log in to purchase.');
+        return;
+      }
       setCheckingOut(offer.id);
       setCheckoutError('');
       const sb = await getSupabase();
@@ -7084,9 +7088,9 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
       })();
     }, []);
 
-    const certName = order?.offers?.name  || null;
-    const amount   = order?.total_amount_cents
-      ? `$${(order.total_amount_cents / 100).toFixed(2)}`
+    const certName = order?.offers?.name || null;
+    const amount   = order?.amount_cents
+      ? `$${(order.amount_cents / 100).toFixed(2)}`
       : null;
 
     const handleDashboard = () => {
@@ -7354,7 +7358,7 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
         {pubView === 'quiz'      && <RLFReadinessQuiz onComplete={() => setPubView('home')} />}
         {pubView === 'checklist' && <RMAPChecklist onCapture={() => setPubView('home')} />}
         {pubView === 'webinar'   && <VSLPage onCTA={() => setPubView('home')} />}
-        {pubView === 'pricing'   && <PricingPage user={null} />}
+        {pubView === 'pricing'   && <PricingPage user={null} onLoginRequest={() => setLoginOpen(true)} />}
         {pubView === 'blog'      && <BlogPage setView={setPubView} />}
         {pubView === 'directory' && <DirectoryPage />}
         <Footer setView={setPubView} />
