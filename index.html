@@ -6244,7 +6244,7 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
 
     const showMsg = (text, type = 'success') => {
       setMsg({ text, type });
-      setTimeout(() => setMsg(null), 4000);
+      setTimeout(() => setMsg(null), type === 'error' ? 8000 : 4000);
     };
 
     // Avatar file pick → show preview for crop
@@ -6280,11 +6280,12 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
         try {
           const sb = await getSupabase();
           const path = `avatars/${user.id}.png`;
-          const { error: upErr } = await sb.storage.from('evidence').upload(path, blob, { contentType: 'image/png', upsert: true });
+          const { error: upErr } = await sb.storage.from('social-images').upload(path, blob, { contentType: 'image/png', upsert: true });
           if (upErr) throw upErr;
-          const { data: urlData } = await sb.storage.from('evidence').createSignedUrl(path, 31536000);
-          const avatarUrl = urlData?.signedUrl;
-          await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', user.id);
+          const { data: urlData } = sb.storage.from('social-images').getPublicUrl(path);
+          const avatarUrl = urlData?.publicUrl;
+          const { error: profErr } = await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', user.id);
+          if (profErr) throw profErr;
           setAvatarPreview(avatarUrl);
           setCropMode(false);
           onProfileUpdate?.();
@@ -6317,11 +6318,16 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
       setSaving(true);
       try {
         const sb = await getSupabase();
+        // Ensure there is an active session before updating
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) { showMsg('Session expired — please sign out and sign back in, then try again', 'error'); setSaving(false); return; }
         const { error } = await sb.auth.updateUser({ password: newPw });
         if (error) throw error;
         setCurrentPw(''); setNewPw(''); setConfirmPw('');
-        showMsg('Password changed successfully!');
-      } catch (e) { showMsg(e.message, 'error'); }
+        showMsg('Password changed successfully! You can now log in with your new password.');
+      } catch (e) {
+        showMsg(e.message || 'Password update failed. Please try again.', 'error');
+      }
       setSaving(false);
     };
 
