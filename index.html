@@ -2106,7 +2106,7 @@ window.ENV = {
     const [loading, setLoading] = useState(true);
     const [selectedCertIds, setSelectedCertIds] = useState(new Set());
     const [bulkPrinting, setBulkPrinting] = useState(false);
-    const [director, setDirector] = useState({ name: 'Robert Nore', title: 'Program Director', signature_data_url: null });
+    const [director, setDirector] = useState({ name: '', title: '', signature_data_url: null });
 
     useEffect(() => {
       (async () => {
@@ -2148,8 +2148,8 @@ window.ENV = {
 
     const buildCertHtml = (cert, dir = director) => {
       const issueDate = new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-      const dirName  = (dir && dir.name)  || 'Program Director';
-      const dirTitle = (dir && dir.title) || 'Program Director';
+      const dirName  = (dir && dir.name)  || '';
+      const dirTitle = (dir && dir.title) || '';
       const dirSig   = (dir && dir.signature_data_url) || null;
       return `
         <div class="cert-page" style="width:900px;height:636px;position:relative;background:#fff;font-family:'Inter',sans-serif;overflow:hidden;page-break-after:always;">
@@ -2183,7 +2183,7 @@ window.ENV = {
               </div>
             </div>
             <div style="display:flex;gap:64px;align-items:flex-end;">
-              <div style="text-align:center;">${dirSig ? `<div style="margin-bottom:2px;height:44px;display:flex;align-items:flex-end;justify-content:center;"><img src="${dirSig}" alt="Signature" style="height:40px;width:auto;"/></div>` : `<div style="margin-bottom:2px;"><span style="font-family:'Dancing Script',cursive;font-size:22px;color:#0F1631;font-weight:700;">${dirName}</span></div>`}<div style="border-top:2px solid #0F1631;width:160px;padding-top:6px;"><div style="font-size:12px;font-weight:800;color:#0F1631;">${dirName}</div><div style="font-size:10px;color:#6b7280;margin-top:2px;">${dirTitle}</div></div></div>
+              <div style="text-align:center;">${dirSig ? `<div style="margin-bottom:2px;height:44px;display:flex;align-items:flex-end;justify-content:center;"><img src="${dirSig}" alt="Signature" style="height:40px;width:auto;"/></div>` : `<div style="height:44px;"></div>`}<div style="border-top:2px solid #0F1631;width:160px;padding-top:6px;"><div style="font-size:12px;font-weight:800;color:#0F1631;">${dirName}</div><div style="font-size:10px;color:#6b7280;margin-top:2px;">${dirTitle}</div></div></div>
               <svg viewBox="0 0 80 80" style="width:80px;height:80px;flex-shrink:0;">
                 <circle cx="40" cy="40" r="38" fill="#0F1631"/>
                 <circle cx="40" cy="40" r="33" fill="none" stroke="#FFD23F" stroke-width="1.5"/>
@@ -3573,7 +3573,7 @@ window.ENV = {
   // ─── Certificate View ─────────────────────────────────────────────────────
   function CertificateView({ cert, onClose }) {
     const issueDate = new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    const [director, setDirector] = useState({ name: 'Robert Nore', title: 'Program Director', signature_data_url: null });
+    const [director, setDirector] = useState({ name: '', title: '', signature_data_url: null });
 
     useEffect(() => {
       (async () => {
@@ -3677,14 +3677,13 @@ window.ENV = {
             <div style={{ display:'flex', gap:64, alignItems:'flex-end' }}>
               <div style={{ textAlign:'center' }}>
                 <div style={{ marginBottom:2, height:44, display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
-                  {director.signature_data_url
-                    ? <img src={director.signature_data_url} alt="Signature" style={{ height:40, width:'auto', display:'block' }} />
-                    : <span style={{ fontFamily:"'Dancing Script','Brush Script MT',cursive", fontSize:22, color:'#0F1631', fontWeight:700 }}>{director.name}</span>
-                  }
+                  {director.signature_data_url && (
+                    <img src={director.signature_data_url} alt="Signature" style={{ height:40, width:'auto', display:'block' }} />
+                  )}
                 </div>
                 <div style={{ borderTop:'2px solid #0F1631', width:160, paddingTop:6 }}>
-                  <div style={{ fontSize:12, fontWeight:800, color:'#0F1631' }}>{director.name}</div>
-                  <div style={{ fontSize:10, color:'#6b7280', marginTop:2 }}>{director.title}</div>
+                  <div style={{ fontSize:12, fontWeight:800, color:'#0F1631' }}>{director.name || ''}</div>
+                  <div style={{ fontSize:10, color:'#6b7280', marginTop:2 }}>{director.title || ''}</div>
                 </div>
               </div>
               {/* Seal */}
