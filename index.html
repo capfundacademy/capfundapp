@@ -2106,21 +2106,24 @@ window.ENV = {
     const [loading, setLoading] = useState(true);
     const [selectedCertIds, setSelectedCertIds] = useState(new Set());
     const [bulkPrinting, setBulkPrinting] = useState(false);
+    const [director, setDirector] = useState({ name: 'Robert Nore', title: 'Program Director', signature_data_url: null });
 
     useEffect(() => {
       (async () => {
         const sb = await getSupabase();
         if (!sb) { setLoading(false); return; }
-        const [{ data: c }, { data: p }, { data: comp }, { data: myCerts }] = await Promise.all([
+        const [{ data: c }, { data: p }, { data: comp }, { data: myCerts }, { data: dirSetting }] = await Promise.all([
           sb.from('certifications').select('*').eq('status','approved').order('cert_number'),
           sb.from('student_progress').select('*'),
           sb.from('certification_completions').select('*'),
-          sb.from('certificates').select('*, certifications(title)').order('issued_at', { ascending: false })
+          sb.from('certificates').select('*, certifications(title)').order('issued_at', { ascending: false }),
+          sb.from('admin_settings').select('value').eq('key', 'program_director').maybeSingle(),
         ]);
         setCerts(c || []);
         setProgress(p || []);
         setCompletions(comp || []);
         setMyCerts(myCerts || []);
+        if (dirSetting?.value) setDirector(dirSetting.value);
         setLoading(false);
       })();
     }, []);
@@ -2143,7 +2146,7 @@ window.ENV = {
     const selectAll = () => setSelectedCertIds(new Set(certificates.map(c => c.id)));
     const clearAll  = () => setSelectedCertIds(new Set());
 
-    const buildCertHtml = (cert) => {
+    const buildCertHtml = (cert, dir = director) => {
       const issueDate = new Date(cert.issued_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
       return `
         <div class="cert-page" style="width:900px;height:636px;position:relative;background:#fff;font-family:'Inter',sans-serif;overflow:hidden;page-break-after:always;">
@@ -2177,7 +2180,7 @@ window.ENV = {
               </div>
             </div>
             <div style="display:flex;gap:64px;align-items:flex-end;">
-              <div style="text-align:center;"><div style="margin-bottom:2px;"><span style="font-family:'Dancing Script',cursive;font-size:22px;color:#0F1631;font-weight:700;">Robert Nore</span></div><div style="border-top:2px solid #0F1631;width:160px;padding-top:6px;"><div style="font-size:12px;font-weight:800;color:#0F1631;">Robert Nore</div><div style="font-size:10px;color:#6b7280;margin-top:2px;">Program Director</div></div></div>
+              <div style="text-align:center;">${dir.signature_data_url ? `<div style="margin-bottom:2px;height:44px;display:flex;align-items:flex-end;justify-content:center;"><img src="${dir.signature_data_url}" alt="Signature" style="height:40px;width:auto;"/></div>` : `<div style="margin-bottom:2px;"><span style="font-family:'Dancing Script',cursive;font-size:22px;color:#0F1631;font-weight:700;">${dir.name}</span></div>`}<div style="border-top:2px solid #0F1631;width:160px;padding-top:6px;"><div style="font-size:12px;font-weight:800;color:#0F1631;">${dir.name}</div><div style="font-size:10px;color:#6b7280;margin-top:2px;">${dir.title}</div></div></div>
               <svg viewBox="0 0 80 80" style="width:80px;height:80px;flex-shrink:0;">
                 <circle cx="40" cy="40" r="38" fill="#0F1631"/>
                 <circle cx="40" cy="40" r="33" fill="none" stroke="#FFD23F" stroke-width="1.5"/>
