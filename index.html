@@ -417,7 +417,7 @@ window.ENV = {
 
   // ─── Logo component ───────────────────────────────────────────────────────
   function Logo({ size = 'md', white = false }) {
-    const h = size === 'sm' ? 72 : size === 'lg' ? 160 : 140;
+    const h = size === 'sm' ? 216 : size === 'lg' ? 480 : 420;
     return (
       <img src="/assets/logo-header.png" alt="Cap Fund Academy" height={h}
         style={{ height: h, width: 'auto', display: 'block' }} />
@@ -6545,7 +6545,7 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
             <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <button onClick={() => setLmsView(isStaff ? 'admin' : 'dashboard')} className="flex items-center">
-                  <img src="/assets/logo-header.png" alt="Cap Fund Academy" style={{ height: 44, width: 'auto' }} />
+                  <img src="/assets/logo-header.png" alt="Cap Fund Academy" style={{ height: 132, width: 'auto' }} />
                 </button>
                 <button onClick={() => setLmsView('catalog')} className="text-sm text-gray-500 hover:text-[#2D1FB1] transition-colors">Catalog</button>
                 <button onClick={() => setLmsView('scoring')} className="text-sm font-semibold text-[#F97316] hover:text-orange-600 transition-colors">🤖 Score My App</button>
