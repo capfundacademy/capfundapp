@@ -6,10 +6,6 @@
 [functions]
   included_files = ["netlify/functions/**"]
 
-# daily-content runs OpenAI + DALL-E + Buffer — needs 15-min background timeout
-[functions."daily-content"]
-  type = "background"
-
 [[scheduled-functions]]
   name = "abandoned-checkout"
   cron = "0 */2 * * *"
@@ -31,7 +27,7 @@
   cron = "0 * * * *"
 
 [[scheduled-functions]]
-  name = "daily-content"
+  name = "daily-content-background"
   cron = "0 8 * * *"
 
 [[scheduled-functions]]

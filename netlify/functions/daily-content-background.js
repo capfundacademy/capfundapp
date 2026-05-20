@@ -308,7 +308,7 @@ exports.handler = async (event) => {
 
   // Log run start
   const { data: runLog, error: runLogErr } = await admin.from('autopilot_runs').insert({
-    function_name: 'daily-content',
+    function_name: 'daily-content-background',
     status: 'running',
     started_at: startedAt,
   }).select().single();
