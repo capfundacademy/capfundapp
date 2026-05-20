@@ -104,8 +104,11 @@ const slugify = (t) => t.toLowerCase()
 
 // ── OpenAI call ──────────────────────────────────────────────────────────────
 async function callOpenAI(prompt, maxTokens = 1800, temperature = 0.72) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 25000);
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
+    signal: controller.signal,
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${OPENAI_API_KEY}`,
@@ -132,7 +135,8 @@ Brand voice: authoritative but accessible, practitioner-focused, regulatory-spec
       max_tokens: maxTokens,
     }),
   });
-  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
+  clearTimeout(timeout);
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const d = await res.json();
   return d.choices?.[0]?.message?.content?.trim() || '';
 }
@@ -285,23 +289,35 @@ async function pushToBuffer(channelId, text, platform, imageUrl) {
 
 // ── Main handler ─────────────────────────────────────────────────────────────
 exports.handler = async (event) => {
+  // ── Pre-flight: surface missing env vars immediately ──────────────────────
+  const missing = [];
+  if (!SUPABASE_URL)         missing.push('SUPABASE_URL');
+  if (!SUPABASE_SERVICE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+  if (!OPENAI_API_KEY)       missing.push('OPENAI_API_KEY');
+  if (!BUFFER_ACCESS_TOKEN)  missing.push('BUFFER_ACCESS_TOKEN');
+  if (missing.length) {
+    const msg = `Missing required env vars: ${missing.join(', ')}`;
+    console.error('[daily-content] ' + msg);
+    return { statusCode: 500, body: JSON.stringify({ error: msg, missing }) };
+  }
+
   const startedAt = new Date().toISOString();
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
   // Log run start
-  const { data: runLog } = await admin.from('autopilot_runs').insert({
+  const { data: runLog, error: runLogErr } = await admin.from('autopilot_runs').insert({
     function_name: 'daily-content',
     status: 'running',
     started_at: startedAt,
   }).select().single();
+  if (runLogErr) console.warn('[daily-content] Could not write run log:', runLogErr.message);
   const runId = runLog?.id;
 
   const results = { blog: null, posts: {}, buffer: {}, errors: [] };
 
   try {
-    if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not configured');
 
     // ── Pick today's topic (day of year mod 28) ──────────────────────────────
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
