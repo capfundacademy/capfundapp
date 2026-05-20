@@ -101,7 +101,9 @@ exports.handler = async () => {
       </div></body></html>`;
 
       try {
-        await fetch(`${SITE_URL}/.netlify/functions/email-send`, {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const sendRes = await fetch(`${SITE_URL}/.netlify/functions/email-send`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -110,8 +112,14 @@ exports.handler = async () => {
             html: emailHtml,
             _internal: true,
           }),
+          signal: controller.signal,
         });
-        nudged++;
+        clearTimeout(timeout);
+        if (sendRes.ok) { nudged++; }
+        else {
+          const errText = await sendRes.text().catch(() => '');
+          errors.push(`${profile.email}: HTTP ${sendRes.status} ${errText}`);
+        }
       } catch (e) { errors.push(`${profile.email}: ${e.message}`); }
 
       await new Promise(r => setTimeout(r, 300)); // rate limit

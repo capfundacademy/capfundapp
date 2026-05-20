@@ -180,16 +180,30 @@ exports.handler = async (event) => {
   </div></body></html>`;
 
   // Send via email-send function (internal call)
-  const sendRes = await fetch(`${SITE_URL}/.netlify/functions/email-send`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      to:       profile.email,
-      subject:  `🎉 You passed Cert ${certNum}: ${cert_title} — ${score}%`,
-      html:     emailHtml,
-      _internal: true,
-    }),
-  });
+  let emailSent = false;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const sendRes = await fetch(`${SITE_URL}/.netlify/functions/email-send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to:        profile.email,
+        subject:   `🎉 You passed Cert ${certNum}: ${cert_title} — ${score}%`,
+        html:      emailHtml,
+        _internal: true,
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    emailSent = sendRes.ok;
+    if (!sendRes.ok) {
+      const errText = await sendRes.text().catch(() => '');
+      console.error(`completion-upsell email failed: ${sendRes.status} ${errText}`);
+    }
+  } catch (e) {
+    console.error('completion-upsell email error:', e.message);
+  }
 
-  return ok({ sent: sendRes.ok, to: profile.email, cert_number: certNum, upsell_tier: upsell?.credential || null });
+  return ok({ sent: emailSent, to: profile.email, cert_number: certNum, upsell_tier: upsell?.credential || null });
 };

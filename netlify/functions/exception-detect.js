@@ -11,8 +11,8 @@ const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY       = process.env.RESEND_API_KEY;
 const SITE_URL             = process.env.URL || 'https://capfundacademy.com';
-const ADMIN_EMAIL          = 'support@capfundacademy.com';
-const FROM                 = 'Cap Fund Academy Alerts <support@capfundacademy.com>';
+const ADMIN_EMAIL          = process.env.ADMIN_ALERT_EMAIL || 'support@capfundacademy.com';
+const FROM                 = `Cap Fund Academy Alerts <${process.env.FROM_EMAIL || 'support@capfundacademy.com'}>`;
 
 async function alertAdmin(subject, html) {
   if (!RESEND_API_KEY) return;

@@ -102,7 +102,15 @@ exports.handler = async (event) => {
 
         // Increment coupon use count
         if (order.coupon_id) {
-          await admin.rpc('increment_coupon_uses', { coupon_id: order.coupon_id });
+          const { error: rpcErr } = await admin.rpc('increment_coupon_uses', { coupon_id: order.coupon_id });
+          if (rpcErr) {
+            // Fallback if RPC not yet created: read-then-write
+            console.warn('increment_coupon_uses RPC missing, using fallback:', rpcErr.message);
+            const { data: coupon } = await admin.from('coupons').select('uses_count').eq('id', order.coupon_id).single();
+            if (coupon) {
+              await admin.from('coupons').update({ uses_count: (coupon.uses_count || 0) + 1 }).eq('id', order.coupon_id);
+            }
+          }
         }
 
         console.log('Order fulfilled:', orderId);

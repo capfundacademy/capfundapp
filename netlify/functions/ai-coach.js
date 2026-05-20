@@ -71,12 +71,12 @@ exports.handler = async (event) => {
   const hasAccess = prof?.coach_access === true || ['super_admin', 'admin'].includes(prof?.role);
   if (!hasAccess) return err(403, 'AI Study Coach is available exclusively for Done-With-You members. Upgrade at capfundacademy.com.');
 
-  // Rate limit: 50 messages per user per 24 hours
+  // Rate limit: 50 messages per user per 24 hours (via ai_coach_sessions table)
   const oneDayAgo = new Date(Date.now() - 86400000).toISOString();
-  const { count } = await admin.from('email_sends')
+  const { count } = await admin.from('ai_coach_sessions')
     .select('*', { count: 'exact', head: true })
-    .eq('to_email', `coach:${userId}`)
-    .gte('sent_at', oneDayAgo);
+    .eq('user_id', userId)
+    .gte('updated_at', oneDayAgo);
   if ((count || 0) >= 50) return err(429, 'Daily message limit reached (50 messages/day). Resets at midnight UTC.');
 
   let body;
@@ -103,8 +103,11 @@ exports.handler = async (event) => {
     const data = await res.json();
     const answer = data.choices?.[0]?.message?.content || 'I had trouble generating a response. Please try again.';
 
-    // Log usage (reuse email_sends table with coach: prefix to avoid a new table)
-    await admin.from('email_sends').insert({ to_email: `coach:${userId}`, subject: 'coach_message', status: 'sent', sent_at: new Date().toISOString() });
+    // Log usage to ai_coach_sessions for rate limiting
+    await admin.from('ai_coach_sessions').upsert(
+      { user_id: userId, messages: 1, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id', ignoreDuplicates: false }
+    ).catch(() => {});
 
     return ok({ answer, tokens: data.usage });
   } catch (e) {
