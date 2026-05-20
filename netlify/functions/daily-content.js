@@ -367,10 +367,10 @@ Output only these two lines, no labels.`;
     const today = new Date();
     let sharedImageUrl = null;
     try {
-      log('Generating DALL-E image…');
+      console.log('[daily-content] Generating DALL-E image…');
       sharedImageUrl = await generateAndCacheImage(topic.topic, topic.keyword, today, admin);
       results.image_url = sharedImageUrl;
-      ok(`Image generated: ${sharedImageUrl?.slice(0, 60)}…`);
+      console.log('[daily-content] Image generated:', sharedImageUrl?.slice(0, 80));
     } catch (imgErr) {
       results.errors.push(`Image generation: ${imgErr.message}`);
       console.warn('[daily-content] Image generation failed, continuing without image:', imgErr.message);
@@ -416,13 +416,24 @@ Output the post content only — ready to publish with no additional editing nee
 
         // ── 4. Push to Buffer with image ───────────────────────────────────
         const channelId = BUFFER_PROFILES[platform];
+        console.log(`[daily-content] Pushing ${platform} to Buffer (channel: ${channelId})…`);
         const bufResult = await pushToBuffer(channelId, content, platform, sharedImageUrl);
         results.buffer[platform] = bufResult;
+        if (bufResult.success) {
+          console.log(`[daily-content] Buffer ${platform} queued: id=${bufResult.buffer_id} dueAt=${bufResult.due_at}`);
+        } else if (bufResult.skipped) {
+          console.warn(`[daily-content] Buffer ${platform} SKIPPED: ${bufResult.reason}`);
+          results.errors.push(`Buffer ${platform} skipped: ${bufResult.reason}`);
+        } else {
+          console.error(`[daily-content] Buffer ${platform} FAILED: ${bufResult.error}`);
+          results.errors.push(`Buffer ${platform}: ${bufResult.error}`);
+        }
 
         // Update post record with schedule time
         if (bufResult.success && savedPost?.id) {
           await admin.from('social_posts').update({
             scheduled_at: scheduledAt,
+            buffer_post_id: bufResult.buffer_id,
           }).eq('id', savedPost.id);
         }
 
