@@ -32,33 +32,43 @@
   "tools": {
     "create_post": {
       "description": "Queue a new social media post for LinkedIn, Instagram, or TikTok via Buffer. Accepts text content, optional image URL, channel ID, and optional scheduled time.",
-      "readOnlyHint": false,
-      "destructiveHint": false,
-      "openWorldHint": true
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
     },
     "get_channels": {
       "description": "Retrieve all connected Buffer channels including LinkedIn, Instagram, and TikTok profile IDs and metadata.",
-      "readOnlyHint": true,
-      "destructiveHint": false,
-      "openWorldHint": false
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      }
     },
     "get_queue": {
       "description": "Retrieve the current post queue for a given Buffer channel, showing scheduled posts and their send times.",
-      "readOnlyHint": true,
-      "destructiveHint": false,
-      "openWorldHint": false
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      }
     },
     "update_post": {
       "description": "Edit the text or scheduled time of an existing queued Buffer post before it publishes.",
-      "readOnlyHint": false,
-      "destructiveHint": false,
-      "openWorldHint": true
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      }
     },
     "delete_post": {
       "description": "Remove a queued post from the Buffer queue before it publishes.",
-      "readOnlyHint": false,
-      "destructiveHint": true,
-      "openWorldHint": false
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": false
+      }
     }
   },
 
