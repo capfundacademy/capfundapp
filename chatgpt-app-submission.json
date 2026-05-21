@@ -29,45 +29,43 @@
     ]
   },
 
-  "tool_information": {
-    "tools": [
-      {
-        "name": "create_post",
-        "description": "Queue a new social media post for LinkedIn, Instagram, or TikTok via Buffer. Accepts text content, optional image URL, channel ID, and optional scheduled time.",
-        "readOnlyHint": false,
-        "destructiveHint": false,
-        "openWorldHint": true
-      },
-      {
-        "name": "get_channels",
-        "description": "Retrieve all connected Buffer channels including LinkedIn, Instagram, and TikTok profile IDs and metadata.",
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "openWorldHint": false
-      },
-      {
-        "name": "get_queue",
-        "description": "Retrieve the current post queue for a given Buffer channel, showing scheduled posts and their send times.",
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "openWorldHint": false
-      },
-      {
-        "name": "update_post",
-        "description": "Edit the text or scheduled time of an existing queued Buffer post before it publishes.",
-        "readOnlyHint": false,
-        "destructiveHint": false,
-        "openWorldHint": true
-      },
-      {
-        "name": "delete_post",
-        "description": "Remove a queued post from the Buffer queue before it publishes.",
-        "readOnlyHint": false,
-        "destructiveHint": true,
-        "openWorldHint": false
-      }
-    ]
-  },
+  "tools": [
+    {
+      "name": "create_post",
+      "description": "Queue a new social media post for LinkedIn, Instagram, or TikTok via Buffer. Accepts text content, optional image URL, channel ID, and optional scheduled time.",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true
+    },
+    {
+      "name": "get_channels",
+      "description": "Retrieve all connected Buffer channels including LinkedIn, Instagram, and TikTok profile IDs and metadata.",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    },
+    {
+      "name": "get_queue",
+      "description": "Retrieve the current post queue for a given Buffer channel, showing scheduled posts and their send times.",
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    },
+    {
+      "name": "update_post",
+      "description": "Edit the text or scheduled time of an existing queued Buffer post before it publishes.",
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true
+    },
+    {
+      "name": "delete_post",
+      "description": "Remove a queued post from the Buffer queue before it publishes.",
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "openWorldHint": false
+    }
+  ],
 
   "test_prompts": [
     {
