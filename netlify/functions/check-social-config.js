@@ -82,18 +82,27 @@ exports.handler = async (event) => {
     }
   }
 
-  // ── 4. Buffer API reachability (REST — more reliable than GraphQL viewer) ──
+  // ── 4. Buffer GraphQL API reachability (same endpoint daily-content uses) ──
   let bufferTest = { ok: false, error: 'skipped — BUFFER_ACCESS_TOKEN missing' };
   if (BUFFER_TOKEN) {
     try {
-      const r = await fetch('https://api.bufferapp.com/1/user.json', {
-        headers: { Authorization: `Bearer ${BUFFER_TOKEN}` },
+      const r = await fetch('https://api.buffer.com/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${BUFFER_TOKEN}`,
+        },
+        body: JSON.stringify({ query: '{ channels { id service name } }' }),
         signal: AbortSignal.timeout(8000),
       });
       const json = await r.json().catch(() => ({}));
-      bufferTest = (r.ok && json?.id)
-        ? { ok: true, message: `Buffer token valid — account: ${json.email || json.id}`, email: json.email }
-        : { ok: false, status: r.status, error: json?.message || json?.error || JSON.stringify(json).slice(0, 200) };
+      const channels = json?.data?.channels;
+      if (r.ok && channels) {
+        bufferTest = { ok: true, message: `Buffer token valid — ${channels.length} channel(s) connected`, channels: channels.map(c => `${c.service}: ${c.name}`) };
+      } else {
+        const errMsg = json?.errors?.[0]?.message || json?.message || JSON.stringify(json).slice(0, 300);
+        bufferTest = { ok: false, status: r.status, error: errMsg };
+      }
     } catch (e) {
       bufferTest = { ok: false, error: e.message };
     }
