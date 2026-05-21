@@ -31,69 +31,160 @@
   },
 
   "tools": {
+    "get_account": {
+      "description": "Retrieve the authenticated Buffer account's profile information including user ID, email, and plan details.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "justifications": {
+        "read_only_justification": "This tool only reads account metadata from Buffer's API. It does not create, modify, or delete any data.",
+        "destructive_justification": "No data is altered or removed. This is a pure read operation that fetches existing account information.",
+        "open_world_justification": "The account is connected to public social media platforms (LinkedIn, Instagram, TikTok). Account data reflects the state of those publicly registered profiles."
+      }
+    },
+    "list_channels": {
+      "description": "List all social media channels connected to the Buffer account, including their IDs, platform types, and connection status.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "justifications": {
+        "read_only_justification": "This tool only retrieves the list of connected channels. No channel connections are added, modified, or removed.",
+        "destructive_justification": "No data is deleted or irreversibly changed. The tool fetches the existing channel list without mutation.",
+        "open_world_justification": "Each channel represents a public social media profile (e.g. a LinkedIn page, Instagram account) that exists on the open internet."
+      }
+    },
+    "get_channel": {
+      "description": "Retrieve detailed metadata for a specific Buffer channel by its ID, including platform, handle, avatar, and posting configuration.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "justifications": {
+        "read_only_justification": "This tool fetches a single channel's metadata without making any changes to it.",
+        "destructive_justification": "No data is modified or deleted. This is a read-only GET operation against Buffer's API.",
+        "open_world_justification": "The channel corresponds to a public social media account. Its metadata (handle, avatar, platform) reflects publicly accessible information about that account."
+      }
+    },
+    "list_posts": {
+      "description": "List queued, scheduled, sent, or draft posts for a given Buffer channel, with filtering by status and date range.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "justifications": {
+        "read_only_justification": "This tool only reads posts from the Buffer queue. No posts are created, modified, or deleted by this operation.",
+        "destructive_justification": "No existing data is altered. Posts listed are not affected by the retrieval operation.",
+        "open_world_justification": "Posts in the queue are intended for publication on public social media platforms. Sent posts are already publicly visible content."
+      }
+    },
+    "get_post": {
+      "description": "Retrieve the full details of a single Buffer post by its ID, including content, scheduling time, channel, and publish status.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "justifications": {
+        "read_only_justification": "This tool retrieves one post's data without modifying it in any way.",
+        "destructive_justification": "The post is not changed, deleted, or rescheduled by this operation. It is a pure read.",
+        "open_world_justification": "The post is either already published publicly or is scheduled to be. Its content represents material intended for public social media audiences."
+      }
+    },
+    "create_idea": {
+      "description": "Create a new content idea or draft in Buffer's idea storage, which can later be converted into a scheduled post.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "justifications": {
+        "read_only_justification": "This tool writes a new idea record to Buffer. It is not read-only because it creates new data.",
+        "destructive_justification": "Creating an idea is an additive operation. It does not overwrite or remove any existing ideas or posts, and can be deleted or discarded later.",
+        "open_world_justification": "An idea is a precursor to a social media post. Once converted and published, it will become publicly visible content on LinkedIn, Instagram, or TikTok."
+      }
+    },
     "create_post": {
-      "description": "Queue a new social media post for LinkedIn, Instagram, or TikTok via Buffer. Accepts text content, optional image URL, channel ID, and optional scheduled time.",
+      "description": "Create and queue a new social media post in Buffer for a specified channel. The post is added to the scheduling queue and published at the designated time.",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
         "openWorldHint": true
       },
       "justifications": {
-        "read_only_justification": "This tool writes a new post to the Buffer queue, so it is not read-only.",
-        "destructive_justification": "Posts are added to the queue and not immediately published; they can be edited or deleted before they go live, so this action is not irreversible.",
-        "open_world_justification": "Once published from the Buffer queue, the post will be publicly visible on LinkedIn, Instagram, or TikTok."
+        "read_only_justification": "This tool creates a new post entry in Buffer's queue. It writes data and is therefore not read-only.",
+        "destructive_justification": "Creating a queued post is additive and non-destructive. The post can be edited or deleted before it publishes. No existing posts or data are overwritten.",
+        "open_world_justification": "Once the scheduled time arrives, Buffer publishes the post publicly to the connected social media platform (LinkedIn, Instagram, or TikTok), making it visible to the public."
       }
     },
-    "get_channels": {
-      "description": "Retrieve all connected Buffer channels including LinkedIn, Instagram, and TikTok profile IDs and metadata.",
-      "annotations": {
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "openWorldHint": false
-      },
-      "justifications": {
-        "read_only_justification": "This tool only reads channel metadata from Buffer and makes no changes to any state.",
-        "destructive_justification": "No data is modified or deleted; this is a read-only fetch operation.",
-        "open_world_justification": "Channel data is private account metadata fetched from Buffer's API; it does not interact with or modify any public-facing state."
-      }
-    },
-    "get_queue": {
-      "description": "Retrieve the current post queue for a given Buffer channel, showing scheduled posts and their send times.",
-      "annotations": {
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "openWorldHint": false
-      },
-      "justifications": {
-        "read_only_justification": "This tool only reads the existing post queue and makes no changes.",
-        "destructive_justification": "No posts are modified or removed; this is a read-only operation.",
-        "open_world_justification": "Queue data is private to the Buffer account; no public-facing content is changed or created."
-      }
-    },
-    "update_post": {
-      "description": "Edit the text or scheduled time of an existing queued Buffer post before it publishes.",
-      "annotations": {
-        "readOnlyHint": false,
-        "destructiveHint": false,
-        "openWorldHint": true
-      },
-      "justifications": {
-        "read_only_justification": "This tool modifies an existing queued post, so it is not read-only.",
-        "destructive_justification": "Edits are applied to a queued post that has not yet published; the change can be undone by updating again before the post goes live.",
-        "open_world_justification": "The updated post will eventually be published publicly on the connected social media platform via Buffer."
-      }
-    },
-    "delete_post": {
-      "description": "Remove a queued post from the Buffer queue before it publishes.",
+    "edit_post": {
+      "description": "Edit the content, media, or scheduled time of an existing Buffer post that has not yet been published.",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "openWorldHint": false
+        "openWorldHint": true
       },
       "justifications": {
-        "read_only_justification": "This tool deletes a post from the queue, so it is not read-only.",
-        "destructive_justification": "Deleting a queued post permanently removes it from the Buffer queue and cannot be undone.",
-        "open_world_justification": "The deleted post was queued but not yet published; removing it does not affect any live public content."
+        "read_only_justification": "This tool modifies an existing post's content or schedule. It writes to Buffer's API and is not read-only.",
+        "destructive_justification": "Editing a post overwrites its previous content. The original version of the post text, media, or schedule is permanently replaced and cannot be recovered after the edit is saved.",
+        "open_world_justification": "The edited post will be published to a public social media platform at its scheduled time. Changes to content directly affect what will appear publicly."
+      }
+    },
+    "delete_post": {
+      "description": "Permanently delete a queued or draft Buffer post before it is published.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      },
+      "justifications": {
+        "read_only_justification": "This tool removes a post from Buffer's queue. It is a write operation and is not read-only.",
+        "destructive_justification": "Deletion permanently removes the post from Buffer's queue. The post and all its content are unrecoverable after deletion. This action cannot be undone.",
+        "open_world_justification": "Although the post has not yet been published, it was intended for a public social media platform. Deletion affects the planned public content pipeline for LinkedIn, Instagram, or TikTok."
+      }
+    },
+    "introspect_schema": {
+      "description": "Retrieve the GraphQL schema of Buffer's API, including available types, queries, mutations, and field definitions.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "justifications": {
+        "read_only_justification": "This tool performs a schema introspection query, which only reads the API's type system definition. No data is created or modified.",
+        "destructive_justification": "Schema introspection is a metadata read operation. It does not alter any posts, channels, or account data.",
+        "open_world_justification": "The schema describes capabilities that interact with public social media platforms. Understanding the schema enables operations that affect publicly visible content."
+      }
+    },
+    "execute_query": {
+      "description": "Execute a read-only GraphQL query against Buffer's API to retrieve data about posts, channels, analytics, or account information.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "justifications": {
+        "read_only_justification": "GraphQL queries by definition only read data and do not modify state. This tool is restricted to query operations, not mutations.",
+        "destructive_justification": "No data is created, updated, or deleted. This tool only retrieves existing data from Buffer's API via read-only queries.",
+        "open_world_justification": "The data returned may include information about posts published or scheduled for public social media platforms, reflecting publicly visible content."
+      }
+    },
+    "execute_mutation": {
+      "description": "Execute a GraphQL mutation against Buffer's API to create, update, or delete posts, ideas, or scheduling data.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": true
+      },
+      "justifications": {
+        "read_only_justification": "GraphQL mutations modify server-side state. This tool explicitly performs write operations and is not read-only.",
+        "destructive_justification": "Mutations can make irreversible changes, including deleting posts, overwriting post content, or modifying channel settings. Some mutations cannot be undone after execution.",
+        "open_world_justification": "Mutations can create, edit, or schedule content that will be published publicly on LinkedIn, Instagram, or TikTok, directly affecting what audiences see on those platforms."
       }
     }
   },
@@ -101,33 +192,30 @@
   "test_prompts": [
     {
       "prompt": "Schedule a LinkedIn post for today about USDA RMAP microlending eligibility requirements.",
-      "expected_tools_called": ["get_channels", "create_post"]
+      "expected_tools_called": ["list_channels", "create_post"]
     },
     {
       "prompt": "What posts do I have queued for Instagram this week?",
-      "expected_tools_called": ["get_channels", "get_queue"]
+      "expected_tools_called": ["list_channels", "list_posts"]
     },
     {
-      "prompt": "Post an Instagram caption about revolving loan fund design with hashtags.",
-      "expected_tools_called": ["get_channels", "create_post"]
+      "prompt": "Delete the last post in my TikTok queue.",
+      "expected_tools_called": ["list_channels", "list_posts", "delete_post"]
     }
   ],
 
   "test_responses": [
     {
       "prompt": "Schedule a LinkedIn post for today about USDA RMAP microlending eligibility requirements.",
-      "expected_response_summary": "The assistant calls get_channels to find the LinkedIn channel ID, then calls create_post with the composed text and addToQueue scheduling. It confirms the post was queued and shows the scheduled time."
+      "expected_response_summary": "The assistant calls list_channels to find the LinkedIn channel ID, then calls create_post with the composed text and automatic queue scheduling. It confirms the post was queued and shows the estimated publish time."
     },
     {
       "prompt": "What posts do I have queued for Instagram this week?",
-      "expected_response_summary": "The assistant retrieves the Instagram channel ID and calls get_queue, then lists the upcoming posts with their scheduled publish times."
-    }
-  ],
-
-  "screenshots": [
+      "expected_response_summary": "The assistant calls list_channels to get the Instagram channel ID, then calls list_posts filtered to queued status. It returns a list of upcoming posts with their scheduled publish times."
+    },
     {
-      "url": "https://capfundacademy.com/assets/screenshot-buffer-queue.png",
-      "alt": "Buffer queue showing three scheduled posts for LinkedIn, Instagram, and TikTok"
+      "prompt": "Delete the last post in my TikTok queue.",
+      "expected_response_summary": "The assistant calls list_channels for the TikTok channel ID, calls list_posts to find the last queued post, then calls delete_post with that post's ID. It confirms the post was permanently deleted."
     }
   ],
 
