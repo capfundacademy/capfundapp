@@ -18,9 +18,9 @@
 
   "oauth_credentials": {
     "client_id": "EVAqMrD0uE1HZzead2IufTO8pTqXdByikGXdql6zyIV",
-    "authorization_url": "https://app.buffer.com/oauth2/authorize",
-    "token_url": "https://api.bufferapp.com/1/oauth2/token.json",
-    "scopes": ["publish", "read_access"],
+    "authorization_url": "https://auth.buffer.com/auth",
+    "token_url": "https://auth.buffer.com/token",
+    "scopes": ["posts:read", "posts:write", "ideas:read", "ideas:write", "account:read", "account:write", "offline_access"],
     "grant_types": ["authorization_code", "refresh_token"],
     "token_endpoint_auth_method": "client_secret_post",
     "redirect_uris": [
