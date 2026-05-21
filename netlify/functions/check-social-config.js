@@ -82,20 +82,18 @@ exports.handler = async (event) => {
     }
   }
 
-  // ── 4. Buffer API reachability ────────────────────────────────────────────
+  // ── 4. Buffer API reachability (REST — more reliable than GraphQL viewer) ──
   let bufferTest = { ok: false, error: 'skipped — BUFFER_ACCESS_TOKEN missing' };
   if (BUFFER_TOKEN) {
     try {
-      const r = await fetch('https://api.buffer.com/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${BUFFER_TOKEN}` },
-        body: JSON.stringify({ query: '{ viewer { id email } }' }),
+      const r = await fetch('https://api.bufferapp.com/1/user.json', {
+        headers: { Authorization: `Bearer ${BUFFER_TOKEN}` },
         signal: AbortSignal.timeout(8000),
       });
       const json = await r.json().catch(() => ({}));
-      bufferTest = (r.ok && json?.data?.viewer)
-        ? { ok: true, viewer: json.data.viewer, message: 'Buffer token valid' }
-        : { ok: false, status: r.status, error: json?.errors?.[0]?.message || JSON.stringify(json).slice(0, 200) };
+      bufferTest = (r.ok && json?.id)
+        ? { ok: true, message: `Buffer token valid — account: ${json.email || json.id}`, email: json.email }
+        : { ok: false, status: r.status, error: json?.message || json?.error || JSON.stringify(json).slice(0, 200) };
     } catch (e) {
       bufferTest = { ok: false, error: e.message };
     }
