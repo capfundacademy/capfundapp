@@ -36,6 +36,11 @@
         "readOnlyHint": false,
         "destructiveHint": false,
         "openWorldHint": true
+      },
+      "justifications": {
+        "readOnlyHint": "This tool writes a new post to the Buffer queue, so it is not read-only.",
+        "destructiveHint": "Posts are added to the queue and not immediately published; they can be edited or deleted before they go live, so this action is not irreversible.",
+        "openWorldHint": "Once published from the Buffer queue, the post will be publicly visible on LinkedIn, Instagram, or TikTok."
       }
     },
     "get_channels": {
@@ -44,6 +49,11 @@
         "readOnlyHint": true,
         "destructiveHint": false,
         "openWorldHint": false
+      },
+      "justifications": {
+        "readOnlyHint": "This tool only reads channel metadata from Buffer and makes no changes to any state.",
+        "destructiveHint": "No data is modified or deleted; this is a read-only fetch operation.",
+        "openWorldHint": "Channel data is private account metadata fetched from Buffer's API; it does not interact with or modify any public-facing state."
       }
     },
     "get_queue": {
@@ -52,6 +62,11 @@
         "readOnlyHint": true,
         "destructiveHint": false,
         "openWorldHint": false
+      },
+      "justifications": {
+        "readOnlyHint": "This tool only reads the existing post queue and makes no changes.",
+        "destructiveHint": "No posts are modified or removed; this is a read-only operation.",
+        "openWorldHint": "Queue data is private to the Buffer account; no public-facing content is changed or created."
       }
     },
     "update_post": {
@@ -60,6 +75,11 @@
         "readOnlyHint": false,
         "destructiveHint": false,
         "openWorldHint": true
+      },
+      "justifications": {
+        "readOnlyHint": "This tool modifies an existing queued post, so it is not read-only.",
+        "destructiveHint": "Edits are applied to a queued post that has not yet published; the change can be undone by updating again before the post goes live.",
+        "openWorldHint": "The updated post will eventually be published publicly on the connected social media platform via Buffer."
       }
     },
     "delete_post": {
@@ -68,6 +88,11 @@
         "readOnlyHint": false,
         "destructiveHint": true,
         "openWorldHint": false
+      },
+      "justifications": {
+        "readOnlyHint": "This tool deletes a post from the queue, so it is not read-only.",
+        "destructiveHint": "Deleting a queued post permanently removes it from the Buffer queue and cannot be undone.",
+        "openWorldHint": "The deleted post was queued but not yet published; removing it does not affect any live public content."
       }
     }
   },
