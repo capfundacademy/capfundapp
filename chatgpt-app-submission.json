@@ -24,8 +24,9 @@
     "grant_types": ["authorization_code", "refresh_token"],
     "token_endpoint_auth_method": "client_secret_post",
     "redirect_uris": [
-      "https://chat.openai.com/aip/oauth_callback",
-      "https://chatgpt.com/aip/oauth_callback"
+      "https://chatgpt.com/aip/oauth/callback",
+      "https://chat.openai.com/aip/oauth/callback",
+      "https://chatgpt.com/aip/p-cap-fund-academy/oauth/callback"
     ]
   },
 
