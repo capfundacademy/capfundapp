@@ -2563,15 +2563,17 @@ window.ENV = {
           </div>
           <button onClick={onSignOut} className="px-4 py-2 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50 transition-colors">Sign Out</button>
         </div>
-        <div className="flex gap-1 border-b border-gray-200 mb-8">
-          {[['autopilot','🤖 Autopilot'],['curriculum','📚 Curriculum'],['capstone','🎓 Capstones'],['certifications','Certifications'],['students','Students'],['analytics','📊 Analytics'],['team','👥 Team'],['review','Content Review'],['commerce','Offers & Orders'],['crm','CRM'],['content','Content Engine'],['blog','Blog'],['affiliates','Affiliates'],['settings','⚙️ Settings']].map(([id,label]) => (
-            <button key={id} onClick={() => setTab(id)}
-              className={`px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${tab===id ? 'border-[#2D1FB1] text-[#2D1FB1]' : 'border-transparent text-gray-500 hover:text-[#0F1631]'}`}>
-              {label}
-              {id==='certifications' && draftCount > 0 && <span className="ml-2 bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full">{draftCount}</span>}
-              {id==='review' && draftLessons.length > 0 && <span className="ml-2 bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full">{draftLessons.length}</span>}
-            </button>
-          ))}
+        <div className="overflow-x-auto border-b border-gray-200 mb-8 -mx-4 px-4">
+          <div className="flex gap-1 min-w-max">
+            {[['autopilot','🤖 Autopilot'],['curriculum','📚 Curriculum'],['capstone','🎓 Capstones'],['certifications','Certifications'],['students','Students'],['analytics','📊 Analytics'],['team','👥 Team'],['review','Content Review'],['commerce','Offers & Orders'],['crm','CRM'],['content','Content Engine'],['blog','Blog'],['affiliates','Affiliates'],['settings','⚙️ Settings']].map(([id,label]) => (
+              <button key={id} onClick={() => setTab(id)}
+                className={`px-4 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-colors ${tab===id ? 'border-[#2D1FB1] text-[#2D1FB1]' : 'border-transparent text-gray-500 hover:text-[#0F1631]'}`}>
+                {label}
+                {id==='certifications' && draftCount > 0 && <span className="ml-2 bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full">{draftCount}</span>}
+                {id==='review' && draftLessons.length > 0 && <span className="ml-2 bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded-full">{draftLessons.length}</span>}
+              </button>
+            ))}
+          </div>
         </div>
         {loading ? <div className="text-center py-20 text-gray-400">Loading…</div> : (<>
           {tab === 'certifications' && (
