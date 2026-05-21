@@ -35,6 +35,11 @@
   cron = "0 11 * * *"
 
 [[redirects]]
+  from = "/mcp"
+  to = "/.netlify/functions/mcp"
+  status = 200
+
+[[redirects]]
   from = "/.well-known/openai-apps-challenge"
   to = "/.netlify/functions/openai-challenge"
   status = 200
