@@ -1,7 +1,6 @@
-// oauth-metadata.js — OAuth 2.0 metadata only (NO OIDC)
-// Buffer's MCP client does not allow the openid scope.
-// Advertising OIDC causes OpenAI to auto-inject openid into every auth request,
-// which Buffer rejects with invalid_scope. Keep this OAuth-only.
+// oauth-metadata.js — OAuth 2.0 metadata pointing to our own auth server
+// Our auth server wraps the Buffer personal access token so OpenAI's
+// OAuth flow completes successfully without depending on Buffer's auth.buffer.com
 exports.handler = async () => ({
   statusCode: 200,
   headers: {
@@ -9,11 +8,9 @@ exports.handler = async () => ({
     'Access-Control-Allow-Origin': '*',
   },
   body: JSON.stringify({
-    issuer:                                'https://auth.buffer.com',
-    authorization_endpoint:               'https://auth.buffer.com/auth',
-    token_endpoint:                       'https://auth.buffer.com/token',
-    registration_endpoint:                'https://auth.buffer.com/reg',
-    revocation_endpoint:                  'https://auth.buffer.com/token/revocation',
+    issuer:                                'https://capfundacademy.com',
+    authorization_endpoint:               'https://capfundacademy.com/oauth/authorize',
+    token_endpoint:                       'https://capfundacademy.com/oauth/token',
 
     response_types_supported:             ['code'],
     grant_types_supported:                ['authorization_code', 'refresh_token'],
@@ -27,6 +24,6 @@ exports.handler = async () => ({
       'offline_access',
     ],
 
-    resource_parameter_supported: true,
+    resource_parameter_supported: false,
   }),
 });

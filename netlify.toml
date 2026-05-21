@@ -40,6 +40,16 @@
   status = 200
 
 [[redirects]]
+  from = "/oauth/authorize"
+  to = "/.netlify/functions/oauth-authorize"
+  status = 200
+
+[[redirects]]
+  from = "/oauth/token"
+  to = "/.netlify/functions/oauth-token"
+  status = 200
+
+[[redirects]]
   from = "/.well-known/oauth-authorization-server"
   to = "/.netlify/functions/oauth-metadata"
   status = 200
