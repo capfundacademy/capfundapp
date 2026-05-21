@@ -40,6 +40,21 @@
   status = 200
 
 [[redirects]]
+  from = "/.well-known/openai"
+  to = "/.netlify/functions/openai-challenge"
+  status = 200
+
+[[redirects]]
+  from = "/.well-known/openai-domain-verification"
+  to = "/.netlify/functions/openai-challenge"
+  status = 200
+
+[[redirects]]
+  from = "/openai-challenge"
+  to = "/.netlify/functions/openai-challenge"
+  status = 200
+
+[[redirects]]
   from = "/sitemap.xml"
   to = "/.netlify/functions/sitemap"
   status = 200
