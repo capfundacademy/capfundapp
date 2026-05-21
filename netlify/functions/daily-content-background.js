@@ -318,6 +318,12 @@ exports.handler = async (event) => {
   const results = { blog: null, posts: {}, buffer: {}, errors: [] };
 
   try {
+    // ── Resolve a system user ID for created_by (social_posts requires it) ───
+    // Use the first super_admin profile found; falls back to null (schema allows null after migration 43)
+    const { data: sysUser } = await admin.from('profiles')
+      .select('id').eq('role', 'super_admin').limit(1).maybeSingle();
+    const systemUserId = sysUser?.id || null;
+    console.log('[daily-content] System user for created_by:', systemUserId || 'null (migration 43 required)');
 
     // ── Pick today's topic (day of year mod 28) ──────────────────────────────
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
@@ -418,7 +424,8 @@ Output the post content only — ready to publish with no additional editing nee
         const content = await callOpenAI(socialPrompt, 700, 0.75);
 
         // Save to social_posts
-        const { data: savedPost } = await admin.from('social_posts').insert({
+        const { data: savedPost, error: postErr } = await admin.from('social_posts').insert({
+          ...(systemUserId ? { created_by: systemUserId } : {}),
           platform,
           content_type: platform === 'tiktok' ? 'reel_script' : 'post',
           body:         content,
@@ -428,6 +435,10 @@ Output the post content only — ready to publish with no additional editing nee
           compliance_flags: [],
         }).select().single();
 
+        if (postErr) {
+          console.error(`[daily-content] social_posts insert failed (${platform}):`, postErr.message);
+          results.errors.push(`DB ${platform}: ${postErr.message}`);
+        }
         results.posts[platform] = { id: savedPost?.id, status: postStatus, chars: content.length };
 
         // ── 4. Push to Buffer with image ───────────────────────────────────
