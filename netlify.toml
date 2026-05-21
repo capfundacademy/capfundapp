@@ -40,6 +40,11 @@
   status = 200
 
 [[redirects]]
+  from = "/.well-known/oauth-authorization-server"
+  to = "/.netlify/functions/oauth-metadata"
+  status = 200
+
+[[redirects]]
   from = "/.well-known/openai-apps-challenge"
   to = "/.netlify/functions/openai-challenge"
   status = 200
