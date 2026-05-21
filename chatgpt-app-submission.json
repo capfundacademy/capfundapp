@@ -1,138 +1,113 @@
 {
-  "$schema": "https://mcp.buffer.com/schema/app-submission.json",
-  "version": "1.0",
+  "$schema": "https://developers.openai.com/apps-sdk/schemas/chatgpt-app-submission.v1.json",
 
-  "app": {
-    "name": "Cap Fund Academy Social Media Automation",
-    "slug": "cap-fund-academy",
-    "description": "Cap Fund Academy automates daily social media content generation and scheduling for rural capital access certifications. Posts are AI-generated, compliance-reviewed, and pushed to LinkedIn, Instagram, and TikTok via Buffer's publishing queue.",
-    "logo_url": "https://capfundacademy.com/assets/logo-cfa.png",
-    "website_url": "https://capfundacademy.com",
-    "contact_email": "support@capfundacademy.com",
-    "privacy_policy_url": "https://capfundacademy.com/privacy",
-    "terms_of_service_url": "https://capfundacademy.com/terms",
-    "category": "social_media_automation",
-    "publisher": "Cap Fund Academy",
-    "publisher_url": "https://capfundacademy.com"
+  "app_name": "Cap Fund Academy — Buffer Social Automation",
+
+  "description": "Cap Fund Academy publishes daily AI-generated social media content to LinkedIn, Instagram, and TikTok via Buffer. Posts cover rural capital access, USDA microlending programs (RMAP, RBDG, IRP), and government lending certifications. Content is AI-authored, compliance-reviewed, and queued automatically through Buffer's MCP server.",
+
+  "logo": {
+    "url": "https://capfundacademy.com/assets/logo-cfa.png"
   },
 
-  "oauth": {
+  "company_url": "https://capfundacademy.com",
+
+  "privacy_policy_url": "https://capfundacademy.com/privacy",
+
+  "mcp_server_url": "https://mcp.buffer.com/mcp",
+
+  "oauth_credentials": {
+    "authorization_url": "https://app.buffer.com/oauth2/authorize",
+    "token_url": "https://api.bufferapp.com/1/oauth2/token.json",
+    "scopes": ["publish", "read_access"],
+    "grant_types": ["authorization_code", "refresh_token"],
+    "token_endpoint_auth_method": "client_secret_post",
     "redirect_uris": [
       "https://chat.openai.com/aip/oauth_callback",
-      "https://chatgpt.com/aip/oauth_callback",
-      "https://capfundacademy.com/.netlify/functions/buffer-oauth-callback"
-    ],
-    "scopes": [
-      "publish",
-      "read_access"
-    ],
-    "grant_types": [
-      "authorization_code",
-      "refresh_token"
-    ],
-    "token_endpoint_auth_method": "client_secret_post",
-    "response_types": ["code"],
-    "authorization_endpoint": "https://app.buffer.com/oauth2/authorize",
-    "token_endpoint": "https://api.bufferapp.com/1/oauth2/token.json"
-  },
-
-  "mcp": {
-    "server_url": "https://mcp.buffer.com/mcp",
-    "transport": "streamable-http",
-    "auth_type": "oauth2",
-    "capabilities": [
-      "create_post",
-      "update_post",
-      "delete_post",
-      "get_channels",
-      "get_queue",
-      "schedule_post",
-      "get_analytics"
+      "https://chatgpt.com/aip/oauth_callback"
     ]
   },
 
-  "openai_integration": {
-    "schema_version": "v1",
-    "name_for_human": "Buffer — Cap Fund Academy Social Posts",
-    "name_for_model": "buffer_social_automation",
-    "description_for_human": "Schedule and publish social media posts to LinkedIn, Instagram, and TikTok via Buffer for Cap Fund Academy's content automation pipeline.",
-    "description_for_model": "Use this tool to create, schedule, and manage social media posts for Cap Fund Academy across LinkedIn, Instagram, and TikTok channels via Buffer. You can add posts to the queue, schedule them at specific times, and retrieve channel information. All posts must comply with Cap Fund Academy brand voice: professional, regulatory-specific, never affiliated with USDA.",
-    "auth": {
-      "type": "oauth",
-      "client_url": "https://app.buffer.com/oauth2/authorize",
-      "authorization_url": "https://api.bufferapp.com/1/oauth2/token.json",
-      "scope": "publish read_access",
-      "token_exchange_method": "default_post",
-      "verification_tokens": {
-        "openai": "REPLACE_WITH_OPENAI_VERIFICATION_TOKEN"
+  "tool_information": {
+    "tools": [
+      {
+        "name": "create_post",
+        "description": "Queue a new social media post for LinkedIn, Instagram, or TikTok via Buffer. Accepts text content, optional image URL, channel ID, and optional scheduled time.",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      {
+        "name": "get_channels",
+        "description": "Retrieve all connected Buffer channels including LinkedIn, Instagram, and TikTok profile IDs and metadata.",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      {
+        "name": "get_queue",
+        "description": "Retrieve the current post queue for a given Buffer channel, showing scheduled posts and their send times.",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      {
+        "name": "update_post",
+        "description": "Edit the text or scheduled time of an existing queued Buffer post before it publishes.",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      {
+        "name": "delete_post",
+        "description": "Remove a queued post from the Buffer queue before it publishes.",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": false
       }
-    },
-    "api": {
-      "type": "mcp",
-      "url": "https://mcp.buffer.com/mcp"
-    },
-    "logo_url": "https://capfundacademy.com/assets/logo-cfa.png",
-    "contact_email": "support@capfundacademy.com",
-    "legal_info_url": "https://capfundacademy.com/terms"
-  },
-
-  "channels": {
-    "linkedin": {
-      "buffer_profile_id": "6a0bf991090476fb99360fd1",
-      "content_type": "text_post",
-      "max_chars": 3000,
-      "scheduling": "automatic"
-    },
-    "instagram": {
-      "buffer_profile_id": "6a0bf854090476fb99360cd8",
-      "content_type": "image_post",
-      "max_chars": 2200,
-      "scheduling": "automatic"
-    },
-    "tiktok": {
-      "buffer_profile_id": "6a0bf90e090476fb99360eb3",
-      "content_type": "video_script_draft",
-      "max_chars": 350,
-      "scheduling": "save_as_draft"
-    }
-  },
-
-  "content_policy": {
-    "brand": "Cap Fund Academy",
-    "compliance_notes": [
-      "Never claim USDA affiliation, endorsement, or certification",
-      "Never guarantee funding outcomes",
-      "Cite CFR sections accurately (e.g. 7 CFR 4280.316)",
-      "Target audience: rural nonprofits, CDFIs, tribal organizations",
-      "Tone: authoritative, practitioner-focused, regulatory-specific"
-    ],
-    "forbidden_phrases": [
-      "USDA-certified",
-      "USDA-approved",
-      "USDA-endorsed",
-      "guaranteed funding",
-      "ensure you get funded"
     ]
   },
 
-  "automation": {
-    "schedule": "daily",
-    "cron": "0 8 * * *",
-    "timezone": "UTC",
-    "posts_per_day": 3,
-    "platforms_per_day": ["linkedin", "instagram", "tiktok"],
-    "includes_blog": true,
-    "image_generation": "dall-e-3",
-    "text_generation": "gpt-4o"
+  "test_prompts": [
+    {
+      "prompt": "Schedule a LinkedIn post for today about USDA RMAP microlending eligibility requirements.",
+      "expected_tools_called": ["get_channels", "create_post"]
+    },
+    {
+      "prompt": "What posts do I have queued for Instagram this week?",
+      "expected_tools_called": ["get_channels", "get_queue"]
+    },
+    {
+      "prompt": "Post an Instagram caption about revolving loan fund design with hashtags.",
+      "expected_tools_called": ["get_channels", "create_post"]
+    }
+  ],
+
+  "test_responses": [
+    {
+      "prompt": "Schedule a LinkedIn post for today about USDA RMAP microlending eligibility requirements.",
+      "expected_response_summary": "The assistant calls get_channels to find the LinkedIn channel ID, then calls create_post with the composed text and addToQueue scheduling. It confirms the post was queued and shows the scheduled time."
+    },
+    {
+      "prompt": "What posts do I have queued for Instagram this week?",
+      "expected_response_summary": "The assistant retrieves the Instagram channel ID and calls get_queue, then lists the upcoming posts with their scheduled publish times."
+    }
+  ],
+
+  "screenshots": [
+    {
+      "url": "https://capfundacademy.com/assets/screenshot-buffer-queue.png",
+      "alt": "Buffer queue showing three scheduled posts for LinkedIn, Instagram, and TikTok"
+    }
+  ],
+
+  "localization_information": {
+    "primary_language": "en-US",
+    "supported_languages": ["en-US"]
   },
 
-  "environment": {
-    "netlify_function": "daily-content-background",
-    "function_url": "https://capfundacademy.com/.netlify/functions/daily-content-background",
-    "buffer_access_token_env": "BUFFER_ACCESS_TOKEN",
-    "buffer_profile_linkedin_env": "BUFFER_PROFILE_LINKEDIN",
-    "buffer_profile_instagram_env": "BUFFER_PROFILE_INSTAGRAM",
-    "buffer_profile_tiktok_env": "BUFFER_PROFILE_TIKTOK",
-    "openai_api_key_env": "OPENAI_API_KEY"
-  }
+  "release_notes": "Initial submission. Enables Cap Fund Academy to queue and manage daily AI-generated social media posts across LinkedIn, Instagram, and TikTok via Buffer's MCP server using OAuth 2.0 authentication.",
+
+  "categories": ["social_media", "content_automation", "marketing"],
+
+  "contact_email": "support@capfundacademy.com"
 }
