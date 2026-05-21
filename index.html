@@ -5348,16 +5348,32 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
                         <p className={`font-bold mb-1 ${textCls}`}>{icon} {label} — {triggerResult.fn}</p>
                         {isRunning && <p className="text-xs text-blue-600">Checking for result every 10 seconds (up to 3 min)…</p>}
                         {/* Config check results */}
-                        {triggerResult.data?._isConfigCheck && (
-                          <div className="mt-1 space-y-0.5 text-xs">
-                            {triggerResult.data.present?.map(k => (
-                              <div key={k} className="text-green-700">✅ {k}</div>
-                            ))}
-                            {triggerResult.data.hints && Object.entries(triggerResult.data.hints).map(([k, v]) => (
-                              <div key={k} className="text-gray-500 pl-4">↳ {k}: {v}</div>
-                            ))}
-                          </div>
-                        )}
+                        {triggerResult.data?._isConfigCheck && (() => {
+                          const d = triggerResult.data._raw || {};
+                          return (
+                            <div className="mt-2 space-y-1 text-xs">
+                              {/* Env vars */}
+                              {triggerResult.data.present?.map(k => <div key={k} className="text-green-700">✅ {k}</div>)}
+                              {triggerResult.data.errors?.map((e,i) => <div key={i} className="text-red-600 font-semibold">❌ {e}</div>)}
+                              {/* DB test */}
+                              {d.dbTest && <div className={d.dbTest.ok ? 'text-green-700' : 'text-red-600'}>
+                                {d.dbTest.ok ? `✅ DB: ${d.dbTest.message}` : `❌ DB: ${d.dbTest.error}`}
+                              </div>}
+                              {/* OpenAI test */}
+                              {d.openaiTest && <div className={d.openaiTest.ok ? 'text-green-700' : 'text-red-600'}>
+                                {d.openaiTest.ok ? `✅ OpenAI: ${d.openaiTest.message}` : `❌ OpenAI: ${d.openaiTest.error}`}
+                              </div>}
+                              {/* Buffer test */}
+                              {d.bufferTest && <div className={d.bufferTest.ok ? 'text-green-700' : 'text-red-600'}>
+                                {d.bufferTest.ok ? `✅ Buffer: ${d.bufferTest.message} (${d.bufferTest.viewer?.email || ''})` : `❌ Buffer: ${d.bufferTest.error}`}
+                              </div>}
+                              {/* Value hints */}
+                              {d.hints && Object.entries(d.hints).map(([k,v]) => (
+                                <div key={k} className="text-gray-400 pl-3">↳ {k}: {v}</div>
+                              ))}
+                            </div>
+                          );
+                        })()}
                         {/* Summary from run log */}
                         {summary?.topic && <p className="text-xs text-gray-600 mt-1">📌 Topic: {summary.topic.slice(0, 80)}</p>}
                         {summary?.buffer_synced !== undefined && (
@@ -5408,9 +5424,9 @@ To exercise any of these rights, email support@capfundacademy.com. We will respo
                                 const data = await res.json();
                                 setTriggerResult({ fn: fn.name, status: data.allGood ? 'success' : 'failed', data: {
                                   errors: data.missing.map(k => `Missing env var: ${k}`),
-                                  hints: data.hints,
                                   present: data.present,
                                   _isConfigCheck: true,
+                                  _raw: data,
                                 }});
                               } catch(e) {
                                 setTriggerResult({ fn: fn.name, status: 'failed', error: e.message });
