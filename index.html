@@ -463,9 +463,9 @@ window.ENV = {
 
   // ─── Logo component ───────────────────────────────────────────────────────
   function Logo({ size = 'md', white = false }) {
-    const h = size === 'sm' ? 216 : size === 'lg' ? 480 : 420;
+    const h = size === 'sm' ? 36 : size === 'lg' ? 56 : 44;
     return (
-      <img src="/assets/logo-header.png" alt="Cap Fund Academy" height={h}
+      <img src="/assets/logo-header.png" alt="Cap Fund Academy"
         style={{ height: h, width: 'auto', display: 'block' }} />
     );
   }
@@ -493,7 +493,7 @@ window.ENV = {
     const [menuOpen, setMenuOpen] = useState(false);
     return (
       <header className="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-36 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <button onClick={() => setView('home')} className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2D1FB1] rounded" aria-label="Cap Fund Academy home">
             <Logo />
           </button>
