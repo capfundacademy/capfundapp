@@ -182,7 +182,6 @@ The image should evoke: rural community development, financial empowerment, fede
       n: 1,
       size: '1024x1024',
       quality: 'hd',
-      style: 'natural',
       response_format: 'url',
     }),
   });
