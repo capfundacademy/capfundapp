@@ -318,12 +318,14 @@ exports.handler = async (event) => {
   const results = { blog: null, posts: {}, buffer: {}, errors: [] };
 
   try {
+    console.log('[daily-content] ── START ──', new Date().toISOString());
+
     // ── Resolve a system user ID for created_by (social_posts requires it) ───
-    // Use the first super_admin profile found; falls back to null (schema allows null after migration 43)
-    const { data: sysUser } = await admin.from('profiles')
+    const { data: sysUser, error: sysUserErr } = await admin.from('profiles')
       .select('id').eq('role', 'super_admin').limit(1).maybeSingle();
+    if (sysUserErr) console.warn('[daily-content] profiles query error:', sysUserErr.message);
     const systemUserId = sysUser?.id || null;
-    console.log('[daily-content] System user for created_by:', systemUserId || 'null (migration 43 required)');
+    console.log('[daily-content] System user:', systemUserId || 'null');
 
     // ── Pick today's topic (day of year mod 28) ──────────────────────────────
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
@@ -335,6 +337,9 @@ exports.handler = async (event) => {
     const autopilot   = bvs?.autopilot_level || 'approval_required';
     const blogStatus  = autopilot === 'preapproved' ? 'published' : 'draft';
     const postStatus  = autopilot === 'preapproved' ? 'approved'  : 'review';
+
+    console.log('[daily-content] Topic:', topic.topic.slice(0, 60));
+    console.log('[daily-content] Autopilot:', autopilot, '| blogStatus:', blogStatus);
 
     // ── 1. Generate blog post ────────────────────────────────────────────────
     const blogPrompt = `Write a comprehensive, SEO-optimized blog article for Cap Fund Academy on the following topic:
