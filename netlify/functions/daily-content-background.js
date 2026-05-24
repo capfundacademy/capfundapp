@@ -105,7 +105,7 @@ const slugify = (t) => t.toLowerCase()
 // ── OpenAI call ──────────────────────────────────────────────────────────────
 async function callOpenAI(prompt, maxTokens = 1800, temperature = 0.72) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 25000);
+  const timeout = setTimeout(() => controller.abort(), 55000);
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     signal: controller.signal,
@@ -383,7 +383,8 @@ Output only these two lines, no labels.`;
     }).select().single();
 
     if (blogErr) results.errors.push(`Blog post: ${blogErr.message}`);
-    else results.blog = { id: blogPost.id, title: blogPost.title, status: blogPost.status };
+    else if (blogPost) results.blog = { id: blogPost.id, title: blogPost.title, status: blogPost.status };
+    else results.errors.push('Blog post: insert returned no data');
 
     // ── 2. Generate today's image with DALL-E 3 (shared across all platforms) ──
     const today = new Date();

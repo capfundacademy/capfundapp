@@ -92,7 +92,7 @@ exports.handler = async (event) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${BUFFER_TOKEN}`,
         },
-        body: JSON.stringify({ query: '{ channels { id service name } }' }),
+        body: JSON.stringify({ query: '{ channels(input: {}) { id service name } }' }),
         signal: AbortSignal.timeout(8000),
       });
       const json = await r.json().catch(() => ({}));
