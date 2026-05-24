@@ -12,8 +12,10 @@ const SUPABASE_URL         = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENAI_API_KEY       = process.env.OPENAI_API_KEY;
 const BUFFER_ACCESS_TOKEN  = process.env.BUFFER_ACCESS_TOKEN;
+const PEXELS_API_KEY       = process.env.PEXELS_API_KEY       || 'vppPF1P7PGdZKiBXlHvYFVMoS6tEZ3E1ZGmUw0Lqv53aXKZBqsjiGA1V';
+const PIXABAY_API_KEY      = process.env.PIXABAY_API_KEY      || '55679045-d3b9cb722b2c1ce599a69d05c';
 const MODEL                = 'gpt-4o';
-const IMAGE_BUCKET         = 'social-images'; // Supabase Storage bucket for generated images
+const IMAGE_BUCKET         = 'social-images';
 
 // Buffer profile IDs — known channel IDs + LinkedIn pending
 const BUFFER_PROFILES = {
@@ -212,6 +214,66 @@ The image should evoke: rural community development, financial empowerment, fede
   return urlData?.publicUrl || null;
 }
 
+// ── Stock video search (Pexels → Pixabay fallback) ──────────────────────────
+// Returns a portrait-oriented MP4 URL suitable for TikTok & Instagram Reels.
+async function findStockVideo(searchTerms) {
+  const query = searchTerms.join(' ');
+
+  // 1. Try Pexels (better quality, portrait filter)
+  try {
+    const r = await fetch(
+      `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=10&orientation=portrait&size=medium`,
+      { headers: { Authorization: PEXELS_API_KEY }, signal: AbortSignal.timeout(10000) }
+    );
+    if (r.ok) {
+      const data = await r.json();
+      const videos = data?.videos || [];
+      for (const v of videos) {
+        // Prefer HD portrait file
+        const file = v.video_files?.find(f => f.quality === 'hd' && f.width < f.height)
+          || v.video_files?.find(f => f.width < f.height)
+          || v.video_files?.[0];
+        if (file?.link) return { url: file.link, source: 'pexels', credit: v.url };
+      }
+    }
+  } catch (e) { console.warn('[daily-content] Pexels error:', e.message); }
+
+  // 2. Fallback: Pixabay videos
+  try {
+    const r = await fetch(
+      `https://pixabay.com/api/videos/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(query)}&per_page=10&video_type=film`,
+      { signal: AbortSignal.timeout(10000) }
+    );
+    if (r.ok) {
+      const data = await r.json();
+      const hits = data?.hits || [];
+      if (hits.length) {
+        const v = hits[Math.floor(Math.random() * Math.min(hits.length, 5))];
+        const file = v.videos?.medium || v.videos?.small;
+        if (file?.url) return { url: file.url, source: 'pixabay', credit: v.pageURL };
+      }
+    }
+  } catch (e) { console.warn('[daily-content] Pixabay error:', e.message); }
+
+  return null;
+}
+
+// Map topic category to concrete video search terms
+function videoSearchTerms(category, keyword) {
+  const map = {
+    'rmap-readiness':                  ['rural small business', 'farmers market', 'rural community'],
+    'revolving-loan-funds':            ['small business loan', 'entrepreneur office', 'business handshake'],
+    'microlending-basics':             ['microenterprise', 'small business owner', 'startup entrepreneur'],
+    'technical-assistance-entrepreneurs': ['business coaching', 'entrepreneur mentoring', 'workshop training'],
+    'rlf-accounting-compliance':       ['financial documents', 'accounting paperwork', 'business finance'],
+    'grant-application-preparation':   ['writing documents', 'grant application', 'government paperwork'],
+    'rural-economic-development':      ['rural community', 'small town development', 'agriculture business'],
+    'rbdg-readiness':                  ['rural development', 'agribusiness', 'rural landscape'],
+    'irp-readiness':                   ['business investment', 'capital finance', 'loan approval'],
+  };
+  return map[category] || [keyword.split(' ').slice(0, 2).join(' '), 'small business', 'finance'];
+}
+
 // ── Buffer GraphQL API ────────────────────────────────────────────────────────
 // Buffer uses GraphQL at https://api.buffer.com/graphql with Bearer token auth.
 // LinkedIn: posted directly to queue (text-only supported)
@@ -232,15 +294,14 @@ async function bufferGQL(query, variables) {
   return { ok: res.ok, json };
 }
 
-async function pushToBuffer(channelId, text, platform, imageUrl) {
+async function pushToBuffer(channelId, text, platform, imageUrl, videoUrl) {
   if (!BUFFER_ACCESS_TOKEN || !channelId) {
     return { skipped: true, reason: !BUFFER_ACCESS_TOKEN ? 'BUFFER_ACCESS_TOKEN not set' : `no channel id for ${platform}` };
   }
 
   const maxLen   = platform === 'linkedin' ? 3000 : 2200;
   const postText = text.slice(0, maxLen);
-  // TikTok needs a video recorded manually — save as draft; others go to queue with image
-  const isTikTok = platform === 'tiktok';
+  const needsVideo = platform === 'tiktok' || platform === 'instagram';
 
   const mutation = `
     mutation CreatePost($input: CreatePostInput!) {
@@ -255,17 +316,22 @@ async function pushToBuffer(channelId, text, platform, imageUrl) {
     channelId,
     schedulingType: 'automatic',
     mode:           'addToQueue',
-    saveToDraft:    isTikTok,
   };
 
-  // Attach generated image to LinkedIn and Instagram
-  if (imageUrl && !isTikTok) {
+  if (needsVideo && videoUrl) {
+    // TikTok & Instagram: use stock video
+    input.assets = [{ video: { url: videoUrl } }];
+  } else if (imageUrl && platform === 'linkedin') {
+    // LinkedIn: use DALL-E image
     input.assets = [{
       image: {
         url:      imageUrl,
         metadata: { altText: 'Cap Fund Academy — rural capital access certification training' },
       },
     }];
+  } else if (needsVideo && !videoUrl) {
+    // No video found — save as draft so Buffer can attach manually
+    input.saveToDraft = true;
   }
 
   const { ok, json } = await bufferGQL(mutation, { input });
@@ -276,13 +342,12 @@ async function pushToBuffer(channelId, text, platform, imageUrl) {
   }
 
   return {
-    success:   true,
-    buffer_id: result?.post?.id,
-    due_at:    result?.post?.dueAt,
-    mode:      isTikTok ? 'draft' : 'addToQueue',
-    has_image: !!imageUrl && !isTikTok,
+    success:    true,
+    buffer_id:  result?.post?.id,
+    due_at:     result?.post?.dueAt,
+    mode:       input.saveToDraft ? 'draft' : 'addToQueue',
+    media_type: needsVideo ? (videoUrl ? 'video' : 'draft-no-video') : 'image',
     platform,
-    note:      isTikTok ? 'TikTok saved as draft — record video and upload in Buffer' : undefined,
   };
 }
 
@@ -390,9 +455,12 @@ Output only these two lines, no labels.`;
     else if (blogPost) results.blog = { id: blogPost.id, title: blogPost.title, status: blogPost.status };
     else results.errors.push('Blog post: insert returned no data');
 
-    // ── 2. Generate today's image with DALL-E 3 (shared across all platforms) ──
+    // ── 2. Generate today's image (LinkedIn) + stock video (Instagram/TikTok) ──
     const today = new Date();
     let sharedImageUrl = null;
+    let sharedVideoUrl = null;
+    let videoCredit    = null;
+
     try {
       console.log('[daily-content] Generating DALL-E image…');
       sharedImageUrl = await generateAndCacheImage(topic.topic, topic.keyword, today, admin);
@@ -400,7 +468,24 @@ Output only these two lines, no labels.`;
       console.log('[daily-content] Image generated:', sharedImageUrl?.slice(0, 80));
     } catch (imgErr) {
       results.errors.push(`Image generation: ${imgErr.message}`);
-      console.warn('[daily-content] Image generation failed, continuing without image:', imgErr.message);
+      console.warn('[daily-content] Image generation failed:', imgErr.message);
+    }
+
+    try {
+      console.log('[daily-content] Searching stock video…');
+      const terms = videoSearchTerms(topic.category, topic.keyword);
+      const vid = await findStockVideo(terms);
+      if (vid) {
+        sharedVideoUrl = vid.url;
+        videoCredit    = vid.credit;
+        results.video_url = vid.url;
+        results.video_source = vid.source;
+        console.log('[daily-content] Stock video found:', vid.source, vid.url?.slice(0, 80));
+      } else {
+        console.warn('[daily-content] No stock video found, TikTok/Instagram will draft');
+      }
+    } catch (vidErr) {
+      console.warn('[daily-content] Stock video search error:', vidErr.message);
     }
 
     // ── 3. Generate platform-optimized social posts ──────────────────────────
@@ -449,7 +534,7 @@ Output the post content only — ready to publish with no additional editing nee
         // ── 4. Push to Buffer with image ───────────────────────────────────
         const channelId = BUFFER_PROFILES[platform];
         console.log(`[daily-content] Pushing ${platform} to Buffer (channel: ${channelId})…`);
-        const bufResult = await pushToBuffer(channelId, content, platform, sharedImageUrl);
+        const bufResult = await pushToBuffer(channelId, content, platform, sharedImageUrl, sharedVideoUrl);
         results.buffer[platform] = bufResult;
         if (bufResult.success) {
           console.log(`[daily-content] Buffer ${platform} queued: id=${bufResult.buffer_id} dueAt=${bufResult.due_at}`);
